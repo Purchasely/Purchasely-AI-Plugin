@@ -31,7 +31,17 @@ If multiple platforms are detected (e.g., a monorepo), ask the user which platfo
 
 Run the appropriate installation commands and modify project files as needed.
 
+**Before installing, ask the user these questions (adapt per platform):**
+
+For **Android, React Native, Flutter, Cordova** — ask:
+1. **Which store(s) do you target?** Google Play is the most common. Huawei AppGallery and Amazon Appstore are also supported (Android native only). The store dependency is REQUIRED and separate from the core SDK.
+2. **Do you need video support in paywalls?** If yes, an optional video player dependency is needed (not available on Cordova).
+
+For **iOS** — no extra questions needed (App Store is the only store, video is included).
+
 ### iOS
+
+Requirements: iOS 11.0+, Xcode 13.0+, Swift 5.0+
 
 **Option A — CocoaPods** (preferred if a `Podfile` exists):
 
@@ -41,69 +51,227 @@ pod 'Purchasely'
 ```
 Then run:
 ```bash
-cd ios && pod install
+pod install
 ```
 
 **Option B — Swift Package Manager** (if the project uses SPM):
 
-Add the package URL in Xcode or in `Package.swift`:
+In Xcode: File > Add Packages, then enter the repository URL:
 ```
 https://github.com/Purchasely/Purchasely-iOS
 ```
 
+**Option C — Carthage**:
+
+Add to `Cartfile`:
+```
+binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json"
+```
+Then run:
+```bash
+carthage update
+```
+
 ### Android
 
-Add the Purchasely Maven repository and dependency to the app-level `build.gradle` (or `build.gradle.kts`):
+Requirements: minSdk 23, compileSdk 34, Kotlin 2.+, Gradle 8.+, JDK 11
 
-In the **project-level** `build.gradle` (or `settings.gradle.kts`), add the Maven repository:
-```groovy
-// build.gradle (project) — allprojects block
-maven { url "https://sdk.purchasely.com/releases" }
-```
-or in `settings.gradle.kts`:
+**1. Add the Purchasely Maven repository** in `settings.gradle.kts`:
 ```kotlin
 dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        maven { url = uri("https://sdk.purchasely.com/releases") }
+        google()
+        mavenCentral()
+        maven {
+            url = uri("https://maven.purchasely.io")
+        }
     }
 }
 ```
 
-In the **app-level** `build.gradle`:
-```groovy
+**2. Add dependencies** in `app/build.gradle.kts`:
+```kotlin
 dependencies {
-    implementation 'io.purchasely:purchasely:+'
+    // Core SDK — Required
+    implementation("io.purchasely:core:5.+")
+
+    // Google Play Store — Required if publishing on Google Play
+    implementation("io.purchasely:google-play:5.+")
+
+    // Video Player — Optional, for video support in paywalls
+    implementation("io.purchasely:player:5.+")
 }
 ```
+
+**Alternative stores** (instead of or in addition to Google Play):
+```kotlin
+// Huawei AppGallery (also requires Huawei AGConnect plugin and repo)
+implementation("io.purchasely:huawei-services:5.+")
+
+// Amazon Appstore
+implementation("io.purchasely:amazon:5.+")
+```
+
+For **Huawei**, also add to the project-level build.gradle:
+```groovy
+buildscript {
+    repositories {
+        maven { url 'https://developer.huawei.com/repo/' }
+    }
+    dependencies {
+        classpath 'com.huawei.agconnect:agcp:1.6.0.300'
+    }
+}
+allprojects {
+    repositories {
+        maven { url 'https://developer.huawei.com/repo/' }
+    }
+}
+```
+And apply the plugin in `app/build.gradle`: `apply plugin: 'com.huawei.agconnect'`
 
 Then sync Gradle.
 
 ### React Native
 
+Requirements: iOS 11.0+, Android minSdk 21, compileSdk 33
+
+**1. Install the core SDK:**
 ```bash
-yarn add react-native-purchasely
-# or: npm install react-native-purchasely
+npm install react-native-purchasely --save
+```
+
+**2. Install the store dependency (required for Android):**
+```bash
+# Google Play — required if targeting Google Play Store
+npm install @purchasely/react-native-purchasely-google --save
+```
+
+**3. Optional — video player for Android:**
+```bash
+npm install @purchasely/react-native-purchasely-android-player --save
+```
+
+**4. iOS pods:**
+```bash
 cd ios && pod install
+```
+
+**5. Android setup** — edit `android/build.gradle`:
+```groovy
+buildscript {
+    ext {
+        minSdkVersion = 21
+        compileSdkVersion = 33
+        targetSdkVersion = 33
+    }
+}
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+```
+
+**CRITICAL: All Purchasely packages must be at the exact same version.** Check `package.json` to ensure version alignment:
+```json
+"dependencies": {
+  "react-native-purchasely": "5.0.0",
+  "@purchasely/react-native-purchasely-google": "5.0.0",
+  "@purchasely/react-native-purchasely-android-player": "5.0.0"
+}
 ```
 
 ### Flutter
 
-Add to `pubspec.yaml` under `dependencies`:
-```yaml
-purchasely_flutter: ^5.0.0
-```
-Then run:
+Requirements: iOS 11.0+, Android minSdk 21, compileSdk 33
+
+**1. Install the core SDK:**
 ```bash
-flutter pub get
+flutter pub add purchasely_flutter
+```
+
+**2. Install the store dependency (required for Android):**
+```bash
+# Google Play — required if targeting Google Play Store
+flutter pub add purchasely_google
+```
+
+**3. Optional — video player for Android:**
+```bash
+flutter pub add purchasely_android_player
+```
+
+**4. iOS pods:**
+```bash
+cd ios && pod install
+```
+
+**5. Android setup** — edit `android/build.gradle`:
+```groovy
+buildscript {
+    ext {
+        minSdkVersion = 21
+        compileSdkVersion = 33
+        targetSdkVersion = 33
+    }
+}
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+```
+
+**CRITICAL: All Purchasely packages must be at the exact same version.** Check `pubspec.yaml`:
+```yaml
+dependencies:
+  purchasely_flutter: ^5.0.0
+  purchasely_google: ^5.0.0
+  purchasely_android_player: ^5.0.0
 ```
 
 ### Cordova
 
+Requirements: iOS 11.0+, Android minSdk 21, compileSdk 33
+
+**1. Install the core plugin:**
 ```bash
-cordova plugin add @nickvdp/purchasely-cordova
+cordova plugin add @purchasely/cordova-plugin-purchasely
 ```
 
-**Action:** Actually edit the project files and run the install commands. Do not just show the commands — write the dependency into the appropriate file and execute the install.
+**2. Install the store dependency (required for Android):**
+```bash
+# Google Play — required if targeting Google Play Store
+cordova plugin add @purchasely/cordova-plugin-purchasely-google
+```
+
+**3. Android setup** — edit `android/build.gradle`:
+```groovy
+buildscript {
+    ext {
+        minSdkVersion = 21
+        compileSdkVersion = 33
+        targetSdkVersion = 33
+    }
+}
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+```
+
+**CRITICAL: All Purchasely packages must be at the exact same version.** Check `package.json`:
+```json
+"dependencies": {
+  "@purchasely/cordova-plugin-purchasely": "5.0.0",
+  "@purchasely/cordova-plugin-purchasely-google": "5.0.0"
+}
+```
+
+**Action:** Actually edit the project files and run the install commands. Do not just show the commands — write the dependency into the appropriate file and execute the install. Ask the user about store choice and video support BEFORE installing.
 
 ---
 
@@ -137,18 +305,21 @@ Purchasely.start(withAPIKey: "YOUR_API_KEY",
 
 ```kotlin
 import io.purchasely.ext.Purchasely
+import io.purchasely.ext.LogLevel
 import io.purchasely.google.GoogleStore
 
-// In Application.onCreate() or Activity.onCreate()
+// In Application.onCreate()
 Purchasely.Builder(applicationContext)
     .apiKey("YOUR_API_KEY")
     .logLevel(LogLevel.DEBUG)
-    .stores(listOf(GoogleStore(), HuaweiStore()))
+    .stores(listOf(GoogleStore()))  // Add HuaweiStore() or AmazonStore() if needed
     .build()
     .start { success, error ->
         Log.d("PLY", "Started: $success")
     }
 ```
+
+Only include the stores matching the dependencies added in Step 1. For example, if using Huawei: `listOf(GoogleStore(), HuaweiStore())`.
 
 ### React Native (TypeScript)
 
