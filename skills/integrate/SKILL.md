@@ -76,21 +76,9 @@ carthage update
 
 Requirements: minSdk 23, compileSdk 34, Kotlin 2.+, Gradle 8.+, JDK 11
 
-**1. Add the Purchasely Maven repository** in `settings.gradle.kts`:
-```kotlin
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        google()
-        mavenCentral()
-        maven {
-            url = uri("https://maven.purchasely.io")
-        }
-    }
-}
-```
+The Purchasely SDK is published on **Maven Central** — no custom repository needed. Just make sure `mavenCentral()` is present in your `settings.gradle.kts` (it is by default in modern projects).
 
-**2. Add dependencies** in `app/build.gradle.kts`:
+**Add dependencies** in `app/build.gradle.kts`:
 ```kotlin
 dependencies {
     // Core SDK — Required
