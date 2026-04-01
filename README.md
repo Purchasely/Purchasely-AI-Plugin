@@ -265,7 +265,6 @@ MIT - see [LICENSE](LICENSE)
 ## Resources
 
 - [Purchasely Documentation](https://docs.purchasely.com)
-- [Purchasely Console](https://console.purchasely.com)
 - [Claude Code Plugins](https://docs.anthropic.com/en/docs/claude-code/plugins)
 - [Cursor Rules](https://docs.cursor.com/context/rules-for-ai)
 - [GitHub Copilot Instructions](https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot)
