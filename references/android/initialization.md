@@ -1,0 +1,151 @@
+# Android SDK Initialization
+
+## Installation
+
+### Maven Repository
+
+Add the Purchasely Maven repository to your `settings.gradle.kts` (recommended) or root `build.gradle.kts`:
+
+```kotlin
+// settings.gradle.kts
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url = uri("https://maven.purchasely.io") }
+    }
+}
+```
+
+Or in Groovy (`settings.gradle`):
+
+```groovy
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://maven.purchasely.io' }
+    }
+}
+```
+
+### Dependencies
+
+Add the core SDK and store-specific dependencies to your app's `build.gradle.kts`:
+
+```kotlin
+dependencies {
+    // Core SDK
+    implementation("io.purchasely:purchasely:+")
+
+    // Store-specific (add one or more)
+    implementation("io.purchasely:google-play:+")
+    implementation("io.purchasely:huawei-mobile-services:+")
+    implementation("io.purchasely:amazon-appstore:+")
+}
+```
+
+**Tip:** Replace `+` with a specific version (e.g., `5.2.0`) in production for reproducible builds.
+
+### Store Dependencies
+
+| Store | Artifact | Class |
+|-------|---------|-------|
+| Google Play | `io.purchasely:google-play` | `GoogleStore()` |
+| Huawei AppGallery | `io.purchasely:huawei-mobile-services` | `HuaweiStore()` |
+| Amazon Appstore | `io.purchasely:amazon-appstore` | `AmazonStore()` |
+
+## SDK Initialization
+
+Initialize Purchasely in your `Application.onCreate()` method:
+
+```kotlin
+class MyApplication : Application() {
+
+    override fun onCreate() {
+        super.onCreate()
+
+        Purchasely.Builder(applicationContext)
+            .apiKey("YOUR_API_KEY")
+            .logLevel(LogLevel.DEBUG)
+            .stores(listOf(GoogleStore(), HuaweiStore()))
+            .userId("user_123")               // optional, set if user is already known
+            .runningMode(PLYRunningMode.Full)  // .Full or .Observer
+            .readyToOpenDeeplink(true)         // set to true when app is ready for deeplinks
+            .build()
+            .start { success, error ->
+                if (success) {
+                    // SDK is ready
+                } else {
+                    Log.e("Purchasely", "Init failed: ${error?.message}")
+                }
+            }
+    }
+}
+```
+
+### Minimal Initialization (Google Play only)
+
+```kotlin
+Purchasely.Builder(applicationContext)
+    .apiKey("YOUR_API_KEY")
+    .logLevel(LogLevel.DEBUG)
+    .stores(listOf(GoogleStore()))
+    .build()
+    .start { success, error -> }
+```
+
+## Running Modes
+
+| Mode | Enum Value | Description |
+|------|-----------|-------------|
+| **Full** | `PLYRunningMode.Full` | Purchasely SDK handles the entire purchase flow (recommended for most apps) |
+| **Observer** | `PLYRunningMode.Observer` | Your app handles purchases; Purchasely only observes for analytics and paywall display |
+
+**Note (v6):** `PLYRunningMode.PaywallObserver` has been renamed to `PLYRunningMode.Observer`.
+
+## ProGuard / R8 Rules
+
+If you use ProGuard or R8 minification, add these rules to your `proguard-rules.pro`:
+
+```proguard
+-keep class io.purchasely.** { *; }
+-keep class io.purchasely.ext.** { *; }
+```
+
+This prevents stripping of SDK classes required for reflection and serialization.
+
+## Multi-Store Setup
+
+For apps distributed across multiple stores (Google Play, Huawei AppGallery, Amazon):
+
+```kotlin
+Purchasely.Builder(applicationContext)
+    .apiKey("YOUR_API_KEY")
+    .logLevel(LogLevel.DEBUG)
+    .stores(listOf(
+        GoogleStore(),
+        HuaweiStore(),
+        AmazonStore()
+    ))
+    .build()
+    .start { success, error -> }
+```
+
+The SDK automatically detects which store the app was installed from and uses the appropriate billing library.
+
+## Important Notes
+
+- **Always initialize in `Application.onCreate()`**, not in an Activity. This ensures the SDK is ready before any UI is shown.
+- The `start` callback confirms the SDK has fetched its configuration. Display paywalls only after `success == true`.
+- If `userId` is not set during initialization, call `Purchasely.userLogin()` later when the user authenticates.
+- For release builds, use `LogLevel.WARN` or `LogLevel.ERROR` to reduce log output.
+
+## Log Levels
+
+| Level | Description |
+|-------|-------------|
+| `LogLevel.DEBUG` | Verbose logging for development |
+| `LogLevel.INFO` | General informational messages |
+| `LogLevel.WARN` | Warnings only |
+| `LogLevel.ERROR` | Errors only |

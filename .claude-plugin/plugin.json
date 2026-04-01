@@ -1,0 +1,26 @@
+{
+  "name": "purchasely",
+  "description": "Purchasely SDK integration assistant — guides implementation, reviews code, debugs issues, and handles migrations across iOS, Android, React Native, Flutter, and Cordova.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Purchasely",
+    "email": "engineering@purchasely.com"
+  },
+  "homepage": "https://www.purchasely.com",
+  "repository": "https://github.com/Purchasely/purchasely-ai-skill",
+  "license": "MIT",
+  "keywords": [
+    "purchasely",
+    "sdk",
+    "in-app-purchase",
+    "subscriptions",
+    "paywalls",
+    "ios",
+    "android",
+    "react-native",
+    "flutter",
+    "cordova",
+    "monetization"
+  ],
+  "category": "sdk-integration"
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@purchasely/ai-skill",
+  "version": "1.0.0",
+  "description": "AI coding assistant skill for Purchasely SDK integration across all platforms",
+  "author": "Purchasely <engineering@purchasely.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/Purchasely/purchasely-ai-skill",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Purchasely/purchasely-ai-skill.git"
+  },
+  "keywords": [
+    "purchasely",
+    "ai-skill",
+    "claude-code",
+    "cursor",
+    "copilot",
+    "codex",
+    "sdk",
+    "in-app-purchase",
+    "paywalls"
+  ]
+}

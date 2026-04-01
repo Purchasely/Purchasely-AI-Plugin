@@ -1,0 +1,25 @@
+{
+  "name": "purchasely-ai-skill",
+  "owner": {
+    "name": "Purchasely",
+    "url": "https://github.com/Purchasely"
+  },
+  "metadata": {
+    "description": "Purchasely SDK integration skills for AI coding assistants",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "purchasely",
+      "description": "Purchasely SDK integration assistant — guides implementation, reviews code, debugs issues, and handles migrations across iOS, Android, React Native, Flutter, and Cordova. Includes 4 skills, 1 agent, and 1 slash command.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Purchasely",
+        "email": "engineering@purchasely.com"
+      },
+      "homepage": "https://github.com/Purchasely/purchasely-ai-skill",
+      "tags": ["purchasely", "sdk", "in-app-purchase", "paywalls", "subscriptions", "ios", "android", "react-native", "flutter", "cordova"],
+      "source": "./"
+    }
+  ]
+}
