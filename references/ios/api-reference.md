@@ -165,45 +165,92 @@ Purchasely.userLogout()
 
 ## User Attributes
 
-### `Purchasely.setAttribute(_:value:)`
+### `Purchasely.setUserAttribute(with*Value:forKey:)`
 
-Set user attributes for audience targeting and personalization.
+Set user attributes for audience targeting and personalization. Use the typed variant matching the value type.
 
 ```swift
-// Built-in attributes
-Purchasely.setAttribute(.firstName, value: "John")
-Purchasely.setAttribute(.lastName, value: "Doe")
-Purchasely.setAttribute(.age, value: 30)
-Purchasely.setAttribute(.gender, value: "male")
+Purchasely.setUserAttribute(withStringValue: "John", forKey: "first_name")
+Purchasely.setUserAttribute(withStringValue: "gold", forKey: "loyalty_tier")
+Purchasely.setUserAttribute(withIntValue: 30, forKey: "age")
+Purchasely.setUserAttribute(withDoubleValue: 175.5, forKey: "height")
+Purchasely.setUserAttribute(withBoolValue: true, forKey: "is_premium")
+Purchasely.setUserAttribute(withDateValue: Date(), forKey: "signup_date")
+```
 
-// Custom attributes
-Purchasely.setAttribute(.custom("loyalty_tier"), value: "gold")
-Purchasely.setAttribute(.custom("articles_read"), value: 42)
+To set multiple attributes at once:
+
+```swift
+Purchasely.setUserAttributes([
+    "age": 30,
+    "gender": "male",
+    "loyalty_tier": "gold",
+    "is_premium": true,
+    "signup_date": Date()
+])
 ```
 
 ## Subscriptions
 
-### `Purchasely.userSubscriptions`
+### `Purchasely.userSubscriptions(success:failure:)`
 
 Fetch the user's active subscriptions.
 
 ```swift
-Purchasely.userSubscriptions { subscriptions in
-    for subscription in subscriptions ?? [] {
-        print("Plan: \(subscription.plan.vendorId)")
-        print("Expires: \(subscription.subscriptionSource.nextRenewalDate)")
+Purchasely.userSubscriptions(
+    success: { subscriptions in
+        for subscription in subscriptions ?? [] {
+            print("Plan: \(subscription.plan.vendorId)")
+        }
+    },
+    failure: { error in
+        print("Error: \(error?.localizedDescription ?? "")")
     }
-}
+)
+```
+
+To force a cache refresh:
+
+```swift
+Purchasely.userSubscriptions(
+    refresh: true,
+    success: { subscriptions in ... },
+    failure: { error in ... }
+)
+```
+
+## Restore Purchases
+
+### `Purchasely.restoreAllProducts(success:failure:)`
+
+Restore the user's previous purchases. Should be triggered by a user action (e.g., a "Restore Purchases" button). May prompt the user to sign in on iOS.
+
+```swift
+Purchasely.restoreAllProducts(
+    success: { plan in
+        print("Restored plan: \(plan?.vendorId ?? "unknown")")
+    },
+    failure: { error in
+        print("Restore failed: \(error?.localizedDescription ?? "")")
+    }
+)
 ```
 
 ## Synchronize
 
-### `Purchasely.synchronize()`
+### `Purchasely.synchronize(success:failure:)`
 
-Force a synchronization of the user's purchases with Purchasely servers.
+Force a synchronization of the user's purchases with Purchasely servers. Use this for silent transfers (e.g., in Observer mode after a purchase). Unlike `restoreAllProducts`, this does not prompt the user.
 
 ```swift
-Purchasely.synchronize()
+Purchasely.synchronize(
+    success: {
+        print("Synchronization successful")
+    },
+    failure: { error in
+        print("Synchronization failed: \(error?.localizedDescription ?? "")")
+    }
+)
 ```
 
 ## Events

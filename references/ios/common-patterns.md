@@ -137,13 +137,13 @@ Purchasely.setPaywallActionsInterceptor { action, parameters, presentationInfo, 
                 proceed(false)
             } else {
                 // Notify Purchasely of the purchase for analytics
-                Purchasely.synchronize()
+                Purchasely.synchronize(success: {}, failure: { _ in })
                 proceed(true)
             }
         }
     case .restore:
         Purchases.shared.restorePurchases { info, error in
-            Purchasely.synchronize()
+            Purchasely.synchronize(success: {}, failure: { _ in })
             proceed(error == nil)
         }
     default:
@@ -173,7 +173,7 @@ Purchasely.setPaywallActionsInterceptor { action, parameters, presentationInfo, 
                 let result = try await product.purchase()
                 switch result {
                 case .success(let verification):
-                    Purchasely.synchronize()
+                    Purchasely.synchronize(success: {}, failure: { _ in })
                     proceed(true)
                 case .pending:
                     proceed(false)
@@ -189,7 +189,7 @@ Purchasely.setPaywallActionsInterceptor { action, parameters, presentationInfo, 
     case .restore:
         Task {
             try? await AppStore.sync()
-            Purchasely.synchronize()
+            Purchasely.synchronize(success: {}, failure: { _ in })
             proceed(true)
         }
     default:
@@ -205,15 +205,15 @@ Set attributes to enable audience targeting and paywall personalization:
 ```swift
 // After user login or profile update
 func updatePurchaselyAttributes(user: User) {
-    Purchasely.setAttribute(.firstName, value: user.firstName)
-    Purchasely.setAttribute(.email, value: user.email)
-    Purchasely.setAttribute(.age, value: user.age)
+    Purchasely.setUserAttribute(withStringValue: user.firstName, forKey: "first_name")
+    Purchasely.setUserAttribute(withStringValue: user.email, forKey: "email")
+    Purchasely.setUserAttribute(withIntValue: user.age, forKey: "age")
 
     // Custom attributes for targeting rules
-    Purchasely.setAttribute(.custom("subscription_tier"), value: user.tier)
-    Purchasely.setAttribute(.custom("articles_read"), value: user.articlesRead)
-    Purchasely.setAttribute(.custom("signup_date"), value: user.signupDate)
-    Purchasely.setAttribute(.custom("is_power_user"), value: user.isPowerUser)
+    Purchasely.setUserAttribute(withStringValue: user.tier, forKey: "subscription_tier")
+    Purchasely.setUserAttribute(withIntValue: user.articlesRead, forKey: "articles_read")
+    Purchasely.setUserAttribute(withDateValue: user.signupDate, forKey: "signup_date")
+    Purchasely.setUserAttribute(withBoolValue: user.isPowerUser, forKey: "is_power_user")
 }
 ```
 
@@ -223,13 +223,18 @@ Check active subscriptions to gate content:
 
 ```swift
 func checkSubscriptionAccess(completion: @escaping (Bool) -> Void) {
-    Purchasely.userSubscriptions { subscriptions in
-        let hasActiveSubscription = subscriptions?.contains { subscription in
-            subscription.plan.vendorId == "premium_monthly" ||
-            subscription.plan.vendorId == "premium_yearly"
-        } ?? false
-        completion(hasActiveSubscription)
-    }
+    Purchasely.userSubscriptions(
+        success: { subscriptions in
+            let hasActiveSubscription = subscriptions?.contains { subscription in
+                subscription.plan.vendorId == "premium_monthly" ||
+                subscription.plan.vendorId == "premium_yearly"
+            } ?? false
+            completion(hasActiveSubscription)
+        },
+        failure: { _ in
+            completion(false)
+        }
+    )
 }
 
 // Usage
@@ -282,8 +287,8 @@ func application(_ application: UIApplication,
 
 func enableTracking() {
     // Set attribute to indicate consent for server-side processing
-    Purchasely.setAttribute(.custom("gdpr_consent"), value: true)
-    Purchasely.setAttribute(.custom("consent_date"), value: ISO8601DateFormatter().string(from: Date()))
+    Purchasely.setUserAttribute(withBoolValue: true, forKey: "gdpr_consent")
+    Purchasely.setUserAttribute(withStringValue: ISO8601DateFormatter().string(from: Date()), forKey: "consent_date")
 }
 ```
 

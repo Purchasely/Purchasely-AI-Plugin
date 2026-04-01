@@ -226,17 +226,39 @@ Purchasely.setUserAttribute("articles_read", 42)
 
 ## Subscriptions
 
-### `Purchasely.userSubscriptions`
+### `Purchasely.userSubscriptions(invalidateCache, listener)`
 
-Fetch the user's active subscriptions.
+Fetch the user's active subscriptions. The first parameter controls whether to bypass the cache.
 
 ```kotlin
-Purchasely.userSubscriptions { subscriptions ->
-    subscriptions?.forEach { subscription ->
-        Log.d("PLY", "Plan: ${subscription.plan.vendorId}")
-        Log.d("PLY", "Store: ${subscription.subscriptionSource}")
+Purchasely.userSubscriptions(
+    false, // invalidateCache: false = use cache, true = force refresh
+    object : SubscriptionsListener {
+        override fun onSuccess(subscriptions: List<PLYSubscriptionData>) {
+            subscriptions.forEach { subscription ->
+                Log.d("PLY", "Plan: ${subscription.plan.vendorId}")
+                Log.d("PLY", "Store: ${subscription.subscriptionSource}")
+            }
+        }
+        override fun onFailure(error: Throwable) {
+            Log.e("PLY", "Error fetching subscriptions", error)
+        }
     }
-}
+)
+```
+
+Named-parameter style (equivalent):
+
+```kotlin
+Purchasely.userSubscriptions(
+    invalidate = false,
+    onSuccess = { subscriptions ->
+        subscriptions.forEach { Log.d("PLY", it.plan.vendorId) }
+    },
+    onError = { error ->
+        Log.e("PLY", "Error", error)
+    }
+)
 ```
 
 ## Synchronize
