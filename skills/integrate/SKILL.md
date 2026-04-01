@@ -512,19 +512,33 @@ NSLayoutConstraint.activate([
 paywallVC.didMove(toParent: self)
 ```
 
-#### Android — embed in a specific container
+#### Android — option A: embed as a View
 
 ```kotlin
-// After fetchPresentation, for NORMAL or FALLBACK types only:
-val fragment = presentation.buildView(this) { result ->
+// buildView() returns a View — add it into an existing ViewGroup
+val paywallView = presentation.buildView(this) { result ->
     // Handle result (purchase, restore, cancel...)
 }
+containerViewGroup.addView(paywallView)
+```
+
+#### Android — option B: embed as a Fragment
+
+```kotlin
+// getFragment() returns a Fragment — use with FragmentManager
+val fragment = presentation.getFragment(
+    callback = object : PLYPresentationResultHandler {
+        override fun invoke(result: PLYProductViewResult, plan: PLYPlan?) {
+            // Handle result (optional — omit the callback parameter if not needed)
+        }
+    }
+)
 supportFragmentManager.beginTransaction()
     .replace(R.id.your_container, fragment)
     .commitAllowingStateLoss()
 ```
 
-> Note: `buildView` embeds the paywall as a Fragment in a container you control. This bypasses Flow navigation — use only for truly inline use cases where you manage the UI hierarchy yourself.
+> Note: Both options bypass Flow navigation — use only for truly inline use cases where you manage the UI hierarchy yourself.
 
 ---
 
