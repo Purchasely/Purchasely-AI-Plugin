@@ -2,20 +2,43 @@
 
 ## Installation
 
-```bash
-yarn add react-native-purchasely
-```
-
-For Google Play support:
+Requirements: iOS 11.0+, Android minSdk 21, compileSdk 33
 
 ```bash
-yarn add @purchasely/react-native-purchasely-google
+# Core SDK
+npm install react-native-purchasely --save
+
+# Google Play — required if targeting Google Play Store
+npm install @purchasely/react-native-purchasely-google --save
+
+# Video Player — optional, for video support in paywalls on Android
+npm install @purchasely/react-native-purchasely-android-player --save
 ```
 
-Then install native dependencies:
+**CRITICAL: All Purchasely packages must be at the exact same version.**
+
+### iOS Setup
 
 ```bash
 cd ios && pod install
+```
+
+### Android Setup
+
+Edit `android/build.gradle`:
+```groovy
+buildscript {
+    ext {
+        minSdkVersion = 21
+        compileSdkVersion = 33
+        targetSdkVersion = 33
+    }
+}
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
 ```
 
 ## Import and Initialization

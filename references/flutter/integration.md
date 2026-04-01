@@ -2,26 +2,49 @@
 
 ## Installation
 
-Add to your `pubspec.yaml`:
+Requirements: iOS 11.0+, Android minSdk 21, compileSdk 33
 
+```bash
+# Core SDK
+flutter pub add purchasely_flutter
+
+# Google Play — required if targeting Google Play Store
+flutter pub add purchasely_google
+
+# Video Player — optional, for video support in paywalls on Android
+flutter pub add purchasely_android_player
+```
+
+**CRITICAL: All Purchasely packages must be at the exact same version.** Check `pubspec.yaml`:
 ```yaml
 dependencies:
   purchasely_flutter: ^5.0.0
-  purchasely_google: ^5.0.0   # optional, for Google Play
-```
-
-Then run:
-
-```bash
-flutter pub get
+  purchasely_google: ^5.0.0
+  purchasely_android_player: ^5.0.0
 ```
 
 ### iOS Setup
 
-Ensure your `ios/Podfile` has the correct platform and run pod install:
-
 ```bash
 cd ios && pod install
+```
+
+### Android Setup
+
+Edit `android/build.gradle`:
+```groovy
+buildscript {
+    ext {
+        minSdkVersion = 21
+        compileSdkVersion = 33
+        targetSdkVersion = 33
+    }
+}
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
 ```
 
 ## Import and Initialization

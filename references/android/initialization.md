@@ -35,25 +35,30 @@ Add the core SDK and store-specific dependencies to your app's `build.gradle.kts
 
 ```kotlin
 dependencies {
-    // Core SDK
-    implementation("io.purchasely:purchasely:+")
+    // Core SDK — Required
+    implementation("io.purchasely:core:5.+")
 
-    // Store-specific (add one or more)
-    implementation("io.purchasely:google-play:+")
-    implementation("io.purchasely:huawei-mobile-services:+")
-    implementation("io.purchasely:amazon-appstore:+")
+    // Google Play Store — Required if publishing on Google Play
+    implementation("io.purchasely:google-play:5.+")
+
+    // Video Player — Optional, for video support in paywalls
+    implementation("io.purchasely:player:5.+")
 }
 ```
-
-**Tip:** Replace `+` with a specific version (e.g., `5.2.0`) in production for reproducible builds.
 
 ### Store Dependencies
 
 | Store | Artifact | Class |
 |-------|---------|-------|
-| Google Play | `io.purchasely:google-play` | `GoogleStore()` |
-| Huawei AppGallery | `io.purchasely:huawei-mobile-services` | `HuaweiStore()` |
-| Amazon Appstore | `io.purchasely:amazon-appstore` | `AmazonStore()` |
+| Google Play | `io.purchasely:google-play:5.+` | `GoogleStore()` |
+| Huawei AppGallery | `io.purchasely:huawei-services:5.+` | `HuaweiStore()` |
+| Amazon Appstore | `io.purchasely:amazon:5.+` | `AmazonStore()` |
+
+### Optional Dependencies
+
+| Feature | Artifact |
+|---------|---------|
+| Video paywalls | `io.purchasely:player:5.+` |
 
 ## SDK Initialization
 
@@ -68,7 +73,7 @@ class MyApplication : Application() {
         Purchasely.Builder(applicationContext)
             .apiKey("YOUR_API_KEY")
             .logLevel(LogLevel.DEBUG)
-            .stores(listOf(GoogleStore(), HuaweiStore()))
+            .stores(listOf(GoogleStore()))    // Add HuaweiStore(), AmazonStore() if needed
             .userId("user_123")               // optional, set if user is already known
             .runningMode(PLYRunningMode.Full)  // .Full or .Observer
             .readyToOpenDeeplink(true)         // set to true when app is ready for deeplinks
