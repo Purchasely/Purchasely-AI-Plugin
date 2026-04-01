@@ -370,19 +370,25 @@ The fetch returns a presentation with a `type` property. Handle each type:
 ### iOS (Swift)
 
 ```swift
-let controller = try await Purchasely.fetchPresentation(for: "PLACEMENT_ID")
+let presentation = try await Purchasely.fetchPresentation(for: "PLACEMENT_ID")
 
-switch controller.type {
+switch presentation.type {
 case .normal, .fallback:
-    // Present the paywall
-    self.present(controller.controller!, animated: true)
+    // display() handles Flows, transitions, and full-screen presentation automatically
+    presentation.display(controller: self) { result, plan in
+        switch result {
+        case .purchased: print("Purchased: \(plan?.vendorId ?? "")")
+        case .restored:  print("Restored")
+        case .cancelled: break
+        @unknown default: break
+        }
+    }
 case .deactivated:
     // Placement is deactivated — do nothing or show your own UI
     break
 case .client:
     // Show your own custom paywall
-    let presentationId = controller.presentationId
-    // ... display your custom paywall based on presentationId
+    let presentationId = presentation.presentationId
     break
 @unknown default:
     break
@@ -401,13 +407,8 @@ Purchasely.fetchPresentation("PLACEMENT_ID") { presentation, error ->
     when (presentation?.type) {
         PLYPresentationType.NORMAL,
         PLYPresentationType.FALLBACK -> {
-            val fragment = presentation.buildView(this) { result ->
-                // Handle presentation result (purchase, restore, close...)
-            }
-            supportFragmentManager.beginTransaction()
-                .addToBackStack(null)
-                .replace(R.id.container, fragment, "paywall")
-                .commitAllowingStateLoss()
+            // display() handles Flows, transitions, and full-screen presentation automatically
+            presentation.display(this)
         }
         PLYPresentationType.DEACTIVATED -> {
             // Do nothing
@@ -488,6 +489,42 @@ Purchasely.fetchPresentation(
 ```
 
 **Action:** Find the appropriate screen/view/component where the paywall should be displayed (e.g., a "Premium" button, settings screen, or onboarding flow) and add the paywall display code. Ask the user which placement ID to use, or use `"onboarding"` as a sensible default.
+
+### Advanced: Inline / Embedded Paywall (iOS & Android)
+
+> **Only use this approach if the user explicitly needs to embed a paywall inside an existing container view** (e.g., an inline screen, a tab, or a custom layout). For standard full-screen and Flow presentations, `display()` above is the correct approach.
+
+#### iOS — embed in a container view
+
+```swift
+// After fetchPresentation, for .normal or .fallback types only:
+guard let paywallVC = presentation.controller else { return }
+
+addChild(paywallVC)
+paywallVC.view.translatesAutoresizingMaskIntoConstraints = false
+containerView.addSubview(paywallVC.view)
+NSLayoutConstraint.activate([
+    paywallVC.view.topAnchor.constraint(equalTo: containerView.topAnchor),
+    paywallVC.view.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
+    paywallVC.view.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+    paywallVC.view.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+])
+paywallVC.didMove(toParent: self)
+```
+
+#### Android — embed in a specific container
+
+```kotlin
+// After fetchPresentation, for NORMAL or FALLBACK types only:
+val fragment = presentation.buildView(this) { result ->
+    // Handle result (purchase, restore, cancel...)
+}
+supportFragmentManager.beginTransaction()
+    .replace(R.id.your_container, fragment)
+    .commitAllowingStateLoss()
+```
+
+> Note: `buildView` embeds the paywall as a Fragment in a container you control. This bypasses Flow navigation — use only for truly inline use cases where you manage the UI hierarchy yourself.
 
 ---
 
