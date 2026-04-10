@@ -107,7 +107,8 @@ When you identify one of these patterns, apply the known fix immediately:
 | Events fire twice | Listener registered in `onResume`/`viewWillAppear` instead of `onCreate`/`viewDidLoad` | Move registration to a lifecycle method that runs only once, or guard with a flag |
 | User attributes not syncing | `setAttribute` called before `start()` completes | Move `setAttribute` calls into the `start()` completion handler or after it resolves |
 | Wrong paywall showing | Confusion between `placementId` and `presentationId`, or audience not matching | Use `placementId` for production flows (respects targeting); `presentationId` only for testing a specific screen |
-| Purchase succeeds but status not updated | Observer mode without `synchronize()` call | Add `Purchasely.synchronize()` after every successful purchase in Observer mode |
+| Purchase succeeds but status not updated | Observer mode without `synchronize()` call | Add `Purchasely.synchronize()` after every successful purchase in Observer mode. If using a wrapper pattern, ensure the wrapper calls `synchronize()` when observing `TransactionResult.Success` |
+| Observer purchase works but paywall freezes | `processAction` not called after native purchase completes | In wrapper-based architectures, ensure `TransactionResult` observation calls `pendingProcessAction(false)` for all outcomes (success, cancel, error) |
 | Paywall loads but buttons do nothing | `PLYUIDelegate` / `UIDelegate` not set or not retained | Set the delegate and store a strong reference to the delegate object |
 | Crash on paywall display (Android) | Application context passed instead of Activity context | Pass the current Activity, not `applicationContext` |
 | Paywall not updating after Console changes | SDK presentation cache | Clear app data, force kill, or call the fetch method with a cache-busting parameter if available |

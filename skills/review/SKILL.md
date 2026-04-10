@@ -114,7 +114,19 @@ For each item below, search the code, analyze the context, and report one of:
 - [ ] **userLogout() called on sign out** — `Purchasely.userLogout()` must be called when the user signs out. WARNING if missing (stale user data).
 - [ ] **User attributes set** — If the app uses audience targeting, `setUserAttribute` should be called with relevant attributes. SKIP if audience targeting is not used.
 
-### 3.6 Production Readiness
+### 3.6 Architecture (If Wrapper Exists)
+
+If the project uses a PurchaselyWrapper or similar abstraction, verify these recommended patterns. SKIP this entire section if there is no wrapper — do NOT suggest adding one unless the user asks.
+
+- [ ] **SDK calls go through wrapper** — Search for direct `Purchasely.start`, `Purchasely.fetchPresentation`, `Purchasely.setPaywallActionsInterceptor` calls outside the wrapper. WARNING if SDK is called directly from UI code alongside a wrapper.
+- [ ] **Screens have zero SDK imports** — `import Purchasely` / `import io.purchasely` should not appear in ViewModel/Screen files. WARNING if found.
+- [ ] **Observer mode billing decoupled** — If using Observer mode with a wrapper, check that the native PurchaseManager does NOT import the SDK. WARNING if it directly calls `synchronize()` or references the wrapper.
+- [ ] **Wrapper owns init and interceptor** — `start()` and `setPaywallActionsInterceptor` should be in the wrapper, not scattered. WARNING if init logic is outside.
+- [ ] **Testable wrapper** — iOS: protocol for mocking. Android: DI-injectable. WARNING if not mockable.
+
+See `references/architecture-patterns.md` for recommended patterns and improvements to suggest.
+
+### 3.7 Production Readiness
 
 - [ ] **ProGuard/R8 rules added** (Android only) — `proguard-rules.pro` must include Purchasely keep rules or the dependency must use `consumerProguardFiles`. WARNING if missing.
 - [ ] **No deprecated methods** — Flag any use of deprecated Purchasely APIs: `presentationViewControllerFor`, `presentationView(for:)`, `isDeeplinkHandled`, `productViewControllerFor`, `planViewControllerFor`, `subscriptionViewController`. WARNING for each occurrence.

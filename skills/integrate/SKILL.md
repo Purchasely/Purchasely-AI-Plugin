@@ -746,6 +746,28 @@ After completing the integration, verify it works:
 
 ---
 
+## Step 7: Architecture Choice (Ask the User)
+
+Before finishing, ask the user:
+
+> **How would you like to organize the SDK integration?**
+>
+> **A) Direct integration** — Call Purchasely SDK methods directly from your app code. Simpler to set up, fine for small projects.
+>
+> **B) Wrapper pattern (recommended)** — Wrap all SDK calls in a dedicated `PurchaselyWrapper` class. Better for testability, SDK isolation, and larger projects. See `references/architecture-patterns.md`.
+
+If the user chooses **B**, help them:
+1. Create a `PurchaselyWrapper` class/singleton wrapping all SDK calls
+2. Move init, interceptor, and events into the wrapper
+3. Create type-safe result types (`FetchResult`, `DisplayResult`)
+4. If Observer mode: decouple the native billing service with reactive patterns (SharedFlow/Combine) so the PurchaseManager has zero SDK imports
+
+If the user chooses **A**, the integration from Steps 1-6 is already complete. Do NOT add a wrapper.
+
+See `references/architecture-patterns.md` for detailed architecture diagrams and implementation guidance.
+
+---
+
 ## Important Notes
 
 - In **Full mode**, the SDK handles the entire purchase flow. You do not need to call StoreKit/Play Billing APIs yourself.
