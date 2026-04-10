@@ -244,3 +244,37 @@ android {
       }
   }
   ```
+
+## 11. iOS App Freezes After Closing a Paywall (SwiftUI)
+
+**Symptoms:** After dismissing a Purchasely paywall presented via `presentation.display(from: viewController)`, the entire app becomes unresponsive. The underlying SwiftUI content is visible but no touches register. The paywall itself closes normally.
+
+**Root cause:** The SDK creates its own `PLYWindow` to display the paywall. When `display(from:)` is called with a SwiftUI host `UIViewController` (resolved via a `UIViewControllerRepresentable` bridge), the SDK's `PLYWindow` becomes the key window. After dismiss, the `PLYWindow` remains key with an empty `UITransitionView` overlay, intercepting all touch events. The original SwiftUI window never regains key status.
+
+**Diagnosis:** Add temporary logging to verify:
+```swift
+// After dismiss, check window state
+let windows = UIApplication.shared.connectedScenes
+    .compactMap { ($0 as? UIWindowScene)?.windows }.flatMap { $0 }
+let keyWindow = windows.first { $0.isKeyWindow }
+print("Windows: \(windows.count), key: \(type(of: keyWindow))")
+// If key window is PLYWindow with count=2, this is the bug
+```
+
+**Solution:** Call `presentation.display()` **without** the `from:` parameter. The SDK will find the topmost view controller itself and correctly manage its `PLYWindow` lifecycle:
+
+```swift
+// BAD: Passing a SwiftUI host VC causes PLYWindow to stay key after dismiss
+func display(presentation: PLYPresentation, from viewController: UIViewController?) {
+    presentation.display(from: viewController)  // FREEZE after dismiss
+}
+
+// GOOD: Let the SDK find the top VC — PLYWindow is cleaned up correctly
+func display(presentation: PLYPresentation, from viewController: UIViewController?) {
+    presentation.display()  // No freeze
+}
+```
+
+**Affected platforms:** iOS (SwiftUI apps). UIKit apps presenting from a real `UIViewController` are not affected.
+
+**Note:** This applies to modal paywalls displayed via `presentation.display()`. Embedded/inline paywalls using `presentation.controller` and `UIViewControllerRepresentable` are not affected.
