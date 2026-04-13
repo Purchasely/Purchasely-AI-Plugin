@@ -245,36 +245,65 @@ android {
   }
   ```
 
-## 11. iOS App Freezes After Closing a Paywall (SwiftUI)
+## 11. App Freezes After Closing a Flow Paywall — `.close` vs `.closeAll`
 
-**Symptoms:** After dismissing a Purchasely paywall presented via `presentation.display(from: viewController)`, the entire app becomes unresponsive. The underlying SwiftUI content is visible but no touches register. The paywall itself closes normally.
+**Symptoms:** After dismissing a Purchasely Flow paywall (a placement configured as a flow, i.e. `presentation.internalFlowId != nil`), the paywall visually closes but the underlying app UI becomes unresponsive. No crash, no error — taps simply don't register. Most visible on SwiftUI hosts but the root cause affects all platforms.
 
-**Root cause:** The SDK creates its own `PLYWindow` to display the paywall. When `display(from:)` is called with a SwiftUI host `UIViewController` (resolved via a `UIViewControllerRepresentable` bridge), the SDK's `PLYWindow` becomes the key window. After dismiss, the `PLYWindow` remains key with an empty `UITransitionView` overlay, intercepting all touch events. The original SwiftUI window never regains key status.
+**Root cause — Console configuration, NOT an SDK bug:**
 
-**Diagnosis:** Add temporary logging to verify:
+The Purchasely SDK defines two semantically distinct close actions:
+
+| Action    | Purpose                          | Effect                                           |
+|-----------|----------------------------------|--------------------------------------------------|
+| `.close`    | **Back navigation** in a multi-step flow | Pops the current step, **keeps the flow window alive** for the previous step |
+| `.closeAll` | **Exit** the paywall entirely        | Clears `flowSteps`, **closes the flow window**  |
+
+The SDK holds flow presentations inside a dedicated `PLYWindow` (iOS) / custom overlay (Android) that stays alive across steps. When `.close` is triggered on the only *visible* step but there are preloaded (not-yet-shown) steps queued in `flowSteps` or registered controllers, the window remains alive waiting for the next step — which will never come, because the user wanted to exit. The stale window intercepts touches and the app appears frozen.
+
+**Convention:**
+- **X button / "Not now" / "Skip"** = `.closeAll` (user intent: exit the paywall)
+- **Back arrow inside a multi-step flow** = `.close` (user intent: go back one step)
+
+**Diagnosis:** Look at the interceptor action and the flow's step count:
+
 ```swift
-// After dismiss, check window state
-let windows = UIApplication.shared.connectedScenes
-    .compactMap { ($0 as? UIWindowScene)?.windows }.flatMap { $0 }
-let keyWindow = windows.first { $0.isKeyWindow }
-print("Windows: \(windows.count), key: \(type(of: keyWindow))")
-// If key window is PLYWindow with count=2, this is the bug
+// In your PaywallActionsInterceptor
+Purchasely.setPaywallActionsInterceptor { action, params, info, proceed in
+    print("Action: \(action) rawValue=\(action.rawValue)")
+    // rawValue 0 = .close, rawValue 1 = .closeAll
+    proceed(true)
+}
 ```
 
-**Solution:** Call `presentation.display()` **without** the `from:` parameter. The SDK will find the topmost view controller itself and correctly manage its `PLYWindow` lifecycle:
+If you see `rawValue: 0` (`.close`) fired from what the user perceives as "exit the paywall", the **paywall is misconfigured**.
+
+**Solution (preferred): fix the Console configuration**
+
+1. Open the paywall in the Screen Composer
+2. Select the X / dismiss button
+3. Change its action from `close` to `closeAll`
+4. Publish and retest
+
+**Solution (fallback): intercept `.close` app-side**
+
+If you cannot modify the Console config (e.g. legacy paywalls, A/B tests), map `.close` to `.closeAll` in your interceptor:
 
 ```swift
-// BAD: Passing a SwiftUI host VC causes PLYWindow to stay key after dismiss
-func display(presentation: PLYPresentation, from viewController: UIViewController?) {
-    presentation.display(from: viewController)  // FREEZE after dismiss
-}
+// iOS — in the paywall actions interceptor
+case .close:
+    // Treat X as full exit, not back navigation
+    Purchasely.closeAllScreens()
+    proceed(false) // we handled it
+```
 
-// GOOD: Let the SDK find the top VC — PLYWindow is cleaned up correctly
-func display(presentation: PLYPresentation, from viewController: UIViewController?) {
-    presentation.display()  // No freeze
+```kotlin
+// Android — in the paywall actions interceptor
+PLYPresentationAction.CLOSE -> {
+    Purchasely.closeAllScreens()
+    proceed(false)
 }
 ```
 
-**Affected platforms:** iOS (SwiftUI apps). UIKit apps presenting from a real `UIViewController` are not affected.
+**Why clients don't hit this in prod:** most customer paywalls created via the Screen Composer default to `.closeAll` on their dismiss button, because that matches the "exit paywall" user intent. The bug surfaces on legacy or hand-configured paywalls that use `.close` on a single-step flow.
 
-**Note:** This applies to modal paywalls displayed via `presentation.display()`. Embedded/inline paywalls using `presentation.controller` and `UIViewControllerRepresentable` are not affected.
+**Related defensive work:** see Purchasely-iOS-Sources PR #563 which adds SDK-level safeguards (`closeFlow()` called when no visible content remains) so misconfigured paywalls degrade gracefully instead of freezing.

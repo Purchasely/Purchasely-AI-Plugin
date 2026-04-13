@@ -111,7 +111,7 @@ When you identify one of these patterns, apply the known fix immediately:
 | Observer purchase works but paywall freezes | `processAction` not called after native purchase completes | In wrapper-based architectures, ensure `TransactionResult` observation calls `pendingProcessAction(false)` for all outcomes (success, cancel, error) |
 | Paywall loads but buttons do nothing | `PLYUIDelegate` / `UIDelegate` not set or not retained | Set the delegate and store a strong reference to the delegate object |
 | Crash on paywall display (Android) | Application context passed instead of Activity context | Pass the current Activity, not `applicationContext` |
-| iOS SwiftUI app freezes after closing paywall | `display(from: viewController)` with a SwiftUI host VC causes the SDK's `PLYWindow` to remain key after dismiss, blocking all touches | Call `presentation.display()` without `from:` parameter — the SDK finds the top VC itself and correctly cleans up its window. See `references/troubleshooting/common-issues.md` §11 |
+| App freezes after closing a flow paywall (touches don't register) | The X button fires `.close` (back navigation) instead of `.closeAll` (full exit); `PLYWindow` stays alive waiting for a next step that never comes | Fix the paywall in Purchasely Console: change X button action from `close` to `closeAll`. Fallback: map `.close` → `closeAllScreens()` in interceptor. See `references/troubleshooting/common-issues.md` §11 |
 | Paywall not updating after Console changes | SDK presentation cache | Clear app data, force kill, or call the fetch method with a cache-busting parameter if available |
 
 ## Guidelines
