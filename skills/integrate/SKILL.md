@@ -7,7 +7,7 @@ description: "Use when integrating the Purchasely SDK into a mobile app — guid
 
 You are guiding a developer through integrating the Purchasely SDK into their mobile app. You must write actual code into the user's project — not just explain what to do.
 
-Reference documentation is available in the `references/` directory of this plugin.
+Reference documentation is available in the `references/` directory of this plugin. Before integrating, read `references/purchasely-architecture.md` to understand the end-to-end platform (SDK ↔ Purchasely Server ↔ stores ↔ your backend ↔ third-party tools) and the Full-mode purchase flow.
 
 ## Arguments
 
@@ -754,13 +754,13 @@ Before finishing, ask the user:
 >
 > **A) Direct integration** — Call Purchasely SDK methods directly from your app code. Simpler to set up, fine for small projects.
 >
-> **B) Wrapper pattern (recommended)** — Wrap all SDK calls in a dedicated `PurchaselyWrapper` class. Better for testability, SDK isolation, and larger projects. See `references/architecture-patterns.md`.
+> **B) Wrapper pattern (recommended for larger projects)** — Route all Purchasely SDK calls through a single dedicated class. Better for testability and SDK isolation. The class name is up to you (`PurchaselyWrapper`, `PurchaselyService`, `IAPManager`, … any name works). See `references/architecture-patterns.md`.
 
 If the user chooses **B**, help them:
-1. Create a `PurchaselyWrapper` class/singleton wrapping all SDK calls
-2. Move init, interceptor, and events into the wrapper
-3. Create type-safe result types (`FetchResult`, `DisplayResult`)
-4. If Observer mode: decouple the native billing service with reactive patterns (SharedFlow/Combine) so the PurchaseManager has zero SDK imports
+1. Create a single class (e.g. `PurchaselyWrapper`) that owns every call into `Purchasely.*`
+2. Move init, interceptor, and events into that class
+3. Define type-safe result types (`FetchResult`, `DisplayResult`)
+4. If Observer mode: decouple the native billing service with reactive patterns (SharedFlow / Combine) so it has zero SDK imports
 
 If the user chooses **A**, the integration from Steps 1-6 is already complete. Do NOT add a wrapper.
 
