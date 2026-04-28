@@ -2,11 +2,13 @@
 
 Recommended architecture patterns for production-grade Purchasely SDK integrations.
 
+> **Note on the patterns below.** The `PurchaselyWrapper` and the reactive Observer-mode flow are **recommendations**, not requirements. The Purchasely SDK works perfectly well when called directly from ViewModels or UI code — that is a fully supported integration. Suggest the wrapper pattern only when the team explicitly asks about testability, SDK isolation, or production-grade architecture; do not flag a direct integration as "wrong".
+
 ---
 
-## 1. PurchaselyWrapper Pattern
+## 1. PurchaselyWrapper Pattern (recommended)
 
-**Rule: Never call the Purchasely SDK directly. All calls go through a dedicated `PurchaselyWrapper`.**
+**Recommendation: For larger codebases or teams that value testability and SDK isolation, route all SDK calls through a dedicated `PurchaselyWrapper`. This is a best practice, not a requirement — direct SDK use is fully supported.**
 
 ### Why
 
@@ -51,9 +53,9 @@ Recommended architecture patterns for production-grade Purchasely SDK integratio
 
 ---
 
-## 2. Observer Mode: Reactive Purchase Flow
+## 2. Observer Mode: Reactive Purchase Flow (recommended)
 
-**Rule: In Observer mode, purchases and restores are decoupled from the SDK via reactive flows. The native `PurchaseManager` has zero Purchasely imports.**
+**Recommendation: When the wrapper pattern is used in Observer mode, decouple purchases and restores from the SDK via reactive flows so the native `PurchaseManager` has zero Purchasely imports. Teams not using the wrapper can implement Observer mode in any style they prefer — direct calls between the interceptor and the billing client are also valid.**
 
 ### Architecture
 
@@ -410,23 +412,33 @@ Repositories that need persistent storage accept custom `UserDefaults` for test 
 
 ---
 
-## Checklist for New Purchasely Integrations
+## Checklist for Production-Grade Integrations
+
+> These items are **best-practice signals**, not pass/fail criteria. A perfectly valid integration may not adopt any of them. Use them as conversation starters when the team has explicitly asked for an architecture review.
+
+### Universal (apply regardless of architecture choice)
+
+- [ ] Uses `loadPresentation()` + `display()` / `getView()` / `getController()`, never the deprecated `presentationView()` / `presentationController()`
+- [ ] Presentations are prefetched (Android: in `init`, iOS: from `onAppear`) when not already premium
+- [ ] Handles all `FetchResult` variants: success, client, deactivated, error
+- [ ] No crashes on SDK errors — nothing is shown if fetch fails
+- [ ] Uses `presentation.height` (dp on Android, points on iOS) for embedded view sizing
+- [ ] User attributes are set on actual state changes, not on every recomposition / re-render
+- [ ] Android Screens use `collectAsStateWithLifecycle()` (not `collectAsState()`) for lifecycle-aware collection
+
+### Recommended when adopting the wrapper pattern
 
 - [ ] All SDK calls go through `PurchaselyWrapper`
-- [ ] Screens/Views have zero `io.purchasely` / `import Purchasely` imports
-- [ ] Uses `loadPresentation()` + `display()` / `getView()` / `getController()`, never `presentationView()` or `presentationController()`
-- [ ] Presentations are prefetched by the ViewModel (Android: `init`, iOS: `onAppear`)
-- [ ] Handles all `FetchResult` variants (success, client, deactivated, error)
-- [ ] User attributes set from ViewModel, not Screen
+- [ ] Screens / Views have zero `io.purchasely` / `import Purchasely` imports
 - [ ] Modal paywalls (Android): ViewModel prefetches, emits `SharedFlow<PresentationHandle>`, Screen resolves Activity and calls `wrapper.display(handle, activity)`
-- [ ] Modal paywalls (iOS): ViewModel prefetches, shows loader while loading, Screen provides ViewController on display
-- [ ] Embedded paywalls: ViewModel prefetches, Screen uses an embedded banner component with the prefetched result/controller
-- [ ] Uses `presentation.height` (dp / points) for embedded view sizing
-- [ ] No crashes on SDK errors — nothing shown if fetch fails
-- [ ] SDK init and interceptor are in `PurchaselyWrapper.initialize()` — NOT in App class
-- [ ] Observer mode purchases flow through `PurchaseManager` via reactive subjects (not direct wrapper calls)
-- [ ] `PurchaseManager` has zero Purchasely / SDK imports
-- [ ] Login/logout, restore, consent, synchronize go through wrapper in ViewModels
+- [ ] Modal paywalls (iOS): ViewModel prefetches, shows loader while loading, Screen provides the ViewController on display
+- [ ] Embedded paywalls: ViewModel prefetches, Screen uses a reusable banner component with the prefetched result/controller
+- [ ] SDK init and interceptor live in `PurchaselyWrapper.initialize()` — not in the App class
+- [ ] Login/logout, restore, consent, synchronize go through the wrapper in ViewModels
 - [ ] SDK types (`PLYRunningMode`, `PLYDataProcessingPurpose`, etc.) are tolerated as direct imports
-- [ ] Android Screens use `collectAsStateWithLifecycle()` (not `collectAsState()`) for lifecycle-aware collection
 - [ ] Tests use `MockPurchaselyWrapper` (iOS) or MockK (Android) — never the real SDK
+
+### Recommended when using the reactive Observer-mode flow
+
+- [ ] Observer-mode purchases flow through `PurchaseManager` via reactive subjects (not direct wrapper calls)
+- [ ] `PurchaseManager` has zero Purchasely / SDK imports

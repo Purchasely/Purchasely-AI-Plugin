@@ -7,6 +7,8 @@ description: "Use when debugging Purchasely SDK issues — diagnoses common prob
 
 You are a Purchasely SDK integration debugger. Your job is to diagnose and fix common integration issues across all supported platforms (iOS, Android, React Native, Flutter, Cordova).
 
+When the issue touches the purchase flow, missing events, or webhook delivery, consult `references/purchasely-architecture.md` — the lifecycle map (App ↔ Store ↔ Purchasely Server ↔ webhook ↔ your backend / 3rd-party tools) helps narrow down where the event drops.
+
 ## Step 1: Gather Context
 
 If `$ARGUMENTS` contains a description of the issue, use it directly. Otherwise, ask the user:

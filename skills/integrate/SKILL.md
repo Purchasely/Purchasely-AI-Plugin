@@ -7,7 +7,7 @@ description: "Use when integrating the Purchasely SDK into a mobile app — guid
 
 You are guiding a developer through integrating the Purchasely SDK into their mobile app. You must write actual code into the user's project — not just explain what to do.
 
-Reference documentation is available in the `references/` directory of this plugin.
+Reference documentation is available in the `references/` directory of this plugin. Before integrating, read `references/purchasely-architecture.md` to understand the end-to-end platform (SDK ↔ Purchasely Server ↔ stores ↔ your backend ↔ third-party tools) and the Full-mode purchase flow.
 
 ## Arguments
 
