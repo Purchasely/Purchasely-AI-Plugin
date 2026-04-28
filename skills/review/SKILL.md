@@ -116,9 +116,9 @@ For each item below, search the code, analyze the context, and report one of:
 - [ ] **userLogout() called on sign out** — `Purchasely.userLogout()` must be called when the user signs out. WARNING if missing (stale user data).
 - [ ] **User attributes set** — If the app uses audience targeting, `setUserAttribute` should be called with relevant attributes. SKIP if audience targeting is not used.
 
-### 3.6 Architecture (If Wrapper Exists)
+### 3.6 Architecture (If a wrapper class exists)
 
-If the project uses a PurchaselyWrapper or similar abstraction, verify these recommended patterns. SKIP this entire section if there is no wrapper — do NOT suggest adding one unless the user asks.
+If the project routes its Purchasely SDK calls through a single dedicated class — whatever its name (`PurchaselyWrapper`, `PurchaselyService`, `IAPManager`, …) — verify these recommended patterns. SKIP this entire section if there is no such class — do NOT suggest adding one unless the user asks.
 
 - [ ] **SDK calls go through wrapper** — Search for direct `Purchasely.start`, `Purchasely.fetchPresentation`, `Purchasely.setPaywallActionsInterceptor` calls outside the wrapper. WARNING if SDK is called directly from UI code alongside a wrapper.
 - [ ] **Screens have zero SDK imports** — `import Purchasely` / `import io.purchasely` should not appear in ViewModel/Screen files. WARNING if found.

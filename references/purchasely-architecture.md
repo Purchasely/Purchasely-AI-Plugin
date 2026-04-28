@@ -128,6 +128,6 @@ The Purchasely Server **normalizes these heterogeneous formats** into a unified 
 
 ## 6. See Also
 
-- `architecture-patterns.md` — recommended **client-side** architecture patterns (`PurchaselyWrapper`, Observer mode reactive flow, MVVM, prefetch, embedded paywalls, testability).
+- `architecture-patterns.md` — recommended **client-side** architecture patterns (the optional wrapper class, Observer mode reactive flow, MVVM, prefetch, embedded paywalls, testability).
 - `ios/`, `android/`, `react-native/`, `flutter/`, `cordova/` — platform-specific API references and integration guides.
 - `troubleshooting/common-issues.md` — known issues and fixes.
