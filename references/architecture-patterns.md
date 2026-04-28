@@ -339,15 +339,25 @@ Always handle all `FetchResult` variants:
 
 ## 11. Testability
 
-**Rule: Make Purchasely integration code testable by injecting a seam between your code and `Purchasely`.**
+**Recommendation: Make Purchasely integration code testable by introducing a seam between your code and `Purchasely`. The exact seam depends on whether you adopted the wrapper pattern.**
 
-### Protocol-based mocking (iOS)
+### iOS
 
-Define a protocol (e.g. `PurchaselyWrapping`) that mirrors the SDK calls your app uses. ViewModels accept the protocol type via init with a default real implementation. Tests inject a mock implementation.
+**With a wrapper class:** define a protocol (e.g. `PurchaselyWrapping`) that mirrors the SDK calls your app uses. ViewModels accept the protocol type via init with a default real implementation. Tests inject a mock implementation.
 
-### DI-based mocking (Android)
+**Without a wrapper:** the static `Purchasely` API cannot be mocked directly. Two practical options:
+- Inject **typed closures** into your ViewModels for the few SDK calls you exercise — e.g. `init(fetchPresentation: (String) async throws -> PLYPresentation = { try await Purchasely.fetchPresentation(for: $0) })`. Tests pass canned closures.
+- Or wrap each call site in a tiny **protocol-with-one-method** seam (the lightweight equivalent of a wrapper, scoped to the test surface).
+- Tests that only need to assert non-SDK behavior (state transitions, premium gating logic) can stub the boundary and never touch the SDK.
 
-Inject the wrapper class via Koin / Hilt constructor. Tests use MockK: `mockk<MyPurchaselyWrapper>(relaxed = true)`.
+### Android
+
+**With a wrapper class:** inject the wrapper via Koin / Hilt constructor. Tests use MockK: `mockk<MyPurchaselyWrapper>(relaxed = true)`.
+
+**Without a wrapper:** `Purchasely` is a Kotlin `object`, so direct calls are hard to intercept. Options:
+- Use **MockK's static mocking** (`mockkStatic(Purchasely::class)`) to stub the SDK calls your ViewModel makes. Remember to `unmockkStatic` in `@After` — leftover static mocks leak across tests.
+- Or inject **lambdas / functional interfaces** for the SDK calls you exercise (`fetchPresentation: suspend (String) -> PLYPresentation = { Purchasely.fetchPresentation(...) }`). Tests pass fakes.
+- Tests covering only ViewModel state, premium gating, or domain logic can stub the boundary and skip the SDK entirely.
 
 ### Native billing service testability
 
