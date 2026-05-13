@@ -71,7 +71,7 @@ ${BOLD}USAGE${RESET}
 ${BOLD}OPTIONS${RESET}
   --all               Install for all detected tools without prompting
   --tool <name>       Install only for a specific tool
-                      (claude, cursor, copilot, windsurf, codex, gemini)
+                      (claude, cursor, copilot, windsurf, codex, gemini, mistral)
   --project <path>    Target project directory (default: current directory)
   --help              Show this help message
 
@@ -127,10 +127,10 @@ PROJECT_DIR="$(cd "$PROJECT_DIR" && pwd)"
 # Validate --tool value
 if [ -n "$TOOL" ]; then
   case "$TOOL" in
-    claude|cursor|copilot|windsurf|codex|gemini) ;;
+    claude|cursor|copilot|windsurf|codex|gemini|mistral) ;;
     *)
       err "Unknown tool: $TOOL"
-      err "Valid tools: claude, cursor, copilot, windsurf, codex, gemini"
+      err "Valid tools: claude, cursor, copilot, windsurf, codex, gemini, mistral"
       exit 1
       ;;
   esac
@@ -159,6 +159,14 @@ detect_codex() {
 
 detect_gemini() {
   command -v gemini >/dev/null 2>&1
+}
+
+detect_mistral() {
+  # Mistral's coding agent CLI is `vibe`. It reads the cross-vendor AGENTS.md
+  # standard (same format as Codex). Detect by presence of the `vibe` binary
+  # or an existing AGENTS.md file in the project.
+  command -v vibe >/dev/null 2>&1 \
+    || [ -f "$PROJECT_DIR/AGENTS.md" ]
 }
 
 # ── Install functions ────────────────────────────────────────────────
@@ -335,6 +343,41 @@ install_codex() {
   installed_count=$((installed_count + 1))
 }
 
+install_mistral() {
+  step "Mistral"
+  if ! detect_mistral; then
+    info "Mistral not detected — skipping"
+    return
+  fi
+  ok "Detected Mistral"
+
+  src="$SCRIPT_DIR/configs/mistral/AGENTS.md"
+  dest="$PROJECT_DIR/AGENTS.md"
+
+  if [ ! -f "$src" ]; then
+    err "Source config not found: $src"
+    failed_count=$((failed_count + 1))
+    return
+  fi
+
+  if [ -f "$dest" ]; then
+    warn "AGENTS.md already exists: $dest"
+    info "Mistral reads the same AGENTS.md as Codex — no action needed if Codex was already installed."
+    add_skip "Mistral (AGENTS.md already present)"
+    skipped_count=$((skipped_count + 1))
+    return
+  elif ! confirm "Install Mistral AGENTS.md to $dest?"; then
+    add_skip "Mistral"
+    skipped_count=$((skipped_count + 1))
+    return
+  fi
+
+  cp "$src" "$dest"
+  ok "Installed: $dest"
+  add_summary "Mistral — $dest"
+  installed_count=$((installed_count + 1))
+}
+
 install_gemini() {
   step "Gemini"
   if ! detect_gemini; then
@@ -386,6 +429,7 @@ if [ -n "$TOOL" ]; then
     windsurf) install_windsurf ;;
     codex)    install_codex    ;;
     gemini)   install_gemini   ;;
+    mistral)  install_mistral  ;;
   esac
 else
   # Detect all tools
@@ -397,6 +441,7 @@ else
   detect_windsurf && detected="${detected} windsurf" && ok "Windsurf"
   detect_codex    && detected="${detected} codex"    && ok "Codex"
   detect_gemini   && detected="${detected} gemini"   && ok "Gemini"
+  detect_mistral  && detected="${detected} mistral"  && ok "Mistral"
 
   if [ -z "$detected" ]; then
     warn "No AI coding tools detected."

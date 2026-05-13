@@ -16,8 +16,12 @@
     "cursor",
     "copilot",
     "codex",
+    "gemini",
+    "mistral",
+    "windsurf",
     "sdk",
     "in-app-purchase",
+    "subscriptions",
     "paywalls"
   ]
 }
