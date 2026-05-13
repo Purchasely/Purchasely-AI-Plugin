@@ -71,7 +71,7 @@ This is almost always because `processAction()` / `proceed()` was not called in 
 
 ### Deeplinks Not Working
 
-1. **Check handler method** -- search for `handleDeeplink` (current) vs `isDeeplinkHandled` (deprecated). If using the deprecated version, recommend migration.
+1. **Check handler method** -- search for `handleDeeplink` (current) vs `isDeeplinkHandled` (deprecated). If using the deprecated version, recommend switching to `handleDeeplink`.
 2. **Check deeplink readiness flags** -- search for `allowDeeplink` or `readyToOpenDeeplink`. These must be set to `true` before deeplinks will be processed.
 3. **Check default presentation result handler** -- `setDefaultPresentationResultHandler` must be configured, or the SDK has nowhere to send deeplink paywall results.
 4. **Check URL scheme / universal links** -- verify the app's URL scheme or associated domains are correctly configured in the platform project settings and match what the Console generates.

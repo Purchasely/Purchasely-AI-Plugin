@@ -84,7 +84,7 @@ Object returned from `fetchPresentation`:
 
 Returns a view for the paywall. Deprecated in favor of `fetchPresentation`.
 
-## Action Interceptor (v5)
+## Action Interceptor
 
 ### `Purchasely.setPaywallActionsInterceptor`
 
@@ -116,51 +116,6 @@ Purchasely.setPaywallActionsInterceptor { info, action, parameters, processActio
 ```
 
 **Important:** You must call `processAction()` in every code path. Failing to do so will freeze the paywall UI.
-
-## Action Interceptor (v6)
-
-### `Purchasely.interceptAction<ActionType>`
-
-Per-action interceptor with typed results. Replaces the global interceptor in v6.
-
-```kotlin
-Purchasely.interceptAction<PLYPresentationAction.Login> { info ->
-    // info contains presentation context
-    val result = showLoginScreen()
-    if (result.success) {
-        Purchasely.userLogin(result.userId) { }
-        PLYInterceptResult.SUCCESS
-    } else {
-        PLYInterceptResult.NOT_HANDLED
-    }
-}
-
-Purchasely.interceptAction<PLYPresentationAction.Navigate> { info ->
-    // Handle custom navigation
-    PLYInterceptResult.SUCCESS
-}
-```
-
-**PLYInterceptResult values:**
-
-| Value | Description |
-|-------|-------------|
-| `SUCCESS` | Action was handled successfully |
-| `NOT_HANDLED` | Action was not handled, SDK should proceed with default behavior |
-| `FAILED` | Action failed |
-
-## PLYPresentation Builder (v6)
-
-New builder pattern for presentation display:
-
-```kotlin
-PLYPresentation {
-    placementId("ONBOARDING")
-    contentId("content_123")  // optional
-}.preload { presentation ->
-    // Presentation preloaded, ready to display
-}.display(context)
-```
 
 ## Deeplinks
 
@@ -211,7 +166,7 @@ Purchasely.userLogout()
 
 ### `Purchasely.setUserAttribute(key, value)`
 
-Set user attributes for audience targeting. In v6, these methods return `Deferred<Boolean>`.
+Set user attributes for audience targeting.
 
 ```kotlin
 // Built-in attributes
@@ -311,8 +266,6 @@ Purchasely.setEventListener { event ->
 
 ## PLYPresentationAction
 
-### v5 (Enum)
-
 | Action | Description |
 |--------|-------------|
 | `PURCHASE` | User tapped a purchase button |
@@ -323,20 +276,6 @@ Purchasely.setEventListener { event ->
 | `OPEN_PRESENTATION` | User tapped a link to another presentation |
 | `PROMO_CODE` | User tapped the promo code button |
 
-### v6 (Sealed Class)
-
-In v6, `PLYPresentationAction` becomes a sealed class with parameters on each variant:
-
-| Action | v5 Name | v6 Class |
-|--------|---------|----------|
-| Purchase | `PURCHASE` | `PLYPresentationAction.Purchase` |
-| Restore | `RESTORE` | `PLYPresentationAction.Restore` |
-| Login | `LOGIN` | `PLYPresentationAction.Login` |
-| Close | `CLOSE` | `PLYPresentationAction.Close` |
-| Navigate | `NAVIGATE` | `PLYPresentationAction.Navigate` |
-| Open Presentation | `OPEN_PRESENTATION` | `PLYPresentationAction.OpenPresentation` |
-| Promo Code | `PROMO_CODE` | `PLYPresentationAction.PromoCode` |
-
 ## PLYPresentationType
 
 | Type | Description |
@@ -346,7 +285,7 @@ In v6, `PLYPresentationAction` becomes a sealed class with parameters on each va
 | `DEACTIVATED` | Presentation has been deactivated in the dashboard -- do not display |
 | `CLIENT` | Client-side presentation (use your own paywall with Purchasely data) |
 
-## Additional v6 APIs
+## Additional APIs
 
 ### `allowCampaigns`
 
@@ -357,9 +296,9 @@ Purchasely.allowCampaigns = true  // enable campaign display
 Purchasely.allowCampaigns = false // disable campaign display
 ```
 
-### Custom Logging (v6)
+### Custom Logging
 
-In v6, custom loggers receive ALL messages. Use the `logcatEnabled` flag to control Logcat output:
+Custom loggers receive ALL messages. Use the `logcatEnabled` flag to control Logcat output:
 
 ```kotlin
 Purchasely.Builder(applicationContext)

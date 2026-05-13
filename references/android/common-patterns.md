@@ -228,7 +228,7 @@ Use Purchasely for paywalls while managing purchases yourself:
 Purchasely.Builder(applicationContext)
     .apiKey("YOUR_API_KEY")
     .stores(listOf(GoogleStore()))
-    .runningMode(PLYRunningMode.Observer)  // .Observer in v6, .PaywallObserver in v5
+    .runningMode(PLYRunningMode.PaywallObserver)
     .build()
     .start { _, _ -> }
 

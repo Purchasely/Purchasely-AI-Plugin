@@ -111,20 +111,9 @@ Purchasely.setPaywallActionInterceptor((result) => {
 ## Common Mistakes to Avoid
 
 1. **Forgetting `processAction`/`proceed`** — the paywall UI freezes with no error logged
-2. **Using deprecated APIs** — `presentationView` and `isDeeplinkHandled` are removed in v6
-3. **Not handling DEACTIVATED** — showing a paywall when the server says deactivated breaks A/B tests
-4. **Calling SDK methods before `start()`** — all calls silently fail or throw
-5. **Not setting `allowDeeplink` after UI init** — deeplinks fire before navigation is ready and are lost
-
-## v6 Migration Notes
-
-Key breaking changes from v5 to v6:
-- `presentationView` removed — use `fetchPresentation()` + display
-- `isDeeplinkHandled` removed — use `handleDeeplink(url)`
-- Presentation callback returns typed `PLYPresentation` with `.type` enum
-- Action interceptor signature changed — `proceed` is now mandatory in all paths
-- Minimum iOS 15 / Android API 24
-- `PLY` prefix standardized on all public types
+2. **Not handling DEACTIVATED** — showing a paywall when the server says deactivated breaks A/B tests
+3. **Calling SDK methods before `start()`** — all calls silently fail or throw
+4. **Not setting `allowDeeplink` after UI init** — deeplinks fire before navigation is ready and are lost
 
 ## Platform Quick Reference
 
