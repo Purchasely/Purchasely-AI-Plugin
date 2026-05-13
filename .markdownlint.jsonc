@@ -1,0 +1,17 @@
+{
+  // Reference: https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
+  "default": true,
+
+  // Disable rules that are noisy for technical SDK docs:
+  "MD013": false,   // line length — code samples / tables exceed 80
+  "MD024": { "siblings_only": true }, // duplicate headings OK across sections
+  "MD025": false,   // multiple H1 — README + others use H1 freely
+  "MD033": false,   // inline HTML — we use <details>/<summary>
+  "MD034": false,   // bare URLs OK in resource lists
+  "MD036": false,   // emphasis used as heading (intentional in skill prompts)
+  "MD040": false,   // fenced code without language — some blocks are plain text
+  "MD041": false,   // first line must be H1 — front-matter blocks confuse this
+  "MD046": false,   // code block style (we mix fenced and indented)
+  "MD051": false,   // link fragments — we don't enforce anchor validity here
+  "MD059": false    // descriptive link text
+}

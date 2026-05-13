@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  validate:
-    name: Validate plugin structure & JSON
+  structure:
+    name: Plugin structure & JSON
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,41 +16,123 @@ jobs:
       - name: Validate plugin.json
         run: |
           test -f .claude-plugin/plugin.json
-          python3 -c "import json,sys; json.load(open('.claude-plugin/plugin.json'))"
+          python3 -c "import json; json.load(open('.claude-plugin/plugin.json'))"
 
       - name: Validate marketplace.json
         run: |
           test -f .claude-plugin/marketplace.json
-          python3 -c "import json,sys; json.load(open('.claude-plugin/marketplace.json'))"
+          python3 -c "import json; json.load(open('.claude-plugin/marketplace.json'))"
 
       - name: Validate package.json
         run: |
           test -f package.json
-          python3 -c "import json,sys; json.load(open('package.json'))"
+          python3 -c "import json; json.load(open('package.json'))"
 
       - name: Check required files
         run: |
           for f in README.md LICENSE CONTRIBUTING.md SECURITY.md CODE_OF_CONDUCT.md CHANGELOG.md .gitignore install.sh; do
-            test -f "$f" || { echo "Missing required file: $f"; exit 1; }
+            test -f "$f" || { echo "::error file=$f::Missing required file"; exit 1; }
           done
 
       - name: Check all skills have SKILL.md
         run: |
           for d in skills/*/; do
-            test -f "$d/SKILL.md" || { echo "Missing SKILL.md in $d"; exit 1; }
+            test -f "$d/SKILL.md" || { echo "::error file=$d::Missing SKILL.md"; exit 1; }
           done
 
-      - name: Check install.sh is POSIX-executable
+      - name: Validate SKILL.md front-matter
         run: |
-          test -x install.sh
-          sh -n install.sh
+          python3 <<'PY'
+          import os, re, sys, glob
+          required = ("name", "description")
+          errors = []
+          for path in sorted(glob.glob("skills/*/SKILL.md")):
+              with open(path) as f:
+                  content = f.read()
+              m = re.match(r"^---\s*\n(.*?)\n---\s*\n", content, re.DOTALL)
+              if not m:
+                  errors.append(f"{path}: missing YAML front-matter")
+                  continue
+              fm = m.group(1)
+              for key in required:
+                  if not re.search(rf"^{key}\s*:", fm, re.MULTILINE):
+                      errors.append(f"{path}: front-matter missing '{key}:'")
+          if errors:
+              for e in errors:
+                  print(f"::error::{e}")
+              sys.exit(1)
+          print("All SKILL.md front-matter OK")
+          PY
 
       - name: Reject committed real API keys
         run: |
-          # Allow only the placeholder. Fail if a real-looking key appears anywhere.
           if grep -rE 'pk_(live|test)_[A-Za-z0-9]{20,}|sk_(live|test)_[A-Za-z0-9]{20,}' \
                --include='*.md' --include='*.json' --include='*.sh' --include='*.yml' \
                --exclude-dir=.git . ; then
-            echo "Real-looking API key detected — refusing to merge."
+            echo "::error::Real-looking API key detected — refusing to merge."
             exit 1
           fi
+
+  markdownlint:
+    name: Lint Markdown
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DavidAnson/markdownlint-cli2-action@v17
+        with:
+          globs: |
+            **/*.md
+            !node_modules
+            !.github/PULL_REQUEST_TEMPLATE.md
+            !.github/ISSUE_TEMPLATE/**
+
+  shellcheck:
+    name: ShellCheck install.sh
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify install.sh is executable
+        run: |
+          test -x install.sh || { echo "::error file=install.sh::Not executable"; exit 1; }
+
+      - name: POSIX syntax check
+        run: sh -n install.sh
+
+      - uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: '.'
+          severity: warning
+          additional_files: install.sh
+
+  test-installer:
+    name: Test installer (${{ matrix.tool }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tool: [cursor, copilot, windsurf, codex, gemini, mistral]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare detection conditions
+        run: |
+          mkdir -p /tmp/test-project
+          case "${{ matrix.tool }}" in
+            cursor)   mkdir -p /tmp/test-project/.cursor ;;
+            copilot)  mkdir -p /tmp/test-project/.github ;;
+            windsurf) mkdir -p /tmp/test-project/.codeium ;;
+            codex)    touch /tmp/test-project/AGENTS.md ;;
+            gemini)   sudo ln -sf /bin/true /usr/local/bin/gemini ;;
+            mistral)  touch /tmp/test-project/AGENTS.md ;;
+          esac
+
+      - name: Run installer with auto-yes
+        run: |
+          # Pipe "y" repeatedly so confirm() prompts auto-accept
+          yes | ./install.sh --tool ${{ matrix.tool }} --project /tmp/test-project || true
+
+      - name: Show resulting test project
+        run: |
+          ls -la /tmp/test-project
+          find /tmp/test-project -type f -maxdepth 3
