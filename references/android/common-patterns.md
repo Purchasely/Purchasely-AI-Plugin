@@ -254,6 +254,118 @@ Purchasely.setPaywallActionsInterceptor { info, action, parameters, processActio
 }
 ```
 
+## Observer Mode — Recommended Post-Purchase Flow
+
+After a successful Observer-mode purchase, the recommended sequence is:
+
+1. **`Purchasely.synchronize()`** — fire-and-forget (no callback on Android)
+2. **`processAction(false)`** — tell the SDK we handled the purchase (skip its own flow)
+3. **`Purchasely.closeAllScreens()`** — force-dismiss the paywall
+
+The order **processAction → closeAllScreens** matters: the interceptor must learn the action was handled BEFORE the paywall tears down.
+
+```kotlin
+private fun onPurchaseSuccess(processAction: (Boolean) -> Unit) {
+    Purchasely.synchronize()       // fire-and-forget
+    processAction(false)           // tell interceptor we handled it
+    Purchasely.closeAllScreens()   // dismiss
+}
+```
+
+> `closeAllScreens()` requires Purchasely Android SDK **5.7.4+**.
+
+### Chaining a Follow-up Placement After Purchase (optional)
+
+Some apps display a follow-up paywall after a successful purchase — a thank-you screen, a premium feature tour, a one-tap upsell. This is **not part of the SDK contract**: it's just `fetchPresentation` called again with whatever placement ID you've configured on the Console (e.g. `"post_purchase"`, `"thank_you"`, `"premium_welcome"` — pick your own).
+
+Because Android's `synchronize()` is fire-and-forget (no callback to await), the follow-up fetch may briefly resolve against stale subscription state if its audience targets subscribers. Android's cache refresh is usually fast enough in practice, but worth knowing if you see fallback presentations.
+
+```kotlin
+private fun showPostPurchaseScreen(activity: Activity) {
+    Purchasely.fetchPresentation("YOUR_POST_PURCHASE_PLACEMENT_ID") { presentation, error ->
+        if (error != null || presentation == null) return@fetchPresentation
+        when (presentation.type) {
+            PLYPresentationType.NORMAL,
+            PLYPresentationType.FALLBACK -> presentation.display(activity)
+            else -> {}
+        }
+    }
+}
+```
+
+**Naming gotcha:** the placement ID string must match the Console exactly — typos silently return a deactivated presentation.
+
+## Decoupling the Purchase Manager with SharedFlow
+
+In Observer mode, keep the native billing logic isolated from the Purchasely SDK. The wrapper communicates with `PurchaseManager` via `SharedFlow` — `PurchaseManager` has zero Purchasely imports.
+
+```kotlin
+// Types (no SDK imports needed)
+data class PurchaseRequest(val activity: Activity, val productId: String, val offerToken: String)
+data object RestoreRequest
+sealed class TransactionResult {
+    data object Success : TransactionResult()
+    data object Cancelled : TransactionResult()
+    data class Error(val message: String?) : TransactionResult()
+    data object Idle : TransactionResult()
+}
+
+// In the wrapper (owns SDK)
+class PurchaselyWrapper(
+    private val purchaseRequests: MutableSharedFlow<PurchaseRequest>,
+    private val restoreRequests: MutableSharedFlow<RestoreRequest>,
+    private val transactionResult: SharedFlow<TransactionResult>,
+    private val scope: CoroutineScope,
+) {
+    private var pendingProcessAction: ((Boolean) -> Unit)? = null
+
+    fun setupInterceptor(activity: Activity) {
+        Purchasely.setPaywallActionsInterceptor { _, action, parameters, processAction ->
+            when (action) {
+                PLYPresentationAction.PURCHASE -> {
+                    val plan = parameters?.plan ?: return@setPaywallActionsInterceptor processAction(false)
+                    // Race guard: cancel any orphaned previous callback
+                    pendingProcessAction?.invoke(false)
+                    pendingProcessAction = processAction
+                    scope.launch {
+                        purchaseRequests.emit(
+                            PurchaseRequest(activity, plan.store_product_id, plan.offerToken.orEmpty())
+                        )
+                    }
+                }
+                // … same for RESTORE
+                else -> processAction(true)
+            }
+        }
+        // Collect transaction results from PurchaseManager
+        scope.launch {
+            transactionResult.collect { result ->
+                when (result) {
+                    is TransactionResult.Success -> {
+                        Purchasely.synchronize()
+                        pendingProcessAction?.invoke(false)
+                        Purchasely.closeAllScreens()
+                    }
+                    is TransactionResult.Cancelled,
+                    is TransactionResult.Error -> pendingProcessAction?.invoke(false)
+                    is TransactionResult.Idle -> {}
+                }
+                pendingProcessAction = null
+            }
+        }
+    }
+}
+```
+
+## Presentation Cache (Audience Invalidation)
+
+The Android SDK doesn't (yet) expose a user-attribute delegate as public API. If you maintain an app-side presentation cache, invalidate it on explicit triggers:
+
+- `wrapper.synchronize()` — subscription state may have changed
+- `wrapper.restart()` — SDK mode change (Full ↔ Observer) resets the session
+
+When the Android SDK adds a user-attribute delegate (expected in 6.x), wire cache invalidation to attribute changes the same way iOS does.
+
 ## Handle Presentation Types (DEACTIVATED Guard)
 
 Always check the presentation type before displaying:

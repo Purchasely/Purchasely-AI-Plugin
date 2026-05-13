@@ -11,6 +11,8 @@ When the issue touches the purchase flow, missing events, or webhook delivery, c
 
 When the issue involves a `user_id` with active subscriptions on more than one platform (App Store + Stripe, Play Store + Stripe, etc.), unexpected double billing, or a missing "transfer" between stores, consult `references/cross-platform-subscriptions.md` — coexistence is the documented default behavior, not a bug.
 
+**Before patching code, read the logs.** The SDK emits a detailed log stream prefixed with `[Purchasely]` plus named analytics events. See `references/troubleshooting/common-issues.md` §0 ("Diagnostic Logs — Read Before Patching") for the full event taxonomy, annotated traces (purchase, startup, receipt validation), and the symptom→cause table. Almost every "paywall is broken" issue has its answer in the log stream.
+
 ## Step 1: Gather Context
 
 If `$ARGUMENTS` contains a description of the issue, use it directly. Otherwise, ask the user:
@@ -23,8 +25,11 @@ If `$ARGUMENTS` contains a description of the issue, use it directly. Otherwise,
 > 5. Deeplinks not working
 > 6. Events not firing
 > 7. Paywall showing wrong content
+> 8. Paywall doesn't close after Observer-mode purchase / wrong screen reappears
 
 Identify the platform (iOS, Android, React Native, Flutter, Cordova) from the codebase or by asking.
+
+**Ask for the logs.** Request a grep of `[Purchasely]` (and `[YourApp]` if the integration uses app-side markers) over the failing run. The first red flag (missing `APP_CONFIGURED`, missing `PRESENTATION_LOADED`, `is_fallback_presentation: true`, missing `RECEIPT_VALIDATED`, missing `PRESENTATION_CLOSED`) narrows the diagnostic in one step. See the full symptom→cause table in `references/troubleshooting/common-issues.md` §0.
 
 ## Step 2: Diagnose Using the Appropriate Tree
 
@@ -116,7 +121,12 @@ When you identify one of these patterns, apply the known fix immediately:
 | Paywall loads but buttons do nothing | `PLYUIDelegate` / `UIDelegate` not set or not retained | Set the delegate and store a strong reference to the delegate object |
 | Crash on paywall display (Android) | Application context passed instead of Activity context | Pass the current Activity, not `applicationContext` |
 | App freezes after closing a flow paywall (touches don't register) | The X button fires `.close` (back navigation) instead of `.closeAll` (full exit); `PLYWindow` stays alive waiting for a next step that never comes | Fix the paywall in Purchasely Console: change X button action from `close` to `closeAll`. Fallback: map `.close` → `closeAllScreens()` in interceptor. See `references/troubleshooting/common-issues.md` §11 |
-| Paywall not updating after Console changes | SDK presentation cache | Clear app data, force kill, or call the fetch method with a cache-busting parameter if available |
+| Paywall doesn't dismiss after Observer-mode purchase | `closeAllScreens()` not called, or called BEFORE `proceed(false)` / `processAction(false)` | Order MUST be `proceed(false)` → `closeAllScreens()`. iOS requires SDK 5.7.5+ and `Task { @MainActor in … }` from non-isolated contexts. Android requires SDK 5.7.4+ |
+| Wrong screen reappears after Observer-mode purchase (e.g. the onboarding paywall replays) | The flow hosting the placement chains a post-purchase step to the wrong paywall on the Console | Inspect `flow_id` + `displayed_presentation` in the `PRESENTATION_LOADED` event after purchase. Dashboard → Flows → fix the post-purchase branch |
+| Chained follow-up placement shows the wrong/fallback screen | The follow-up `fetchPresentation` resolved against stale subscription state | iOS: await `synchronize()` via `withCheckedThrowingContinuation` BEFORE fetching the next placement. Android: fire-and-forget — accept brief stale-state risk |
+| Paywall not updating after Console changes | SDK presentation cache | Clear app data, force kill, or invalidate the app-side cache via attribute change (iOS `PLYUserAttributeDelegate`) or explicit `wrapper.synchronize()`/`wrapper.restart()` (Android) |
+| iOS compile error: *"Call to main actor-isolated class method 'closeAllScreens()' in a synchronous nonisolated context."* | Calling `closeAllScreens()` from a `DispatchQueue.main.async` block, a `synchronize(success:)` callback, or a `nonisolated` delegate | Wrap in `Task { @MainActor in Purchasely.closeAllScreens() }` |
+| iOS: presentation re-fetches on every `.onAppear` (and Flow paywalls get stuck) | SDK has no native placement-level cache; repeated fetches accumulate `flowSteps` entries in `FlowsManager` | Add an app-side `PresentationCache` keyed by `placementId[/contentId]`. Invalidate on user-attribute changes and `synchronize()`. See `references/ios/common-patterns.md` |
 
 ## Guidelines
 

@@ -775,3 +775,121 @@ See `references/architecture-patterns.md` for detailed architecture diagrams and
 - Always test with a sandbox/test account before going to production.
 - Switch `logLevel` to `ERROR` (or remove the parameter) before releasing to production.
 - The SDK supports multiple stores on Android (Google, Huawei, Amazon). Only include the stores your app actually publishes on.
+
+---
+
+## Step 8: Observer Mode — Post-Purchase Flow (iOS & Android)
+
+**Only relevant if you initialized in `Observer` / `.observer` mode.** In Full mode, the SDK handles dismissal automatically.
+
+When the interceptor receives a `PURCHASE` action in Observer mode, you run the native billing flow yourself. After it succeeds, three things MUST happen in order:
+
+1. **`Purchasely.synchronize()`** — uploads the receipt to Purchasely
+2. **`proceed(false)` / `processAction(false)`** — tell the SDK you handled the purchase (skip its own flow)
+3. **`Purchasely.closeAllScreens()`** — force-dismiss the paywall
+
+**The order matters:** the interceptor must learn the action was handled BEFORE the paywall tears down. Reversing it leaves the paywall in an inconsistent state.
+
+### SDK version requirements for `closeAllScreens()`
+
+- **iOS:** Purchasely SDK **5.7.5+**. The method is `@MainActor`-isolated — from a non-isolated synchronous context (e.g. inside `synchronize(success:)` callback, `DispatchQueue.main.async` block), wrap it:
+  ```swift
+  Task { @MainActor in Purchasely.closeAllScreens() }
+  ```
+  Calling it directly produces: *"Call to main actor-isolated class method 'closeAllScreens()' in a synchronous nonisolated context."*
+- **Android:** Purchasely SDK **5.7.4+**. No threading constraint — call directly.
+
+> Use `closeAllScreens()` (not `closeDisplayedPresentation()`) — it correctly tears down Flow paywalls with multiple steps and is required if you plan to chain a follow-up placement (see Optional section below).
+
+### iOS Observer-mode post-purchase
+
+```swift
+@MainActor
+private func handlePurchaseSuccess(proceed: @escaping (Bool) -> Void) async {
+    do {
+        try await synchronizeReceipt()      // only await if you chain a follow-up placement
+        proceed(false)                      // tell interceptor we handled it
+        Purchasely.closeAllScreens()        // dismiss
+    } catch {
+        proceed(false)
+        Purchasely.closeAllScreens()        // dismiss anyway
+    }
+}
+
+private func synchronizeReceipt() async throws {
+    try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+        Purchasely.synchronize(
+            success: { cont.resume() },
+            failure: { error in
+                cont.resume(throwing: error ?? NSError(domain: "Purchasely", code: -1))
+            }
+        )
+    }
+}
+```
+
+### Android Observer-mode post-purchase
+
+```kotlin
+private fun onPurchaseSuccess(processAction: (Boolean) -> Unit) {
+    Purchasely.synchronize()        // fire-and-forget (no callback on Android)
+    processAction(false)            // tell interceptor we handled it
+    Purchasely.closeAllScreens()    // dismiss
+}
+```
+
+> Android's `synchronize()` is parameterless — you cannot await it. iOS exposes `success:`/`failure:` closures that you can bridge to `async/await` via `withCheckedThrowingContinuation`.
+
+### Optional: Chain a Follow-up Placement After Purchase
+
+Some apps display a follow-up paywall after a successful purchase — a thank-you screen, a premium feature tour, a one-tap upsell. This is **not part of the SDK contract**: it's just `fetchPresentation` called again with whatever placement ID you've configured on the Console (pick your own, e.g. `"post_purchase"`, `"thank_you"`, `"premium_welcome"`).
+
+If the chained placement's audience targets subscribers, **`synchronize()` must complete first** — otherwise the fetch resolves against stale state and may return a deactivated/fallback presentation. On iOS, that's why the `synchronizeReceipt()` await above matters; on Android, fire-and-forget `synchronize()` is usually fast enough.
+
+```swift
+// iOS — after closeAllScreens() above
+private func showPostPurchaseScreen() {
+    Purchasely.fetchPresentation(
+        for: "YOUR_POST_PURCHASE_PLACEMENT_ID",
+        fetchCompletion: { presentation, _ in
+            guard let presentation = presentation,
+                  presentation.type == .normal || presentation.type == .fallback,
+                  let topVC = UIApplication.shared.topViewController()
+            else { return }
+            presentation.display(from: topVC)
+        },
+        completion: { _, _ in }
+    )
+}
+```
+
+```kotlin
+// Android — after closeAllScreens() above
+private fun showPostPurchaseScreen(activity: Activity) {
+    Purchasely.fetchPresentation("YOUR_POST_PURCHASE_PLACEMENT_ID") { presentation, error ->
+        if (error != null || presentation == null) return@fetchPresentation
+        when (presentation.type) {
+            PLYPresentationType.NORMAL,
+            PLYPresentationType.FALLBACK -> presentation.display(activity)
+            else -> {}
+        }
+    }
+}
+```
+
+**Naming gotcha:** the placement ID string must match the Console exactly — a typo silently returns a deactivated presentation.
+
+See `references/ios/common-patterns.md` and `references/android/common-patterns.md` for the full Observer-mode flow including `SharedFlow`-based decoupling (Android) and the single-in-flight-task guard (iOS).
+
+---
+
+## Step 9: Diagnostic Markers
+
+Add app-side log markers around the key Purchasely decision points — they make every future bug 10× faster to diagnose. The SDK already emits `[Purchasely]` lines; add an app-side prefix (e.g. `[YourApp]`) at:
+
+- After `synchronize()` completes (success or failure)
+- Before each `closeAllScreens()` call
+- Inside the `fetchPresentation` completion (placement, type, error)
+- When chaining a follow-up placement (and what it resolves to)
+
+Mirror the SDK's analytics events via `PLYEventDelegate` (iOS) / `EventListener` (Android) with the full property bag — that way, a single `grep -E "\[Purchasely\]|\[YourApp\]"` over the failing run reveals exactly what the SDK did and why. See `references/troubleshooting/common-issues.md` §0 for the full event taxonomy and annotated traces.

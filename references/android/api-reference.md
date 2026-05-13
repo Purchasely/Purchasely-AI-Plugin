@@ -228,7 +228,7 @@ Purchasely.setUserAttribute("articles_read", 42)
 
 ### `Purchasely.userSubscriptions(invalidateCache, listener)`
 
-Fetch the user's active subscriptions. The first parameter controls whether to bypass the cache.
+Fetch the user's active subscriptions. The first parameter is a **`Boolean`** that controls cache invalidation: `true` forces a fresh fetch, `false` uses the SDK cache.
 
 ```kotlin
 Purchasely.userSubscriptions(
@@ -238,6 +238,10 @@ Purchasely.userSubscriptions(
             subscriptions.forEach { subscription ->
                 Log.d("PLY", "Plan: ${subscription.plan.vendorId}")
                 Log.d("PLY", "Store: ${subscription.subscriptionSource}")
+                // subscriptionStatus is nullable; isExpired() is a function
+                if (subscription.subscriptionStatus?.isExpired() == false) {
+                    // active subscription
+                }
             }
         }
         override fun onFailure(error: Throwable) {
@@ -246,6 +250,10 @@ Purchasely.userSubscriptions(
     }
 )
 ```
+
+> `PLYPlan` does not have a `hasEntitlement()` method. To gate features by entitlement, inspect the `vendorId` (or compare against your known plan IDs) on the returned subscriptions.
+
+> Use `subscription.plan.store_product_id` (not `productId`) to read the underlying Google Play product ID.
 
 Named-parameter style (equivalent):
 
@@ -261,15 +269,32 @@ Purchasely.userSubscriptions(
 )
 ```
 
+## Close Screens
+
+### `Purchasely.closeAllScreens()` *(SDK 5.7.4+)*
+
+Force-dismiss any paywall currently on screen (including Flow paywalls with multiple steps). Use this instead of `closeDisplayedPresentation()` when you need to reliably tear down a paywall — for example after an Observer-mode purchase or when chaining a follow-up placement.
+
+Unlike iOS, there is no actor/threading constraint — call directly from any thread.
+
+**Ordering rule:** in the action interceptor, `processAction(false)` MUST be called BEFORE `closeAllScreens()` — the SDK needs to know not to proceed before the paywall tears down.
+
+```kotlin
+processAction(false)            // tell interceptor we handled it
+Purchasely.closeAllScreens()    // dismiss
+```
+
 ## Synchronize
 
 ### `Purchasely.synchronize()`
 
-Force a synchronization of the user's purchases with Purchasely servers.
+Force a synchronization of the user's purchases with Purchasely servers. Parameterless — fire-and-forget (no callback).
 
 ```kotlin
 Purchasely.synchronize()
 ```
+
+> Unlike iOS (which exposes `success:`/`failure:` closures), Android's `synchronize()` returns nothing. You cannot await its completion. If you need to chain a placement that targets users based on subscription state, accept the brief risk of stale state — Android's cache refresh is usually fast enough in practice.
 
 ## Events
 

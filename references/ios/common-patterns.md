@@ -198,6 +198,119 @@ Purchasely.setPaywallActionsInterceptor { action, parameters, presentationInfo, 
 }
 ```
 
+## Observer Mode — Recommended Post-Purchase Flow
+
+After a successful Observer-mode purchase, the recommended sequence is:
+
+1. **Await `synchronize()`** (only if you chain a follow-up placement that targets users based on subscription state — otherwise fire-and-forget is fine)
+2. **`proceed(false)`** — tell the SDK interceptor we handled the purchase (skip its own flow)
+3. **`Purchasely.closeAllScreens()`** — force-dismiss the paywall
+
+The order **proceed → closeAllScreens** matters: the interceptor must learn the action was handled BEFORE the paywall tears down.
+
+```swift
+@MainActor
+private func handlePurchaseSuccess(proceed: @escaping (Bool) -> Void) async {
+    do {
+        try await synchronizeReceipt()   // only await if you chain a placement that targets subscribers
+        proceed(false)                   // tell interceptor we handled it
+        Purchasely.closeAllScreens()     // dismiss
+    } catch {
+        proceed(false)                   // dismiss anyway on sync error
+        Purchasely.closeAllScreens()
+    }
+}
+
+private func synchronizeReceipt() async throws {
+    try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+        Purchasely.synchronize(
+            success: { cont.resume() },
+            failure: { error in
+                cont.resume(throwing: error ?? NSError(domain: "Purchasely", code: -1))
+            }
+        )
+    }
+}
+```
+
+> `closeAllScreens()` requires Purchasely iOS SDK **5.7.5+** and is `@MainActor`-isolated. From a non-isolated context, wrap in `Task { @MainActor in Purchasely.closeAllScreens() }`.
+
+### Chaining a Follow-up Placement After Purchase (optional)
+
+Some apps display a follow-up paywall after a successful purchase — a thank-you screen, an onboarding tour for premium features, a one-tap upsell, etc. This is **not part of the SDK contract**: it's just `fetchPresentation` called again with whatever placement ID you've configured on the Console (e.g. `"post_purchase"`, `"thank_you"`, `"premium_welcome"` — pick your own).
+
+If you do chain a placement and its audience targets users based on subscription state, **`synchronize()` must complete first** — otherwise the fetch resolves against stale state and may return a deactivated/fallback presentation. On iOS, that's why the `synchronizeReceipt()` await above matters.
+
+```swift
+// After closeAllScreens() above, fetch and display the chained placement
+private func showPostPurchaseScreen() {
+    Purchasely.fetchPresentation(
+        for: "YOUR_POST_PURCHASE_PLACEMENT_ID",
+        fetchCompletion: { presentation, error in
+            guard let presentation = presentation,
+                  presentation.type == .normal || presentation.type == .fallback,
+                  let topVC = UIApplication.shared.topViewController()
+            else { return }
+            presentation.display(from: topVC)
+        },
+        completion: { _, _ in /* dismissed */ }
+    )
+}
+```
+
+**Naming gotcha:** the placement ID string must match the Console exactly — typos silently return a deactivated presentation.
+
+## Presentation Cache & Audience Invalidation
+
+The iOS SDK fetches presentations from the network on every call. If you display the same placement repeatedly (`.onAppear` fires several times, sheet/back navigation, etc.), each call hits the network and — for flow placements — accumulates `flowSteps` entries in the SDK's `FlowsManager`. A known SDK issue: dismissing the only visible step then leaves a stuck `PLYWindow` that intercepts touches.
+
+**Fix:** wrap the fetch in an app-side cache keyed by `placementId[/contentId]`:
+
+```swift
+actor PresentationCache {
+    static let shared = PresentationCache()
+    private var cache: [String: PLYPresentation] = [:]
+
+    func get(_ key: String) -> PLYPresentation? { cache[key] }
+    func set(_ key: String, _ presentation: PLYPresentation) { cache[key] = presentation }
+    func invalidateAll() { cache.removeAll() }
+}
+```
+
+**Invalidation triggers** (when the cached result may be stale):
+- `PLYUserAttributeDelegate.onUserAttributeSet` / `onUserAttributeRemoved` — any attribute change can alter audience targeting
+- Successful `Purchasely.synchronize()` — subscription state may have changed
+- SDK mode change (Full ↔ Observer)
+
+> Invalidation is intentionally coarse-grained (`invalidateAll`) because the SDK doesn't expose attribute→audience dependencies. Purchasely SDK 6.x is expected to add native placement-level caching — remove the app-side cache then.
+
+## Swift 6 Concurrency Notes
+
+- Use `@preconcurrency import Purchasely` where needed — the current SDK exposes Objective-C class properties / callback types without full Swift 6 concurrency annotations.
+- SDK callbacks fire on unknown threads. Hop to the main actor with `Task { @MainActor [weak self] in … }`, **not** `DispatchQueue.main.async`, to keep one consistent concurrency model.
+- Mark Purchasely-facing protocols (`PurchaselyWrapping`, etc.) `@MainActor` so call sites don't accidentally cross actor boundaries.
+- Keep `PLYEventDelegate` / `PLYUserAttributeDelegate` callbacks `nonisolated` and do only thread-safe work in them (logging, cache invalidation).
+
+## Guard Against Overlapping Observer Purchases
+
+In Observer mode, the interceptor fires once per user tap. If a second purchase/restore action arrives while one is already running, you'll have two overlapping StoreKit flows and two independent `proceed(_:)` closures to call. Guard with a single in-flight task:
+
+```swift
+private var observerActionTask: Task<Void, Never>?
+
+private func handlePurchaseAction(productId: String, proceed: @escaping (Bool) -> Void) {
+    guard observerActionTask == nil else {
+        proceed(false) // already busy — ignore this action
+        return
+    }
+    observerActionTask = Task { @MainActor [weak self] in
+        defer { self?.observerActionTask = nil }
+        let result = await PurchaseManager.shared.purchase(productId: productId)
+        await self?.handleTransactionResult(result, proceed: proceed)
+    }
+}
+```
+
 ## Setting User Attributes for Targeting
 
 Set attributes to enable audience targeting and paywall personalization:

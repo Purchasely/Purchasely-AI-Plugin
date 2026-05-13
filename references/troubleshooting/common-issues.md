@@ -1,5 +1,190 @@
 # Troubleshooting: Common Issues
 
+## 0. Diagnostic Logs — Read Before Patching
+
+When something looks wrong (paywall doesn't close, wrong screen reappears, purchase doesn't unlock premium…), do **not** start patching code. The Purchasely SDK emits a detailed log stream — read it first, the answer is almost always there.
+
+### Log sources
+
+| Prefix | Source | What it tells you |
+|--------|--------|-------------------|
+| `[Purchasely][YYYY-MM-DD HH:MM:SS.mmm]<Level>` | SDK internal logs | SDK lifecycle (config, fetch, validation, receipt status) |
+| `[Purchasely] Event: <NAME>` | SDK analytics events | Every paywall view, purchase, restore, dismiss, error |
+| `[YourApp] Event: <NAME> \| Properties: {…}` | App-side mirror of SDK events (via `PLYEventDelegate` / `EventListener`) | Same events, with the full property bag — useful to inspect targeting context |
+| `[YourApp] …` | App-side instrumentation around SDK calls | Local decisions (chained placement, sync result, observer mode dispatch) |
+
+> `[Purchasely]` is emitted by the SDK and is identical in every integration — that is your grep target (`grep "\[Purchasely\]"`). Add an app-side prefix (e.g. `[YourApp]`) around the decision points (chain trigger, sync result, fetch outcome) so a teammate can reproduce the diagnostic workflow.
+
+Set the SDK log level to `.debug` (iOS) / `LogLevel.DEBUG` (Android) during development.
+
+### Key SDK events to watch
+
+The SDK fires named events. Each carries a property bag (placement_id, displayed_presentation, flow_id, step_id, plan, …) — the source of truth for *what the SDK actually did*.
+
+| Event | Fires when | Useful properties |
+|-------|------------|-------------------|
+| `APP_CONFIGURED` | `Purchasely.start(...)` completed successfully | `sdk_version`, `running_mode`, `storekit_version` |
+| `APP_STARTED` | SDK has finished its full startup (config + initial fetches) | `session_id`, `session_count` |
+| `PRESENTATION_LOADED` | Paywall fetched and ready. **Fires once per prefetched placement at startup, plus on every fetch** | `placement_id`, `displayed_presentation`, `internal_presentation_id`, `flow_id`, `display_mode`, `paywall_request_duration_in_ms` |
+| `PRESENTATION_VIEWED` | Paywall on screen | same + `paywall_rendering_time_in_ms`, `display_method` |
+| `PRESENTATION_CLOSED` | Paywall dismissed (any reason) | same + `screen_duration` |
+| `PLAN_SELECTED` | User taps a plan | `plan`, `purchasely_plan_id`, `store_product_id` |
+| `IN_APP_PURCHASING` | Purchase tap, billing flow opens | `plan` |
+| `IN_APP_PURCHASED` | Native purchase succeeds (before validation) | `plan`, `transaction_id` |
+| `RECEIPT_CREATED` | SDK builds the receipt payload, about to validate | `receipt_status` |
+| `RECEIPT_VALIDATED` | Server validation succeeded | `receipt_status: completed` |
+| `RECEIPT_FAILED` | Server validation refused the receipt | `error` |
+| `IN_APP_PURCHASE_FAILED` | Whole purchase attempt failed | `error` |
+| `IN_APP_RENEWED` | Receipt confirms an active subscription | `running_subscriptions`, `plan` |
+| `IN_APP_RESTORED` | Restore flow finds an active receipt | `plan` |
+| `IN_APP_DEFERRED` / `IN_APP_NOT_PURCHASED` | Pending / cancelled | `plan` |
+
+### How to read a purchase log trace
+
+Annotated slice for one Observer-mode purchase (placement IDs are app-specific — substitute yours):
+
+```
+[Purchasely] Receipt status: transmitting          ← SDK starts validating the receipt
+[Purchasely] Successfully retrieved subscriptions.
+[Purchasely] Receipt status: completed             ← receipt validated
+[Purchasely] Event: RECEIPT_VALIDATED
+[YourApp]   Event: RECEIPT_VALIDATED | Properties: {  ← App mirrors via PLYEventDelegate
+  placement_id: "<your_placement_id>",
+  flow_id: "<your_flow_id>",
+  displayed_presentation: "<your_paywall_id>",
+  plan: "<your_plan_vendor_id>",
+  running_subscriptions: [{ plan, product }],      ← user is now subscribed ✓
+  …
+}
+[Purchasely] Event: IN_APP_RENEWED                 ← subscription confirmed active
+[Purchasely] Interceptor executed action purchase. Skipping SDK execution.
+                                                   ↑ proceed(false) acknowledged
+[Purchasely] Event: PRESENTATION_CLOSED            ← paywall dismissed
+```
+
+The trace tells you, in order:
+1. **Receipt validated** (`RECEIPT_VALIDATED`, `IN_APP_RENEWED`) — purchase succeeded server-side.
+2. **Interceptor acknowledged** (`Skipping SDK execution`) — your `proceed(false)` was received.
+3. **Paywall dismissed** (`PRESENTATION_CLOSED`) — `closeAllScreens()` ran.
+
+If you chain a follow-up placement after the purchase, expect an additional `Successfully retrieved presentation Optional("<your_followup_placement_id>")` → `PRESENTATION_LOADED` → `PRESENTATION_VIEWED` sequence at the end of the trace.
+
+If any of those three is missing, you have a defined symptom — see the table below.
+
+### Symptom → likely cause
+
+| Symptom (in logs) | Likely cause | Where to look |
+|-------------------|--------------|---------------|
+| No `RECEIPT_VALIDATED` event | Receipt failed server-side validation | Check `[Purchasely] Receipt status: …` — `failed` / `error` → check StoreKit config, sandbox account, server clock |
+| `IN_APP_PURCHASED` but no `IN_APP_RENEWED` | Receipt validated but no active subscription state | Dashboard → Subscribers → look up the transaction; check store product config |
+| `PRESENTATION_CLOSED` never fires after a successful purchase | `closeAllScreens()` not called, or called before `proceed(false)` | Verify the order: `proceed(false)` MUST precede `closeAllScreens()` |
+| `pendingSuccessfulPurchase=false` after a real purchase | The flag was never set (transaction handler didn't run, or wrong mode) | Check interceptor `.purchase` case took the Observer branch |
+| Follow-up `fetchPresentation` returns `type=deactivated` or `error=…` | The chained placement is missing / typo / deactivated on the dashboard | Dashboard → Placements → check the exact vendor ID. Common gotcha: typo in the placement_id string |
+| Follow-up placement returns a presentation, but renders "the previous paywall again" | The Flow hosting the original placement chains a post-purchase step that points to the wrong paywall | The event's `flow_id` and `displayed_presentation` reveal the chained step. Dashboard → Flows → inspect `<flow_id>` post-purchase branches |
+| `IN_APP_RESTORED` but premium UI doesn't update | `userSubscriptions(...)` not called after the purchase completes, or callback not wired to your premium state | Check your post-purchase refresh path |
+| `is_fallback_presentation: true` on `PRESENTATION_LOADED` | Audience targeting failed, SDK served the default — usually a stale presentation cache | Trigger an attribute change → invalidate cache. Or call `PresentationCache.shared.invalidateAll()` explicitly (iOS) |
+
+### Reading event property bags
+
+Useful fields when debugging:
+
+- `placement_id` + `internal_placement_id` — which placement the SDK was working on
+- `displayed_presentation` + `internal_presentation_id` + `template` — which paywall design was rendered (template ID matches Console > Paywalls)
+- `flow_id` + `flow_session_id` + `internal_flow_id` + `step_id` + `from_step_id` — flow position. Detects when a flow continues into a post-purchase step
+- `is_fallback_presentation: true` — SDK fell back to the default paywall instead of resolving via audience targeting
+- `display_mode` — `full_screen` / `push` — how the SDK is rendering (a `push` after `full_screen` indicates a flow step continuation)
+- `purchasable_plans` — empty array on a non-purchase placement (e.g. a thank-you / confirmation screen) is normal
+- `running_subscriptions` (on `IN_APP_RENEWED`) — confirms which entitlement is active after validation
+- `paywall_request_duration_in_ms` + `paywall_rendering_time_in_ms` — performance budget
+
+### Reading SDK lifecycle logs (startup)
+
+Annotated startup slice:
+
+```
+[Purchasely] N products declared: <your_product_id>                      ← SDK reads its configured products
+[Purchasely] [AppStore][Storekit2] Fetching app store products:          ← StoreKit2 fetches App Store metadata
+              <your_store_product_id_1>,
+              <your_store_product_id_2>,
+              …
+[Purchasely] Successfully retrieved presentation Optional("<paywall_id>") ← prefetched paywalls (one log per placement)
+[Purchasely] [AppStore][Storekit2] Fetched app store products and found … ← all store products resolved
+[Purchasely] N products available for sale: <your_product_id>            ← product mapping resolved
+[Purchasely] N plans available for sale: <your_plan_vendor_id>, …
+[Purchasely] Event: APP_CONFIGURED                                       ← ✓ Purchasely.start() succeeded
+[Purchasely] Event: PRESENTATION_LOADED                                  ← one event per prefetched placement
+[Purchasely] Event: PRESENTATION_VIEWED                                  ← the first paywall shown to user
+[Purchasely] Event: APP_STARTED                                          ← ✓ initial fetches done, SDK fully ready
+[Purchasely] Successfully retrieved subscriptions.                       ← initial subscriptions() polls
+```
+
+**Order matters:**
+1. **Products fetch** from the App Store / Play Store (before any paywall can show real prices)
+2. **Presentations fetch** in parallel (one `Successfully retrieved presentation` per prefetched placement)
+3. **`APP_CONFIGURED`** — SDK marks itself as ready
+4. **`PRESENTATION_LOADED` × N** — one event per prefetched placement; useful to confirm all your placements were resolved
+5. **`PRESENTATION_VIEWED`** — first paywall actually shown
+6. **`APP_STARTED`** — full startup completed
+7. **Initial `userSubscriptions` polls** — SDK refreshes subscription state
+
+**Red flags at startup:**
+- `APP_CONFIGURED` never fires → `start(...)` failed. Check API key, network, the `onReady`/`onConfigured` callback's `error` argument.
+- `0 products available for sale` → product IDs in Console don't match any store products. Check Console > Products and store consoles.
+- `0 plans available for sale` → plans configured but no store products bound. Console > Products > plan → store binding.
+- `PRESENTATION_LOADED` missing for an expected placement → placement undefined / deactivated / wrong audience targeting on dashboard.
+- `is_fallback_presentation: true` on `PRESENTATION_VIEWED` → audience targeting failed, default paywall served.
+
+### Reading receipt validation logs
+
+Receipt processing has its own log stream — useful when StoreKit confirms locally but Purchasely doesn't recognise the subscription. **Validation can fail without aborting the StoreKit transaction**, so always check both sides.
+
+Sandbox-failure trace (annotated):
+
+```
+[Purchasely] [AppStore][Storekit2][Listener] Transaction verified:       ← StoreKit verified the transaction locally
+              <your_store_product_id>
+[Purchasely] Receipt created.                                            ← receipt payload built
+[Purchasely] Event: RECEIPT_CREATED
+[Purchasely] Refreshing receipt status for validation.
+[Purchasely] Receipt status: verifying                                   ← server-side validation in progress
+[Purchasely] Receipt is still being processed (status: verifying)
+[Purchasely] Receipt status: failed                                      ← ⛔ server refused
+[Purchasely] ⛔️ Receipt validation failed.
+              [Sandbox error] The receipt sent by Apple doesn't
+              contain a valid purchase. …
+[Purchasely] Event: RECEIPT_FAILED
+[Purchasely] Event: IN_APP_PURCHASE_FAILED
+[Purchasely] [AppStore][Storekit2][Listener] Transaction verified:       ← StoreKit retries / fires the entitlement again
+              <your_store_product_id>
+[Purchasely] Event: IN_APP_RENEWED                                       ← ✓ eventually recovers
+```
+
+**How to read `Receipt status`:** the SDK polls until a terminal status.
+
+| Status | Meaning |
+|--------|---------|
+| `transmitting` | Receipt being uploaded to Purchasely's server |
+| `verifying` | Server validating with Apple / Google |
+| `completed` | Validated, entitlement granted ✓ |
+| `failed` | Validation refused — see the error message that follows |
+
+**Common `failed` causes (App Store sandbox):**
+- Sandbox account not signed in / mismatched
+- StoreKit Configuration file used in Xcode (local testing) but receipt sent to real Apple servers
+- Receipt from a different bundle ID / environment
+- Clock skew (server vs device > a few minutes)
+- For real prod issues: check Apple / Google service status before debugging code
+
+### Quick diagnostic checklist
+
+When a teammate says "paywall is broken", ask in this order:
+1. **Which platform** and **which placement_id**?
+2. **Console grep**: `grep -E "\[Purchasely\]|\[YourApp\]"` over the run
+3. **First red flag**: missing `APP_CONFIGURED` (config)? Missing `PRESENTATION_LOADED` (placement/audience)? `is_fallback_presentation: true` (cache)?
+4. **Dashboard cross-check**: does the placement exist? Is it deactivated? Which paywall is attached? Is it in a flow that chains elsewhere?
+
+---
+
 ## 1. Paywall Not Showing
 
 **Symptoms:** `presentationController` or `fetchPresentation` returns nil/null, paywall never appears.

@@ -236,6 +236,29 @@ Purchasely.restoreAllProducts(
 )
 ```
 
+## Close Screens
+
+### `Purchasely.closeAllScreens()` *(SDK 5.7.5+)*
+
+Force-dismiss any paywall currently on screen (including Flow paywalls with multiple steps). Use this instead of `closeDisplayedPresentation()` when you need to reliably tear down a paywall — for example after an Observer-mode purchase or when chaining a follow-up placement.
+
+**Threading constraint:** the method is `@MainActor`-isolated. When called from a non-isolated synchronous context (inside a `DispatchQueue.main.async`, a `synchronize(success:)` callback, etc.), wrap it:
+
+```swift
+Task { @MainActor in
+    Purchasely.closeAllScreens()
+}
+```
+
+Calling it directly from a non-isolated context produces: *"Call to main actor-isolated class method 'closeAllScreens()' in a synchronous nonisolated context."*
+
+**Ordering rule:** in the action interceptor, `proceed(false)` MUST be called BEFORE `closeAllScreens()` — the SDK needs to know not to proceed before the paywall tears down.
+
+```swift
+proceed(false)               // tell interceptor we handled it
+Purchasely.closeAllScreens() // dismiss
+```
+
 ## Synchronize
 
 ### `Purchasely.synchronize(success:failure:)`
@@ -253,21 +276,57 @@ Purchasely.synchronize(
 )
 ```
 
+**Swift Concurrency wrapper:** when you need to await sync before doing more work (e.g. chaining a follow-up placement that targets users based on their now-active subscription), bridge it with `withCheckedThrowingContinuation`:
+
+```swift
+private func synchronizeReceipt() async throws {
+    try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+        Purchasely.synchronize(
+            success: { cont.resume() },
+            failure: { error in
+                cont.resume(throwing: error ?? NSError(domain: "Purchasely", code: -1))
+            }
+        )
+    }
+}
+```
+
+By default the SDK runs `synchronize()` in the background — you do **not** need to await it before dismissing the paywall. Only await when the next step (e.g. fetching another placement whose audience targeting depends on the user's now-active subscription) needs the refreshed subscription state.
+
 ## Events
 
 ### `Purchasely.setEventDelegate(_:)`
 
-Set a delegate to receive SDK events (paywall views, purchases, etc.).
+Set a delegate to receive SDK events (paywall views, purchases, etc.). The `properties` argument is **optional** (`[String: Any]?`).
 
 ```swift
 class MyEventDelegate: PLYEventDelegate {
     func eventTriggered(_ event: PLYEvent, properties: [String: Any]?) {
-        print("Event: \(event.name)")
+        print("Event: \(event.name) | Properties: \(properties ?? [:])")
         // Forward to your analytics provider
     }
 }
 
 Purchasely.setEventDelegate(MyEventDelegate())
+```
+
+> Delegate callbacks fire on unknown threads. Hop to the main actor via `Task { @MainActor in … }` (not `DispatchQueue.main.async`) when mutating UI state.
+
+### `Purchasely.setUserAttributeDelegate(_:)`
+
+React to user-attribute changes — useful to invalidate any app-side presentation cache, since attribute changes can alter audience targeting.
+
+```swift
+class MyAttributeDelegate: PLYUserAttributeDelegate {
+    nonisolated func onUserAttributeSet(key: String, value: Any, source: PLYUserAttributeSource) {
+        // Invalidate caches that depend on audience
+    }
+    nonisolated func onUserAttributeRemoved(key: String, source: PLYUserAttributeSource) {
+        // Same
+    }
+}
+
+Purchasely.setUserAttributeDelegate(MyAttributeDelegate())
 ```
 
 ## PLYPresentationAction Enum
