@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Purchasely SDK question (not about this AI skill)
+    url: https://docs.purchasely.com
+    about: For questions about the Purchasely SDK itself, please consult the official documentation or contact support.
+  - name: Security issue
+    url: https://github.com/Purchasely/purchasely-ai-skill/blob/main/SECURITY.md
+    about: Please report security issues privately — see SECURITY.md.

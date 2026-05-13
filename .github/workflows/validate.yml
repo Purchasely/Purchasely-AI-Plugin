@@ -1,0 +1,56 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Validate plugin structure & JSON
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate plugin.json
+        run: |
+          test -f .claude-plugin/plugin.json
+          python3 -c "import json,sys; json.load(open('.claude-plugin/plugin.json'))"
+
+      - name: Validate marketplace.json
+        run: |
+          test -f .claude-plugin/marketplace.json
+          python3 -c "import json,sys; json.load(open('.claude-plugin/marketplace.json'))"
+
+      - name: Validate package.json
+        run: |
+          test -f package.json
+          python3 -c "import json,sys; json.load(open('package.json'))"
+
+      - name: Check required files
+        run: |
+          for f in README.md LICENSE CONTRIBUTING.md SECURITY.md CODE_OF_CONDUCT.md CHANGELOG.md .gitignore install.sh; do
+            test -f "$f" || { echo "Missing required file: $f"; exit 1; }
+          done
+
+      - name: Check all skills have SKILL.md
+        run: |
+          for d in skills/*/; do
+            test -f "$d/SKILL.md" || { echo "Missing SKILL.md in $d"; exit 1; }
+          done
+
+      - name: Check install.sh is POSIX-executable
+        run: |
+          test -x install.sh
+          sh -n install.sh
+
+      - name: Reject committed real API keys
+        run: |
+          # Allow only the placeholder. Fail if a real-looking key appears anywhere.
+          if grep -rE 'pk_(live|test)_[A-Za-z0-9]{20,}|sk_(live|test)_[A-Za-z0-9]{20,}' \
+               --include='*.md' --include='*.json' --include='*.sh' --include='*.yml' \
+               --exclude-dir=.git . ; then
+            echo "Real-looking API key detected — refusing to merge."
+            exit 1
+          fi

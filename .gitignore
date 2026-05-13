@@ -1,0 +1,30 @@
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local Claude / agent state
+.claude/local/
+.claude/cache/
+.claude-plugin/.cache/
+
+# Node (in case dev tooling is added later)
+node_modules/
+
+# Test/coverage artifacts (in case ever added)
+coverage/
+*.tgz
+
+# Local environment files
+.env
+.env.local
+.env.*.local
