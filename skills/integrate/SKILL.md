@@ -9,6 +9,18 @@ You are guiding a developer through integrating the Purchasely SDK into their mo
 
 Reference documentation is available in the `references/` directory of this plugin. Before integrating, read `references/purchasely-architecture.md` to understand the end-to-end platform (SDK ↔ Purchasely Server ↔ stores ↔ your backend ↔ third-party tools) and the Full-mode purchase flow.
 
+**Universal SDK concepts** (apply to every platform — iOS, Android, React Native, Flutter, Cordova) are in `references/concepts/`. Load them as needed:
+
+- `references/concepts/running-modes.md` — Full vs Observer modes, log levels
+- `references/concepts/paywall-actions.md` — `PLYPresentationAction` enum, interceptor `proceed/processAction` rules
+- `references/concepts/presentation-types.md` — `PLYPresentationType` guard (NORMAL / FALLBACK / DEACTIVATED / CLIENT)
+- `references/concepts/presentation-cache.md` — App-side cache to avoid `FlowsManager.flowSteps` accumulation
+- `references/concepts/observer-mode-post-purchase.md` — `proceed → closeAllScreens` ordering, chaining follow-up placements
+- `references/concepts/user-attributes-targeting.md` — Audience targeting attributes + GDPR consent
+- `references/concepts/subscription-checks.md` — Gating premium content via `userSubscriptions`, restore purchases
+
+**Latest SDK versions** — always pin to the versions listed in `references/sdk-versions.md` (single source of truth). When this skill mentions installation, pin to exact versions from that doc, not floating versions.
+
 ## Arguments
 
 `$ARGUMENTS` may contain an optional platform override (e.g., `ios`, `android`, `react-native`, `flutter`, `cordova`). If provided, skip platform detection and use the specified platform.
@@ -31,6 +43,18 @@ If multiple platforms are detected (e.g., a monorepo), ask the user which platfo
 
 Run the appropriate installation commands and modify project files as needed.
 
+**Versions to pin** (always read `references/sdk-versions.md` for the authoritative list):
+
+| Platform | Latest stable version |
+|----------|-----------------------|
+| iOS (native) | **5.7.5** |
+| Android (native) | **5.7.4** |
+| React Native | **5.7.3** |
+| Flutter | **5.7.3** |
+| Cordova | **5.7.3** |
+
+Always pin to the **exact** version above, never floating (`5.+`, `^5.0.0`). Floating versions break reproducibility and silently pull regressions.
+
 **Before installing, ask the user these questions (adapt per platform):**
 
 For **Android, React Native, Flutter, Cordova** — ask:
@@ -47,11 +71,11 @@ Requirements: iOS 11.0+, Xcode 13.0+, Swift 5.0+
 
 Add to the app's `Podfile`:
 ```ruby
-pod 'Purchasely'
+pod 'Purchasely', '5.7.5'
 ```
 Then run:
 ```bash
-pod install
+pod install --repo-update
 ```
 
 **Option B — Swift Package Manager** (if the project uses SPM):
@@ -60,12 +84,13 @@ In Xcode: File > Add Packages, then enter the repository URL:
 ```
 https://github.com/Purchasely/Purchasely-iOS
 ```
+Select **Exact Version 5.7.5**.
 
 **Option C — Carthage**:
 
 Add to `Cartfile`:
 ```
-binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json"
+binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json" == 5.7.5
 ```
 Then run:
 ```bash
@@ -78,27 +103,27 @@ Requirements: minSdk 23, compileSdk 34, Kotlin 2.+, Gradle 8.+, JDK 11
 
 The Purchasely SDK is published on **Maven Central** — no custom repository needed. Just make sure `mavenCentral()` is present in your `settings.gradle.kts` (it is by default in modern projects).
 
-**Add dependencies** in `app/build.gradle.kts`:
+**Add dependencies** in `app/build.gradle.kts` (pin to exact `5.7.4` — see `references/sdk-versions.md`):
 ```kotlin
 dependencies {
     // Core SDK — Required
-    implementation("io.purchasely:core:5.+")
+    implementation("io.purchasely:core:5.7.4")
 
     // Google Play Store — Required if publishing on Google Play
-    implementation("io.purchasely:google-play:5.+")
+    implementation("io.purchasely:google-play:5.7.4")
 
     // Video Player — Optional, for video support in paywalls
-    implementation("io.purchasely:player:5.+")
+    implementation("io.purchasely:player:5.7.4")
 }
 ```
 
 **Alternative stores** (instead of or in addition to Google Play):
 ```kotlin
 // Huawei AppGallery (also requires Huawei AGConnect plugin and repo)
-implementation("io.purchasely:huawei-services:5.+")
+implementation("io.purchasely:huawei-services:5.7.4")
 
 // Amazon Appstore
-implementation("io.purchasely:amazon:5.+")
+implementation("io.purchasely:amazon:5.7.4")
 ```
 
 For **Huawei**, also add to the project-level build.gradle:
@@ -162,12 +187,12 @@ allprojects {
 }
 ```
 
-**CRITICAL: All Purchasely packages must be at the exact same version.** Check `package.json` to ensure version alignment:
+**CRITICAL: All Purchasely packages must be at the exact same version.** Pin to `5.7.3` (see `references/sdk-versions.md`):
 ```json
 "dependencies": {
-  "react-native-purchasely": "5.0.0",
-  "@purchasely/react-native-purchasely-google": "5.0.0",
-  "@purchasely/react-native-purchasely-android-player": "5.0.0"
+  "react-native-purchasely": "5.7.3",
+  "@purchasely/react-native-purchasely-google": "5.7.3",
+  "@purchasely/react-native-purchasely-android-player": "5.7.3"
 }
 ```
 
@@ -212,12 +237,12 @@ allprojects {
 }
 ```
 
-**CRITICAL: All Purchasely packages must be at the exact same version.** Check `pubspec.yaml`:
+**CRITICAL: All Purchasely packages must be at the exact same version.** Pin to `5.7.3` (see `references/sdk-versions.md`):
 ```yaml
 dependencies:
-  purchasely_flutter: ^5.0.0
-  purchasely_google: ^5.0.0
-  purchasely_android_player: ^5.0.0
+  purchasely_flutter: 5.7.3
+  purchasely_google: 5.7.3
+  purchasely_android_player: 5.7.3
 ```
 
 ### Cordova
@@ -251,11 +276,11 @@ allprojects {
 }
 ```
 
-**CRITICAL: All Purchasely packages must be at the exact same version.** Check `package.json`:
+**CRITICAL: All Purchasely packages must be at the exact same version.** Pin to `5.7.3` (see `references/sdk-versions.md`):
 ```json
 "dependencies": {
-  "@purchasely/cordova-plugin-purchasely": "5.0.0",
-  "@purchasely/cordova-plugin-purchasely-google": "5.0.0"
+  "@purchasely/cordova-plugin-purchasely": "5.7.3",
+  "@purchasely/cordova-plugin-purchasely-google": "5.7.3"
 }
 ```
 
@@ -778,9 +803,11 @@ See `references/architecture-patterns.md` for detailed architecture diagrams and
 
 ---
 
-## Step 8: Observer Mode — Post-Purchase Flow (iOS & Android)
+## Step 8: Observer Mode — Post-Purchase Flow (All Platforms)
 
-**Only relevant if you initialized in `Observer` / `.observer` mode.** In Full mode, the SDK handles dismissal automatically.
+> **Universal pattern.** Applies to iOS, Android, React Native, Flutter, Cordova. The full cross-platform reference is `references/concepts/observer-mode-post-purchase.md` — load it when you need the per-language code samples. The summary below covers the rules and the two native idioms.
+
+**Only relevant if you initialized in `Observer` / `.observer` / `PAYWALL_OBSERVER` mode.** In Full mode, the SDK handles dismissal automatically.
 
 When the interceptor receives a `PURCHASE` action in Observer mode, you run the native billing flow yourself. After it succeeds, three things MUST happen in order:
 
@@ -792,12 +819,15 @@ When the interceptor receives a `PURCHASE` action in Observer mode, you run the 
 
 ### SDK version requirements for `closeAllScreens()`
 
-- **iOS:** Purchasely SDK **5.7.5+**. The method is `@MainActor`-isolated — from a non-isolated synchronous context (e.g. inside `synchronize(success:)` callback, `DispatchQueue.main.async` block), wrap it:
-  ```swift
-  Task { @MainActor in Purchasely.closeAllScreens() }
-  ```
-  Calling it directly produces: *"Call to main actor-isolated class method 'closeAllScreens()' in a synchronous nonisolated context."*
-- **Android:** Purchasely SDK **5.7.4+**. No threading constraint — call directly.
+| Platform | Minimum version |
+|----------|-----------------|
+| iOS (native) | **5.7.5+** — `@MainActor`-isolated. Wrap in `Task { @MainActor in Purchasely.closeAllScreens() }` when called from a non-isolated synchronous context. |
+| Android (native) | **5.7.4+** — no threading constraint. |
+| React Native | Cross-platform plugin **5.7.3+** (bridges to native 5.7.5 / 5.7.4). |
+| Flutter | Cross-platform plugin **5.7.3+**. |
+| Cordova | Cross-platform plugin **5.7.3+**. |
+
+Full version list: `references/sdk-versions.md`.
 
 > Use `closeAllScreens()` (not `closeDisplayedPresentation()`) — it correctly tears down Flow paywalls with multiple steps and is required if you plan to chain a follow-up placement (see Optional section below).
 
@@ -840,6 +870,40 @@ private fun onPurchaseSuccess(processAction: (Boolean) -> Unit) {
 
 > Android's `synchronize()` is parameterless — you cannot await it. iOS exposes `success:`/`failure:` closures that you can bridge to `async/await` via `withCheckedThrowingContinuation`.
 
+### React Native / Flutter / Cordova Observer-mode post-purchase
+
+The cross-platform plugins expose `synchronize()` as an awaitable promise and `closeAllScreens()` as a sync method. The pattern collapses to three lines:
+
+**React Native (TypeScript)**
+
+```ts
+await Purchasely.synchronize();
+Purchasely.onProcessAction(false);
+Purchasely.closeAllScreens();
+```
+
+**Flutter (Dart)**
+
+```dart
+await Purchasely.synchronize();
+Purchasely.onProcessAction(false);
+Purchasely.closeAllScreens();
+```
+
+**Cordova (JavaScript)**
+
+```js
+Purchasely.synchronize(() => {
+  Purchasely.onProcessAction(false);
+  Purchasely.closeAllScreens();
+}, err => {
+  Purchasely.onProcessAction(false);
+  Purchasely.closeAllScreens();
+});
+```
+
+For chained follow-up placements on cross-platform SDKs, see `references/concepts/observer-mode-post-purchase.md`.
+
 ### Optional: Chain a Follow-up Placement After Purchase
 
 Some apps display a follow-up paywall after a successful purchase — a thank-you screen, a premium feature tour, a one-tap upsell. This is **not part of the SDK contract**: it's just `fetchPresentation` called again with whatever placement ID you've configured on the Console (pick your own, e.g. `"post_purchase"`, `"thank_you"`, `"premium_welcome"`).
@@ -879,7 +943,9 @@ private fun showPostPurchaseScreen(activity: Activity) {
 
 **Naming gotcha:** the placement ID string must match the Console exactly — a typo silently returns a deactivated presentation.
 
-See `references/ios/common-patterns.md` and `references/android/common-patterns.md` for the full Observer-mode flow including `SharedFlow`-based decoupling (Android) and the single-in-flight-task guard (iOS).
+**For ALL platforms** — see `references/concepts/observer-mode-post-purchase.md` for the canonical multi-platform reference.
+
+For platform-specific elaborations (SwiftUI structured-concurrency guard on iOS, `SharedFlow`-based decoupling on Android), see `references/ios/common-patterns.md` and `references/android/common-patterns.md`.
 
 ---
 

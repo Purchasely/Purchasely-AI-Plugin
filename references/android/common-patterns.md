@@ -1,5 +1,9 @@
 # Android Common Integration Patterns
 
+> **Platform-specific elaborations.** This file covers Android idioms (Activity / Fragment / Jetpack Compose embedding, `SharedFlow` decoupling, ProGuard rules, multi-store setup). Concepts that apply to **every** Purchasely SDK (Observer-mode post-purchase flow, presentation type guard, presentation cache, audience-targeting attributes, GDPR consent, subscription checks) live in `../concepts/`:
+>
+> - [`../concepts/running-modes.md`](../concepts/running-modes.md), [`../concepts/paywall-actions.md`](../concepts/paywall-actions.md), [`../concepts/presentation-types.md`](../concepts/presentation-types.md), [`../concepts/presentation-cache.md`](../concepts/presentation-cache.md), [`../concepts/observer-mode-post-purchase.md`](../concepts/observer-mode-post-purchase.md), [`../concepts/user-attributes-targeting.md`](../concepts/user-attributes-targeting.md), [`../concepts/subscription-checks.md`](../concepts/subscription-checks.md), [`../sdk-versions.md`](../sdk-versions.md) (Android pinned at **5.7.4**).
+
 ## Display Paywall in an Activity
 
 ```kotlin

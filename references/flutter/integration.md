@@ -1,26 +1,37 @@
 # Flutter Integration
 
+> **Cross-platform reference.** This file covers Flutter-specific syntax. Many concepts (Observer-mode post-purchase flow, presentation type guard, presentation cache, audience-targeting attributes, GDPR consent, subscription checks) are **universal across iOS / Android / RN / Flutter / Cordova** and live in `../concepts/`. Load:
+>
+> - [`../concepts/running-modes.md`](../concepts/running-modes.md) — Full vs Observer + log levels
+> - [`../concepts/paywall-actions.md`](../concepts/paywall-actions.md) — `PLYPresentationAction` enum + interceptor rules
+> - [`../concepts/presentation-types.md`](../concepts/presentation-types.md) — `NORMAL` / `FALLBACK` / `DEACTIVATED` / `CLIENT` guard
+> - [`../concepts/presentation-cache.md`](../concepts/presentation-cache.md) — app-side cache (recommended)
+> - [`../concepts/observer-mode-post-purchase.md`](../concepts/observer-mode-post-purchase.md) — `proceed → closeAllScreens` ordering, chaining follow-up placements
+> - [`../concepts/user-attributes-targeting.md`](../concepts/user-attributes-targeting.md) — audience targeting + GDPR consent
+> - [`../concepts/subscription-checks.md`](../concepts/subscription-checks.md) — gating premium content, restore purchases
+> - [`../sdk-versions.md`](../sdk-versions.md) — latest stable versions (pin to **5.7.3** for Flutter)
+
 ## Installation
 
-Requirements: iOS 11.0+, Android minSdk 21, compileSdk 33
+Requirements: iOS 11.0+, Android minSdk 21, compileSdk 33. Pin all packages to **5.7.3** (see [`../sdk-versions.md`](../sdk-versions.md)).
 
 ```bash
 # Core SDK
-flutter pub add purchasely_flutter
+flutter pub add purchasely_flutter:5.7.3
 
 # Google Play — required if targeting Google Play Store
-flutter pub add purchasely_google
+flutter pub add purchasely_google:5.7.3
 
 # Video Player — optional, for video support in paywalls on Android
-flutter pub add purchasely_android_player
+flutter pub add purchasely_android_player:5.7.3
 ```
 
 **CRITICAL: All Purchasely packages must be at the exact same version.** Check `pubspec.yaml`:
 ```yaml
 dependencies:
-  purchasely_flutter: ^5.0.0
-  purchasely_google: ^5.0.0
-  purchasely_android_player: ^5.0.0
+  purchasely_flutter: 5.7.3
+  purchasely_google: 5.7.3
+  purchasely_android_player: 5.7.3
 ```
 
 ### iOS Setup

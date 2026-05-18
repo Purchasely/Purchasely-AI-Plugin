@@ -1,5 +1,7 @@
 # iOS SDK Initialization
 
+> Pin to the version listed in [`../sdk-versions.md`](../sdk-versions.md) — currently **5.7.5**. Universal concepts (running modes, log levels, etc.) also live in [`../concepts/`](../concepts/README.md).
+
 ## Installation
 
 ### CocoaPods
@@ -7,7 +9,7 @@
 Add to your `Podfile`:
 
 ```ruby
-pod 'Purchasely'
+pod 'Purchasely', '5.7.5'
 ```
 
 Then run:

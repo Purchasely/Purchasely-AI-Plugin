@@ -11,6 +11,17 @@ When the issue touches the purchase flow, missing events, or webhook delivery, c
 
 When the issue involves a `user_id` with active subscriptions on more than one platform (App Store + Stripe, Play Store + Stripe, etc.), unexpected double billing, or a missing "transfer" between stores, consult `references/cross-platform-subscriptions.md` — coexistence is the documented default behavior, not a bug.
 
+**Universal SDK concept references** (apply to every platform — load as needed during diagnosis):
+
+- `references/concepts/paywall-actions.md` — interceptor rules + `proceed/processAction` must-call-once invariant (root cause of most "frozen UI" bugs)
+- `references/concepts/presentation-types.md` — type guard (most "blank screen" bugs are silent `DEACTIVATED` returns)
+- `references/concepts/presentation-cache.md` — stale presentations / stuck Flow paywalls
+- `references/concepts/observer-mode-post-purchase.md` — `proceed → closeAllScreens` ordering issues
+- `references/concepts/running-modes.md` — Full vs Observer mode confusion
+- `references/sdk-versions.md` — minimum versions for APIs (e.g. `closeAllScreens()`)
+
+**Outdated SDK?** Many "this API doesn't exist" / "Cordova doesn't expose X" reports are because the project is pinned to an old version. First check `references/sdk-versions.md` and compare against what's installed.
+
 **Before patching code, read the logs.** The SDK emits a detailed log stream prefixed with `[Purchasely]` plus named analytics events. See `references/troubleshooting/common-issues.md` §0 ("Diagnostic Logs — Read Before Patching") for the full event taxonomy, annotated traces (purchase, startup, receipt validation), and the symptom→cause table. Almost every "paywall is broken" issue has its answer in the log stream.
 
 ## Step 1: Gather Context
@@ -127,6 +138,9 @@ When you identify one of these patterns, apply the known fix immediately:
 | Paywall not updating after Console changes | SDK presentation cache | Clear app data, force kill, or invalidate the app-side cache via attribute change (iOS `PLYUserAttributeDelegate`) or explicit `wrapper.synchronize()`/`wrapper.restart()` (Android) |
 | iOS compile error: *"Call to main actor-isolated class method 'closeAllScreens()' in a synchronous nonisolated context."* | Calling `closeAllScreens()` from a `DispatchQueue.main.async` block, a `synchronize(success:)` callback, or a `nonisolated` delegate | Wrap in `Task { @MainActor in Purchasely.closeAllScreens() }` |
 | iOS: presentation re-fetches on every `.onAppear` (and Flow paywalls get stuck) | SDK has no native placement-level cache; repeated fetches accumulate `flowSteps` entries in `FlowsManager` | Add an app-side `PresentationCache` keyed by `placementId[/contentId]`. Invalidate on user-attribute changes and `synchronize()`. See `references/ios/common-patterns.md` |
+| RN/Flutter/Cordova: same stuck-paywall / repeated-fetch issue as iOS above | Same SDK quirk — the cross-platform bridge calls native fetch every time and has no shared cache | Apply the universal cache pattern from `references/concepts/presentation-cache.md` (skeleton implementations included for RN, Flutter, Cordova) |
+| RN/Flutter/Cordova: `closeAllScreens()` not exposed on JS/Dart side | Cross-platform plugin pinned to a version older than 5.7.3 | Upgrade the plugin per `references/sdk-versions.md`. 5.7.3 bridges native 5.7.4/5.7.5 |
+| RN/Flutter/Cordova: native crash on init or missing API | Plugin packages out of alignment (e.g. `react-native-purchasely 5.7.3` + `@purchasely/react-native-purchasely-google 5.6.0`) | Pin all plugin packages to the same `5.7.3`. See `references/sdk-versions.md` |
 
 ## Guidelines
 

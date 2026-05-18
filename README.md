@@ -197,6 +197,7 @@ AI-Plugin/
 │   ├── debug.md                 # /purchasely:debug
 │   └── question.md              # /purchasely:question
 ├── references/                  # SDK documentation (used by skills)
+│   ├── concepts/                # 🌐 Universal SDK concepts (all 5 platforms)
 │   ├── ios/                     # iOS: init, API ref, patterns
 │   ├── android/                 # Android: init, API ref, patterns
 │   ├── react-native/            # React Native integration
@@ -206,7 +207,8 @@ AI-Plugin/
 │   ├── troubleshooting/         # Common issues & solutions
 │   ├── architecture-patterns.md
 │   ├── cross-platform-subscriptions.md
-│   └── purchasely-architecture.md
+│   ├── purchasely-architecture.md
+│   └── sdk-versions.md          # 📌 Latest stable SDK versions (single source of truth)
 ├── configs/                     # Pre-generated configs for other tools
 │   ├── cursor/purchasely.mdc
 │   ├── copilot/copilot-instructions.md
@@ -259,11 +261,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 
 When a new SDK version is released:
 
-1. Update `references/` with new/changed APIs
-2. Update `configs/` with new patterns and rules
-3. Bump `version` in `.claude-plugin/plugin.json` and `package.json`
-4. Add an entry to [CHANGELOG.md](CHANGELOG.md)
-5. Tag and release
+1. **Update `references/sdk-versions.md`** — this is the single source of truth for pinned versions. Update the table, the pinned snippets, and the `_Last updated_` date.
+2. Update version references in `skills/integrate/SKILL.md` (install section + Step 8 version requirements) and in each platform's `references/<platform>/initialization.md` or `integration.md`.
+3. Update `references/` with new/changed APIs (and `references/concepts/` if a universal behavior changed).
+4. Update `configs/` with new patterns and rules.
+5. Bump `version` in `.claude-plugin/plugin.json` and `package.json`.
+6. Add an entry to [CHANGELOG.md](CHANGELOG.md).
+7. Tag and release.
 
 ## Security
 

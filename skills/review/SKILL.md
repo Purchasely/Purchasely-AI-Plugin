@@ -9,6 +9,17 @@ You are an expert reviewer of Purchasely SDK integrations. Your job is to system
 
 Before reviewing, read `references/purchasely-architecture.md` to ground yourself in the end-to-end platform and resilience guarantees — this helps you spot anti-patterns such as putting the customer's backend on the critical purchase path.
 
+**Universal SDK concept references** (apply to every platform — load as needed during the review):
+
+- `references/concepts/running-modes.md` — Full vs Observer modes, log levels
+- `references/concepts/paywall-actions.md` — interceptor rules + every code path must call `proceed/processAction`
+- `references/concepts/presentation-types.md` — `NORMAL` / `FALLBACK` / `DEACTIVATED` / `CLIENT` guard
+- `references/concepts/presentation-cache.md` — when to invalidate
+- `references/concepts/observer-mode-post-purchase.md` — `proceed → closeAllScreens` ordering
+- `references/concepts/user-attributes-targeting.md` — attributes + GDPR consent
+- `references/concepts/subscription-checks.md` — gating + restore purchases
+- `references/sdk-versions.md` — latest stable versions (flag outdated pins)
+
 If `$ARGUMENTS` specifies a particular area (e.g., "interceptor", "deeplinks", "initialization"), focus the review on that section only. Otherwise, run the full checklist.
 
 ---
@@ -130,10 +141,18 @@ See `references/architecture-patterns.md` for recommended patterns and improveme
 
 ### 3.7 Production Readiness
 
+- [ ] **SDK version is current** — Compare the pinned version against `references/sdk-versions.md` (iOS 5.7.5, Android 5.7.4, RN/Flutter/Cordova 5.7.3). FAIL if older than minimum, WARNING if not at latest. FAIL if a floating version (`5.+`, `^5.0.0`, etc.) is used instead of an exact pin.
+- [ ] **Plugin packages aligned** (cross-platform only) — All `react-native-purchasely*`, `purchasely_*`, or `@purchasely/cordova-plugin-*` packages MUST be the same `5.x.y`. FAIL if mismatched.
 - [ ] **ProGuard/R8 rules added** (Android only) — `proguard-rules.pro` must include Purchasely keep rules or the dependency must use `consumerProguardFiles`. WARNING if missing.
 - [ ] **No deprecated methods** — Flag any use of deprecated Purchasely APIs: `presentationViewControllerFor`, `presentationView(for:)`, `isDeeplinkHandled`, `productViewControllerFor`, `planViewControllerFor`, `subscriptionViewController`. WARNING for each occurrence.
 - [ ] **Error handling around fetchPresentation** — `fetchPresentation` can fail (network error, invalid placement). The error/failure case must be handled gracefully. FAIL if errors are silently ignored.
 - [ ] **Suggest real device testing** — Always recommend testing on a real device with a sandbox/test account, as simulators cannot process real purchases.
+
+### 3.8 Observer Mode Post-Purchase (if Observer mode is detected)
+
+- [ ] **Correct ordering** — Code must call `synchronize()` → `proceed/processAction(false)` → `closeAllScreens()` in this order. FAIL if reversed. See `references/concepts/observer-mode-post-purchase.md`.
+- [ ] **`closeAllScreens()` (not `closeDisplayedPresentation()`)** — for proper Flow-paywall teardown. WARNING if the older API is used.
+- [ ] **iOS `@MainActor` wrap** (iOS only) — when calling `closeAllScreens()` from a non-isolated context (inside `synchronize` callback or `DispatchQueue.main.async`), it must be wrapped in `Task { @MainActor in ... }`. FAIL if missing on iOS 5.7.5+.
 
 ---
 

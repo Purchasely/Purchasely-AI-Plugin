@@ -1,5 +1,7 @@
 # Android SDK Initialization
 
+> Pin to the version listed in [`../sdk-versions.md`](../sdk-versions.md) — currently **5.7.4**. Universal concepts (running modes, log levels, etc.) also live in [`../concepts/`](../concepts/README.md). Use exact versions, not floating (`5.+`).
+
 ## Installation
 
 ### Maven Repository
@@ -13,13 +15,13 @@ Add the core SDK and store-specific dependencies to your app's `build.gradle.kts
 ```kotlin
 dependencies {
     // Core SDK — Required
-    implementation("io.purchasely:core:5.+")
+    implementation("io.purchasely:core:5.7.4")
 
     // Google Play Store — Required if publishing on Google Play
-    implementation("io.purchasely:google-play:5.+")
+    implementation("io.purchasely:google-play:5.7.4")
 
     // Video Player — Optional, for video support in paywalls
-    implementation("io.purchasely:player:5.+")
+    implementation("io.purchasely:player:5.7.4")
 }
 ```
 
@@ -27,15 +29,15 @@ dependencies {
 
 | Store | Artifact | Class |
 |-------|---------|-------|
-| Google Play | `io.purchasely:google-play:5.+` | `GoogleStore()` |
-| Huawei AppGallery | `io.purchasely:huawei-services:5.+` | `HuaweiStore()` |
-| Amazon Appstore | `io.purchasely:amazon:5.+` | `AmazonStore()` |
+| Google Play | `io.purchasely:google-play:5.7.4` | `GoogleStore()` |
+| Huawei AppGallery | `io.purchasely:huawei-services:5.7.4` | `HuaweiStore()` |
+| Amazon Appstore | `io.purchasely:amazon:5.7.4` | `AmazonStore()` |
 
 ### Optional Dependencies
 
 | Feature | Artifact |
 |---------|---------|
-| Video paywalls | `io.purchasely:player:5.+` |
+| Video paywalls | `io.purchasely:player:5.7.4` |
 
 ## SDK Initialization
 
