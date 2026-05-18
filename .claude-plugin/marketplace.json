@@ -1,11 +1,11 @@
 {
-  "name": "purchasely-ai-skill",
+  "name": "AI-Plugin",
   "owner": {
     "name": "Purchasely",
     "url": "https://github.com/Purchasely"
   },
   "metadata": {
-    "description": "Purchasely SDK integration skills for AI coding assistants",
+    "description": "Purchasely SDK integration plugin for AI coding assistants",
     "version": "1.0.0"
   },
   "plugins": [
@@ -17,7 +17,7 @@
         "name": "Purchasely",
         "email": "engineering@purchasely.com"
       },
-      "homepage": "https://github.com/Purchasely/purchasely-ai-skill",
+      "homepage": "https://github.com/Purchasely/AI-Plugin",
       "tags": ["purchasely", "sdk", "in-app-purchase", "paywalls", "subscriptions", "ios", "android", "react-native", "flutter", "cordova"],
       "source": "./"
     }

@@ -1,6 +1,6 @@
 #!/bin/sh
 # ──────────────────────────────────────────────────────────────────────
-# Purchasely AI Skill — Installer
+# Purchasely AI Plugin — Installer
 # Detects AI coding tools and installs the appropriate configuration.
 # POSIX-compatible (no bash-isms).
 # ──────────────────────────────────────────────────────────────────────
@@ -58,7 +58,7 @@ banner() {
                                                |___/
 LOGO
   printf "%s" "$RESET"
-  printf "  %sAI Skill Installer%s v%s\n\n" "$BOLD" "$RESET" "$VERSION"
+  printf "  %sAI Plugin Installer%s v%s\n\n" "$BOLD" "$RESET" "$VERSION"
 }
 
 # ── Usage ────────────────────────────────────────────────────────────
@@ -191,10 +191,11 @@ install_claude() {
   fi
   ok "Detected Claude Code"
 
-  if confirm "Install Purchasely skill for Claude Code?"; then
+  if confirm "Install Purchasely plugin for Claude Code?"; then
     printf "\n"
-    info "Preferred: Run this command in your terminal:"
-    printf "\n    %s%sclaude /plugin marketplace add Purchasely/purchasely-ai-skill%s\n\n" "$BOLD" "$CYAN" "$RESET"
+    info "Preferred: Run these commands inside Claude Code:"
+    printf "\n    %s%s/plugin marketplace add Purchasely/AI-Plugin%s\n" "$BOLD" "$CYAN" "$RESET"
+    printf "    %s%s/plugin install purchasely@Purchasely%s\n\n" "$BOLD" "$CYAN" "$RESET"
     info "Alternatively, you can manually copy configs from:"
     info "  ${SCRIPT_DIR}/configs/claude/"
     info "to your project's .claude/ directory."
@@ -256,7 +257,7 @@ install_copilot() {
     mkdir -p "$(dirname "$dest")"
     if [ -f "$dest" ]; then
       warn "File already exists — appending with separator"
-      printf "\n\n---\n<!-- Purchasely AI Skill — auto-appended by install.sh -->\n\n" >> "$dest"
+      printf "\n\n---\n<!-- Purchasely AI Plugin — auto-appended by install.sh -->\n\n" >> "$dest"
       cat "$src" >> "$dest"
       ok "Appended to: $dest"
     else

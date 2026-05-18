@@ -1,6 +1,6 @@
-# CLAUDE.md — purchasely-ai-skill
+# CLAUDE.md — AI-Plugin
 
-Repository conventions for anyone (human or LLM) editing this skill.
+Repository conventions for anyone (human or LLM) editing this plugin.
 
 ## Wrapper pattern: name and scope
 

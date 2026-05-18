@@ -1,10 +1,12 @@
-# Purchasely AI Skill
+# Purchasely AI Plugin
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-Plugin-D97757)](https://docs.anthropic.com/en/docs/claude-code/plugins)
 [![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20Android%20%7C%20React%20Native%20%7C%20Flutter%20%7C%20Cordova-lightgrey)](#supported-platforms)
 
 > AI-powered assistant for integrating, reviewing, and debugging the [Purchasely](https://www.purchasely.com) SDK across **iOS**, **Android**, **React Native**, **Flutter**, and **Cordova**.
+
+A **Claude Code plugin** that bundles 4 slash commands (`/purchasely:integrate`, `/purchasely:review`, `/purchasely:debug`, `/purchasely:question`), 3 auto-invoked skills, and a dedicated `sdk-expert` agent — plus pre-built configs for other AI coding tools.
 
 Works with: **Claude Code** · **Cursor** · **GitHub Copilot** · **Windsurf** · **OpenAI Codex** · **Google Gemini** · **Mistral `vibe`** · **JetBrains AI** · **VS Code + Continue**
 
@@ -25,18 +27,19 @@ Works with: **Claude Code** · **Cursor** · **GitHub Copilot** · **Windsurf** 
 
 ```bash
 # Inside Claude Code, add the marketplace:
-/plugin marketplace add Purchasely/purchasely-ai-skill
+/plugin marketplace add Purchasely/AI-Plugin
 
-# Then enable the plugin from the /plugin manager (Discover tab)
+# Then install the plugin:
+/plugin install purchasely@Purchasely
 ```
 
-You get 4 slash commands, an `sdk-expert` agent, and 3 skills that the AI invokes automatically when relevant.
+You get 4 slash commands, an `sdk-expert` agent, and 3 skills that Claude invokes automatically when relevant.
 
 ### Option 2 — Install Script (all tools)
 
 ```bash
-git clone https://github.com/Purchasely/purchasely-ai-skill.git
-cd purchasely-ai-skill
+git clone https://github.com/Purchasely/AI-Plugin.git
+cd AI-Plugin
 
 # Auto-detect installed AI tools and install configs
 ./install.sh
@@ -178,7 +181,7 @@ AI: Provides a complete SwiftUI example with fetchPresentation + display,
 ## Project Structure
 
 ```
-purchasely-ai-skill/
+AI-Plugin/
 ├── .claude-plugin/
 │   ├── plugin.json              # Claude Code plugin manifest
 │   └── marketplace.json         # Marketplace definition
@@ -235,10 +238,10 @@ purchasely-ai-skill/
 
 ## Discoverability
 
-This skill is also published on:
+This plugin is also published on:
 
 - 🤖 **[agentskill.sh](https://agentskill.sh)** — community marketplace for AI agent skills (search `purchasely`)
-- 📦 **Claude Code marketplace** — `/plugin marketplace add Purchasely/purchasely-ai-skill`
+- 📦 **Claude Code marketplace** — `/plugin marketplace add Purchasely/AI-Plugin`
 
 ## Contributing
 
@@ -247,7 +250,7 @@ Contributions welcome — bug reports, new troubleshooting recipes, platform imp
 1. Fork the repository
 2. Create a feature branch (`feat/my-improvement`)
 3. Update the relevant files in `skills/`, `references/`, or `configs/`
-4. Test with Claude Code: `claude --plugin-dir ./purchasely-ai-skill`
+4. Test with Claude Code: `claude --plugin-dir ./AI-Plugin`
 5. Submit a pull request
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.

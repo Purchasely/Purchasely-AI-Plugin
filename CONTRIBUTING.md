@@ -1,4 +1,4 @@
-# Contributing to Purchasely AI Skill
+# Contributing to Purchasely AI Plugin
 
 Thanks for helping make Purchasely easier to integrate. This guide covers how to propose changes.
 
@@ -19,7 +19,7 @@ Thanks for helping make Purchasely easier to integrate. This guide covers how to
    - `docs/<scope>` for documentation-only changes
 3. **Edit** the relevant files. Skill front-matter and structure are explained inline.
 4. **Test** locally:
-   - Claude Code: `claude --plugin-dir ./purchasely-ai-skill` then invoke `/purchasely:integrate`, `/purchasely:review`, etc.
+   - Claude Code: `claude --plugin-dir ./AI-Plugin` then invoke `/purchasely:integrate`, `/purchasely:review`, etc.
    - Other tools: copy the relevant `configs/<tool>/` file into a small test project and ask the AI a Purchasely question
 5. **Commit** atomically using [Conventional Commits](https://www.conventionalcommits.org/):
    ```

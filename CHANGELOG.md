@@ -18,7 +18,7 @@ All notable changes to this project are documented here. The format is based on 
 ## [1.0.0] — 2026-04-01
 
 ### Added
-- Initial release of the Purchasely AI Skill plugin
+- Initial release of the Purchasely AI Plugin
 - Claude Code plugin manifest (`.claude-plugin/plugin.json` and `marketplace.json`)
 - 3 AI-invoked skills: `integrate`, `review`, `debug`
 - 4 user-invoked slash commands: `/purchasely:integrate`, `/purchasely:review`, `/purchasely:debug`, `/purchasely:question`
@@ -30,5 +30,5 @@ All notable changes to this project are documented here. The format is based on 
 - POSIX-compatible `install.sh` with auto-detection of installed AI tools
 - MIT License
 
-[Unreleased]: https://github.com/Purchasely/purchasely-ai-skill/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/Purchasely/purchasely-ai-skill/releases/tag/v1.0.0
+[Unreleased]: https://github.com/Purchasely/AI-Plugin/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Purchasely/AI-Plugin/releases/tag/v1.0.0
