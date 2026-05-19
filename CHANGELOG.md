@@ -13,6 +13,8 @@ All notable changes to this project are documented here. The format is based on 
 - README *OpenCode* block in the per-harness Quickstart section pointing at `.opencode/INSTALL.md`.
 - `SessionStart` hook (`hooks/hooks.json`, `hooks/hooks-cursor.json`, `hooks/session-start`, `hooks/run-hook.cmd`, `hooks/intro.md`) auto-injects pointers to the `integrate` / `review` / `debug` skills and `/purchasely:question` command so the plugin is discoverable without the user typing a slash command first. Works on Claude Code, Cursor, and any host honoring the standard SDK `additionalContext` envelope. Zero-dependency POSIX shell + polyglot `.cmd` wrapper for Windows (Git Bash / WSL).
 - `.claude-plugin/plugin.json` now points at `./hooks/hooks.json`.
+- `docs/distribution.md` — public roadmap listing the official marketplaces we want to ship to (Anthropic `claude-plugins-official`, OpenAI Codex `openai/plugins`, Factory Droid, GitHub Copilot CLI, Anthropic Skill Marketplace) with status, target install command, and work-to-do for each.
+- README *Discoverability* section now links to the distribution roadmap.
 
 ### Changed
 

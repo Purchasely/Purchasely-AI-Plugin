@@ -263,6 +263,15 @@ Purchasely-AI-Plugin/
 - An app configured in the Purchasely Console with at least one placement
 - Products/plans configured in your store (App Store Connect, Google Play Console, …)
 
+## Discoverability
+
+This plugin is also published on:
+
+- 🤖 **[agentskill.sh](https://agentskill.sh)** — community marketplace for AI agent skills (search `purchasely`)
+- 📦 **Claude Code marketplace** — `/plugin marketplace add Purchasely/Purchasely-AI-Plugin`
+
+See [`docs/distribution.md`](docs/distribution.md) for the public roadmap of every official marketplace we're targeting (Anthropic, OpenAI Codex, Factory Droid, GitHub Copilot CLI, …) and how to help land each one.
+
 ## Contributing
 
 Contributions welcome — bug reports, new troubleshooting recipes, platform improvements, and translations to other AI tools.
