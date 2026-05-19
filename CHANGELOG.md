@@ -4,27 +4,20 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
-### Added
-
-- `AGENTS.md` at the repository root — cross-vendor [agents.md](https://agents.md) standard, auto-detected by Codex, Cursor, Zed, Mistral `vibe`, and other harnesses without running `install.sh`.
-- `GEMINI.md` at the repository root — imports the `integrate`, `review`, and `debug` skills via `@./skills/...` so Gemini CLI picks up the full playbook automatically.
-- `gemini-extension.json` at the repository root — unlocks one-shot install via `gemini extensions install https://github.com/Purchasely/Purchasely-AI-Plugin`.
-- OpenCode plugin support via `.opencode/INSTALL.md` — covers prerequisites, the one-line `opencode.json` install, usage examples, updating, and Windows troubleshooting (`npm install --prefix` workaround).
-- README *OpenCode* block in the per-harness Quickstart section pointing at `.opencode/INSTALL.md`.
-- `SessionStart` hook (`hooks/hooks.json`, `hooks/hooks-cursor.json`, `hooks/session-start`, `hooks/run-hook.cmd`, `hooks/intro.md`) auto-injects pointers to the `integrate` / `review` / `debug` skills and `/purchasely:question` command so the plugin is discoverable without the user typing a slash command first. Works on Claude Code, Cursor, and any host honoring the standard SDK `additionalContext` envelope. Zero-dependency POSIX shell + polyglot `.cmd` wrapper for Windows (Git Bash / WSL).
-- `.claude-plugin/plugin.json` now points at `./hooks/hooks.json`.
-- `docs/distribution.md` — public roadmap listing the official marketplaces we want to ship to (Anthropic `claude-plugins-official`, OpenAI Codex `openai/plugins`, Factory Droid, GitHub Copilot CLI, Anthropic Skill Marketplace) with status, target install command, and work-to-do for each.
-- README *Discoverability* section now links to the distribution roadmap.
-
-### Changed
-
-- Restructured the `README.md` installation section into a per-harness *Quickstart* (Claude Code, Codex CLI, Codex App, Cursor, Gemini CLI, OpenCode, GitHub Copilot CLI, Mistral `vibe`, Windsurf, JetBrains, Continue). The legacy `install.sh` one-shot install moves into a dedicated *Installation (legacy / all-in-one)* section below it.
-
 ## [1.0.0] — 2026-05-19
 
 Initial public release of the Purchasely AI Plugin.
 
 ### Added
+
+#### Cross-harness support
+- `AGENTS.md` at the repository root — cross-vendor [agents.md](https://agents.md) standard, auto-detected by Codex, Cursor, Zed, Mistral `vibe`, and other harnesses without running `install.sh`.
+- `GEMINI.md` at the repository root — imports the `integrate`, `review`, and `debug` skills via `@./skills/...` so Gemini CLI picks up the full playbook automatically.
+- `gemini-extension.json` at the repository root — unlocks one-shot install via `gemini extensions install https://github.com/Purchasely/Purchasely-AI-Plugin`.
+- OpenCode plugin support via `.opencode/INSTALL.md` — covers prerequisites, the one-line `opencode.json` install, usage examples, updating, and Windows troubleshooting (`npm install --prefix` workaround).
+- `SessionStart` hook (`hooks/hooks.json`, `hooks/hooks-cursor.json`, `hooks/session-start`, `hooks/run-hook.cmd`, `hooks/intro.md`) auto-injects pointers to the `integrate` / `review` / `debug` skills and `/purchasely:question` command so the plugin is discoverable without the user typing a slash command first. Works on Claude Code, Cursor, and any host honoring the standard SDK `additionalContext` envelope. Zero-dependency POSIX shell + polyglot `.cmd` wrapper for Windows (Git Bash / WSL).
+- `.claude-plugin/plugin.json` now points at `./hooks/hooks.json`.
+- `docs/distribution.md` — public roadmap listing the official marketplaces we want to ship to (Anthropic `claude-plugins-official`, OpenAI Codex `openai/plugins`, Factory Droid, GitHub Copilot CLI, Anthropic Skill Marketplace) with status, target install command, and work-to-do for each.
 
 #### Core plugin infrastructure
 - Claude Code plugin manifest (`.claude-plugin/plugin.json` and `marketplace.json`)
@@ -70,5 +63,9 @@ Initial public release of the Purchasely AI Plugin.
 - `references/concepts/README.md` indexes the concept files
 - Every `.md` reference file is cited by at least one skill or agent (no orphaned references)
 - `agents/sdk-expert.md` lists every reference file path explicitly
+
+### Changed
+
+- Restructured the `README.md` installation section into a per-harness *Quickstart* (Claude Code, Codex CLI, Codex App, Cursor, Gemini CLI, OpenCode, GitHub Copilot CLI, Mistral `vibe`, Windsurf, JetBrains, Continue). The legacy `install.sh` one-shot install moves into a dedicated *Installation (legacy / all-in-one)* section below it.
 
 [1.0.0]: https://github.com/Purchasely/Purchasely-AI-Plugin/releases/tag/v1.0.0
