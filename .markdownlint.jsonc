@@ -13,5 +13,10 @@
   "MD041": false,   // first line must be H1 — front-matter blocks confuse this
   "MD046": false,   // code block style (we mix fenced and indented)
   "MD051": false,   // link fragments — we don't enforce anchor validity here
-  "MD059": false    // descriptive link text
+  "MD059": false,   // descriptive link text
+
+  // Disable rules that conflict with compact skill/agent file formatting:
+  "MD022": false,   // headings must have blank lines — skill files use compact sections
+  "MD031": false,   // fenced code blocks surrounded by blank lines — compact formatting
+  "MD032": false    // lists surrounded by blank lines — compact formatting in skill files
 }
