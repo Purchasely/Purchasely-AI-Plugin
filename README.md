@@ -6,44 +6,124 @@
 
 > AI-powered assistant for integrating, reviewing, and debugging the [Purchasely](https://www.purchasely.com) SDK across **iOS**, **Android**, **React Native**, **Flutter**, and **Cordova**.
 
-A **Claude Code plugin** that bundles:
+A cross-harness plugin that bundles:
 
-- **4 user-invoked slash commands** — `/purchasely:integrate`, `/purchasely:review`, `/purchasely:debug`, `/purchasely:question`
-- **3 auto-invoked skills** — `integrate`, `review`, `debug` (Claude loads them automatically when relevant; `/purchasely:question` is a slash command only, not a skill — it routes any free-form SDK question to the expert agent)
+- **4 slash commands** — `/purchasely:integrate`, `/purchasely:review`, `/purchasely:debug`, `/purchasely:question`
+- **3 auto-invoked skills** — `integrate`, `review`, `debug`
 - **1 expert agent** — `sdk-expert`
-- **Pre-built configs** for other AI coding tools (Cursor, Copilot, Windsurf, Codex, Gemini, Mistral)
+- **Cross-vendor manifests** — `AGENTS.md`, `GEMINI.md`, `gemini-extension.json`, `.claude-plugin/`, `configs/`
 
-Works with: **Claude Code** · **Cursor** · **GitHub Copilot** · **Windsurf** · **OpenAI Codex** · **Google Gemini** · **Mistral `vibe`** · **JetBrains AI** · **VS Code + Continue**
+Works with **Claude Code**, **Codex CLI**, **Codex App**, **Cursor**, **Gemini CLI**, **OpenCode**, **GitHub Copilot CLI**, **Mistral `vibe`**, **Windsurf**, **JetBrains AI**, and **VS Code + Continue**.
 
 ---
 
-## What It Does
+## Quickstart
 
-| Command | Description |
-|---------|-------------|
-| `/purchasely:integrate` | Step-by-step SDK integration from scratch — installation, initialization, paywall display, action interceptor, user management |
-| `/purchasely:review` | Automated 24-point checklist review of your existing integration — finds bugs, deprecated APIs, and missing best practices |
-| `/purchasely:debug` | Diagnostic trees for common issues — blank paywalls, frozen UI, purchase failures, deeplink problems |
-| `/purchasely:question` | Ask any question about the Purchasely SDK |
+Pick the block matching your harness. Each one is copy-paste-able as is.
 
-## Quick Install
-
-### Option 1 — Claude Code Plugin (best experience)
-
-Inside Claude Code, run the two slash commands below — the first registers the GitHub marketplace, the second installs the `purchasely` plugin from it:
+### Claude Code
 
 ```text
 /plugin marketplace add Purchasely/Purchasely-AI-Plugin
 /plugin install purchasely@Purchasely-AI-Plugin
 ```
 
-You get 4 slash commands (`/purchasely:integrate`, `/purchasely:review`, `/purchasely:debug`, `/purchasely:question`), an `sdk-expert` agent, and 3 skills that Claude invokes automatically when relevant.
+### Codex CLI
 
-To update later, re-run `/plugin marketplace update Purchasely-AI-Plugin` then `/plugin update purchasely`.
+```bash
+cp configs/codex/AGENTS.md AGENTS.md
+```
 
-### Option 2 — Install Script (all tools)
+`AGENTS.md` is the cross-vendor [agents.md](https://agents.md) standard. Codex CLI auto-detects it at the project root.
 
-Clone the repo and run the POSIX-compatible installer. It auto-detects which AI coding tools you have and installs the right config for each one:
+### Codex App
+
+Open the project in Codex App, then drop the same `AGENTS.md` at the project root (or symlink the one from this repo). No further setup.
+
+### Cursor
+
+```bash
+mkdir -p .cursor/rules
+cp configs/cursor/purchasely.mdc .cursor/rules/purchasely.mdc
+```
+
+Rules activate automatically on Swift, Kotlin, TypeScript, Dart, and JavaScript files.
+
+### Gemini CLI
+
+```bash
+gemini extensions install https://github.com/Purchasely/Purchasely-AI-Plugin
+```
+
+Backed by `gemini-extension.json` + `GEMINI.md` at the repository root. To update later:
+
+```bash
+gemini extensions update purchasely
+```
+
+### OpenCode
+
+See [`.opencode/INSTALL.md`](.opencode/INSTALL.md). TL;DR — add to your `opencode.json`:
+
+```json
+{ "plugin": ["purchasely@git+https://github.com/Purchasely/Purchasely-AI-Plugin.git"] }
+```
+
+### GitHub Copilot CLI
+
+```bash
+mkdir -p .github
+cp configs/copilot/copilot-instructions.md .github/copilot-instructions.md
+```
+
+If `.github/copilot-instructions.md` already exists, append rather than overwrite:
+
+```bash
+printf "\n---\n" >> .github/copilot-instructions.md
+cat configs/copilot/copilot-instructions.md >> .github/copilot-instructions.md
+```
+
+### Mistral `vibe`
+
+```bash
+cp configs/mistral/AGENTS.md AGENTS.md
+```
+
+`vibe` shares the cross-vendor `AGENTS.md` format with Codex.
+
+### Windsurf
+
+```bash
+cp configs/windsurf/.windsurfrules .windsurfrules
+```
+
+### JetBrains AI Assistant / VS Code + Continue
+
+<details>
+<summary><strong>JetBrains AI Assistant</strong></summary>
+
+1. Open **Settings → Tools → AI Assistant → Project-Level Prompt**.
+2. Paste the content of `configs/copilot/copilot-instructions.md`.
+3. Click Apply.
+</details>
+
+<details>
+<summary><strong>VS Code + Continue</strong></summary>
+
+Add to your `.continue/config.json`:
+
+```json
+{
+  "systemMessageFile": "configs/copilot/copilot-instructions.md"
+}
+```
+</details>
+
+---
+
+## Installation (legacy / all-in-one)
+
+Prefer the [Quickstart](#quickstart) above when one entry matches your harness. The installer below is a POSIX one-shot that auto-detects every supported tool — handy when bootstrapping a fresh project.
 
 ```bash
 git clone https://github.com/Purchasely/Purchasely-AI-Plugin.git
@@ -61,92 +141,14 @@ cd Purchasely-AI-Plugin
 
 Supported `--tool` values: `claude`, `cursor`, `copilot`, `windsurf`, `codex`, `gemini`, `mistral`.
 
-### Option 3 — Manual Setup Per Tool
+## What It Does
 
-<details>
-<summary><strong>Cursor</strong></summary>
-
-```bash
-mkdir -p .cursor/rules
-cp configs/cursor/purchasely.mdc .cursor/rules/purchasely.mdc
-```
-
-The rules activate automatically when you edit Swift, Kotlin, TypeScript, Dart, or JavaScript files.
-</details>
-
-<details>
-<summary><strong>GitHub Copilot</strong></summary>
-
-```bash
-mkdir -p .github
-cp configs/copilot/copilot-instructions.md .github/copilot-instructions.md
-```
-
-If you already have a `copilot-instructions.md`, append the content instead:
-
-```bash
-printf "\n---\n" >> .github/copilot-instructions.md
-cat configs/copilot/copilot-instructions.md >> .github/copilot-instructions.md
-```
-</details>
-
-<details>
-<summary><strong>Windsurf / Codeium</strong></summary>
-
-```bash
-cp configs/windsurf/.windsurfrules .windsurfrules
-```
-</details>
-
-<details>
-<summary><strong>OpenAI Codex (and any tool reading <code>AGENTS.md</code>)</strong></summary>
-
-```bash
-cp configs/codex/AGENTS.md AGENTS.md
-```
-
-`AGENTS.md` is the emerging cross-vendor standard ([agents.md](https://agents.md)). Tools like Codex, Cursor, Zed, and others read it automatically.
-</details>
-
-<details>
-<summary><strong>Google Gemini CLI</strong></summary>
-
-```bash
-cp configs/gemini/GEMINI.md GEMINI.md
-```
-</details>
-
-<details>
-<summary><strong>Mistral <code>vibe</code></strong></summary>
-
-Mistral's coding agent (`vibe`) reads the cross-vendor `AGENTS.md` format:
-
-```bash
-cp configs/mistral/AGENTS.md AGENTS.md
-# If AGENTS.md already exists (e.g. from Codex), no further action needed —
-# `vibe` shares the same file.
-```
-</details>
-
-<details>
-<summary><strong>JetBrains AI Assistant</strong></summary>
-
-1. Open **Settings → Tools → AI Assistant → Project-Level Prompt**
-2. Paste the content of `configs/copilot/copilot-instructions.md`
-3. Click Apply
-</details>
-
-<details>
-<summary><strong>VS Code + Continue</strong></summary>
-
-Add to your `.continue/config.json`:
-
-```json
-{
-  "systemMessageFile": "configs/copilot/copilot-instructions.md"
-}
-```
-</details>
+| Command | Description |
+|---------|-------------|
+| `/purchasely:integrate` | Step-by-step SDK integration from scratch — installation, initialization, paywall display, action interceptor, user management |
+| `/purchasely:review` | Automated 24-point checklist review of your existing integration — finds bugs, deprecated APIs, and missing best practices |
+| `/purchasely:debug` | Diagnostic trees for common issues — blank paywalls, frozen UI, purchase failures, deeplink problems |
+| `/purchasely:question` | Ask any question about the Purchasely SDK |
 
 ## Usage Examples
 
@@ -195,35 +197,31 @@ Purchasely-AI-Plugin/
 ├── .claude-plugin/
 │   ├── plugin.json              # Claude Code plugin manifest
 │   └── marketplace.json         # Marketplace definition
+├── AGENTS.md                    # Cross-vendor agents.md (Codex, Cursor, Zed, Mistral, …)
+├── GEMINI.md                    # Gemini CLI context (imports skills via @./skills/...)
+├── gemini-extension.json        # `gemini extensions install` manifest
 ├── skills/                      # AI-invoked skills (automatic)
-│   ├── integrate/SKILL.md       # SDK integration guide
-│   ├── review/SKILL.md          # Integration review checklist
-│   └── debug/SKILL.md           # Debugging diagnostic trees
-│                                # (no skill for /purchasely:question — it's
-│                                #  a slash command only; see commands/)
+│   ├── integrate/SKILL.md
+│   ├── review/SKILL.md
+│   └── debug/SKILL.md
 ├── agents/
 │   └── sdk-expert.md            # Purchasely SDK expert agent
 ├── commands/                    # User-invoked slash commands
-│   ├── integrate.md             # /purchasely:integrate
-│   ├── review.md                # /purchasely:review
-│   ├── debug.md                 # /purchasely:debug
-│   └── question.md              # /purchasely:question (free-form Q&A)
+│   ├── integrate.md
+│   ├── review.md
+│   ├── debug.md
+│   └── question.md
 ├── references/                  # SDK documentation (used by skills)
 │   ├── concepts/                # 🌐 Universal SDK concepts (all 5 platforms)
 │   ├── testing/                 # Sandbox setup (Apple, Google)
-│   ├── troubleshooting/         # Common issues, error codes, debug mode,
-│   │                            #  screen-issue-report template
-│   ├── ios/                     # iOS: init, API ref, patterns
-│   ├── android/                 # Android: init, API ref, patterns
-│   ├── react-native/            # React Native integration
-│   ├── flutter/                 # Flutter integration
-│   ├── cordova/                 # Cordova integration
+│   ├── troubleshooting/         # Common issues, error codes, debug mode
+│   ├── ios/  android/  react-native/  flutter/  cordova/
 │   ├── diagrams/                # Architecture diagrams (SVG)
 │   ├── architecture-patterns.md
 │   ├── cross-platform-subscriptions.md
 │   ├── purchasely-architecture.md
 │   └── sdk-versions.md          # 📌 Latest stable SDK versions (single source of truth)
-├── configs/                     # Pre-generated configs for other tools
+├── configs/                     # Pre-generated configs for legacy installs
 │   ├── cursor/purchasely.mdc
 │   ├── copilot/copilot-instructions.md
 │   ├── windsurf/.windsurfrules
@@ -232,11 +230,11 @@ Purchasely-AI-Plugin/
 │   └── mistral/AGENTS.md
 ├── install.sh                   # Auto-installer (detects tools)
 ├── package.json
-├── CHANGELOG.md                 # Keep up to date with every release
+├── CHANGELOG.md
 ├── CONTRIBUTING.md
-├── SECURITY.md                  # Vulnerability disclosure process
+├── SECURITY.md
 ├── CODE_OF_CONDUCT.md
-├── LICENSE                      # MIT
+├── LICENSE
 └── README.md
 ```
 
@@ -265,13 +263,6 @@ Purchasely-AI-Plugin/
 - An app configured in the Purchasely Console with at least one placement
 - Products/plans configured in your store (App Store Connect, Google Play Console, …)
 
-## Discoverability
-
-This plugin is also published on:
-
-- 🤖 **[agentskill.sh](https://agentskill.sh)** — community marketplace for AI agent skills (search `purchasely`)
-- 📦 **Claude Code marketplace** — `/plugin marketplace add Purchasely/Purchasely-AI-Plugin`
-
 ## Contributing
 
 Contributions welcome — bug reports, new troubleshooting recipes, platform improvements, and translations to other AI tools.
@@ -288,9 +279,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 
 When a new SDK version is released:
 
-1. **Update `references/sdk-versions.md`** — this is the single source of truth for pinned versions. Update the table, the pinned snippets, and the `_Last updated_` date.
-2. Update version references in `skills/integrate/SKILL.md` (install section + Step 8 version requirements) and in each platform's `references/<platform>/initialization.md` or `integration.md`.
-3. Update `references/` with new/changed APIs (and `references/concepts/` if a universal behavior changed).
+1. **Update `references/sdk-versions.md`** — single source of truth for pinned versions.
+2. Update version references in `skills/integrate/SKILL.md` and each platform's `references/<platform>/`.
+3. Update `references/` with new/changed APIs.
 4. Update `configs/` with new patterns and rules.
 5. Bump `version` in `.claude-plugin/plugin.json` and `package.json`.
 6. Add an entry to [CHANGELOG.md](CHANGELOG.md).
@@ -298,7 +289,7 @@ When a new SDK version is released:
 
 ## Security
 
-If you find a security issue, please follow the **responsible disclosure process in [SECURITY.md](SECURITY.md)** — do not open a public GitHub issue. The file lists the supported versions, the disclosure contact, and the expected response timeline.
+If you find a security issue, please follow the **responsible disclosure process in [SECURITY.md](SECURITY.md)** — do not open a public GitHub issue.
 
 ## Changelog
 
@@ -315,3 +306,4 @@ MIT — see [LICENSE](LICENSE).
 - [Cursor Rules](https://docs.cursor.com/context/rules-for-ai)
 - [GitHub Copilot Instructions](https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot)
 - [AGENTS.md spec](https://agents.md)
+- [Gemini extensions](https://github.com/google-gemini/gemini-cli)
