@@ -10,6 +10,10 @@ All notable changes to this project are documented here. The format is based on 
 - `GEMINI.md` at the repository root — imports the `integrate`, `review`, and `debug` skills via `@./skills/...` so Gemini CLI picks up the full playbook automatically.
 - `gemini-extension.json` at the repository root — unlocks one-shot install via `gemini extensions install https://github.com/Purchasely/Purchasely-AI-Plugin`.
 
+### Changed
+
+- Restructured the `README.md` installation section into a per-harness *Quickstart* (Claude Code, Codex CLI, Codex App, Cursor, Gemini CLI, OpenCode, GitHub Copilot CLI, Mistral `vibe`, Windsurf, JetBrains, Continue). The legacy `install.sh` one-shot install moves into a dedicated *Installation (legacy / all-in-one)* section below it.
+
 ## [1.0.0] — 2026-05-19
 
 Initial public release of the Purchasely AI Plugin.
