@@ -9,6 +9,8 @@ All notable changes to this project are documented here. The format is based on 
 - `AGENTS.md` at the repository root — cross-vendor [agents.md](https://agents.md) standard, auto-detected by Codex, Cursor, Zed, Mistral `vibe`, and other harnesses without running `install.sh`.
 - `GEMINI.md` at the repository root — imports the `integrate`, `review`, and `debug` skills via `@./skills/...` so Gemini CLI picks up the full playbook automatically.
 - `gemini-extension.json` at the repository root — unlocks one-shot install via `gemini extensions install https://github.com/Purchasely/Purchasely-AI-Plugin`.
+- OpenCode plugin support via `.opencode/INSTALL.md` — covers prerequisites, the one-line `opencode.json` install, usage examples, updating, and Windows troubleshooting (`npm install --prefix` workaround).
+- README *OpenCode* block in the per-harness Quickstart section pointing at `.opencode/INSTALL.md`.
 
 ### Changed
 
