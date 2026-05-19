@@ -6,7 +6,12 @@
 
 > AI-powered assistant for integrating, reviewing, and debugging the [Purchasely](https://www.purchasely.com) SDK across **iOS**, **Android**, **React Native**, **Flutter**, and **Cordova**.
 
-A **Claude Code plugin** that bundles 4 slash commands (`/purchasely:integrate`, `/purchasely:review`, `/purchasely:debug`, `/purchasely:question`), 3 auto-invoked skills, and a dedicated `sdk-expert` agent — plus pre-built configs for other AI coding tools.
+A **Claude Code plugin** that bundles:
+
+- **4 user-invoked slash commands** — `/purchasely:integrate`, `/purchasely:review`, `/purchasely:debug`, `/purchasely:question`
+- **3 auto-invoked skills** — `integrate`, `review`, `debug` (Claude loads them automatically when relevant; `/purchasely:question` is a slash command only, not a skill — it routes any free-form SDK question to the expert agent)
+- **1 expert agent** — `sdk-expert`
+- **Pre-built configs** for other AI coding tools (Cursor, Copilot, Windsurf, Codex, Gemini, Mistral)
 
 Works with: **Claude Code** · **Cursor** · **GitHub Copilot** · **Windsurf** · **OpenAI Codex** · **Google Gemini** · **Mistral `vibe`** · **JetBrains AI** · **VS Code + Continue**
 
@@ -194,22 +199,26 @@ Purchasely-AI-Plugin/
 │   ├── integrate/SKILL.md       # SDK integration guide
 │   ├── review/SKILL.md          # Integration review checklist
 │   └── debug/SKILL.md           # Debugging diagnostic trees
+│                                # (no skill for /purchasely:question — it's
+│                                #  a slash command only; see commands/)
 ├── agents/
 │   └── sdk-expert.md            # Purchasely SDK expert agent
 ├── commands/                    # User-invoked slash commands
 │   ├── integrate.md             # /purchasely:integrate
 │   ├── review.md                # /purchasely:review
 │   ├── debug.md                 # /purchasely:debug
-│   └── question.md              # /purchasely:question
+│   └── question.md              # /purchasely:question (free-form Q&A)
 ├── references/                  # SDK documentation (used by skills)
 │   ├── concepts/                # 🌐 Universal SDK concepts (all 5 platforms)
+│   ├── testing/                 # Sandbox setup (Apple, Google)
+│   ├── troubleshooting/         # Common issues, error codes, debug mode,
+│   │                            #  screen-issue-report template
 │   ├── ios/                     # iOS: init, API ref, patterns
 │   ├── android/                 # Android: init, API ref, patterns
 │   ├── react-native/            # React Native integration
 │   ├── flutter/                 # Flutter integration
 │   ├── cordova/                 # Cordova integration
 │   ├── diagrams/                # Architecture diagrams (SVG)
-│   ├── troubleshooting/         # Common issues & solutions
 │   ├── architecture-patterns.md
 │   ├── cross-platform-subscriptions.md
 │   ├── purchasely-architecture.md
@@ -223,9 +232,22 @@ Purchasely-AI-Plugin/
 │   └── mistral/AGENTS.md
 ├── install.sh                   # Auto-installer (detects tools)
 ├── package.json
+├── CHANGELOG.md                 # Keep up to date with every release
+├── CONTRIBUTING.md
+├── SECURITY.md                  # Vulnerability disclosure process
+├── CODE_OF_CONDUCT.md
 ├── LICENSE                      # MIT
 └── README.md
 ```
+
+### Skill vs slash command
+
+| Trigger | Surface | Description |
+|---------|---------|-------------|
+| `/purchasely:integrate` | Slash command + matching `integrate` skill | The command launches the skill; the skill is also auto-invoked when Claude detects an SDK integration task |
+| `/purchasely:review` | Slash command + matching `review` skill | Same as above |
+| `/purchasely:debug` | Slash command + matching `debug` skill | Same as above |
+| `/purchasely:question` | **Slash command only** | Free-form SDK Q&A routed to the `sdk-expert` agent — no auto-invoked skill (use the command explicitly) |
 
 ## Supported Platforms
 
@@ -276,7 +298,11 @@ When a new SDK version is released:
 
 ## Security
 
-If you find a security issue, please follow the responsible disclosure process in [SECURITY.md](SECURITY.md).
+If you find a security issue, please follow the **responsible disclosure process in [SECURITY.md](SECURITY.md)** — do not open a public GitHub issue. The file lists the supported versions, the disclosure contact, and the expected response timeline.
+
+## Changelog
+
+Notable changes to this plugin are tracked in [CHANGELOG.md](CHANGELOG.md). Every PR that adds, changes, or removes user-visible behaviour should update the `[Unreleased]` section.
 
 ## License
 

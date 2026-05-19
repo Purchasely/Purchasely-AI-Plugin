@@ -2,6 +2,17 @@
 
 Repository conventions for anyone (human or LLM) editing this plugin.
 
+## CHANGELOG must be kept up to date
+
+Every PR that adds, changes, removes, or deprecates anything user-visible **must** update `CHANGELOG.md`:
+
+1. Add the entry under the top-level `## [Unreleased]` section, in the appropriate sub-section: `Added`, `Changed`, `Removed`, `Deprecated`, `Fixed`, `Security`.
+2. Keep entries short, factual, and user-facing. Example: `Added references/concepts/promotional-offers.md — covers Apple promo offers, Google developer-determined offers, offer codes` — not `Reworked the references directory`.
+3. When cutting a release, rename `[Unreleased]` to `[X.Y.Z] — YYYY-MM-DD`, bump `version` in `.claude-plugin/plugin.json` + `package.json`, then add a fresh empty `[Unreleased]` section at the top.
+4. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning follows [SemVer](https://semver.org/spec/v2.0.0.html).
+
+**Rule of thumb:** if you wouldn't write the change in the release notes a client reads, you probably don't need a CHANGELOG entry. Otherwise, write one.
+
 ## Wrapper pattern: name and scope
 
 The "wrapper" pattern (a single dedicated class that owns every call into the Purchasely SDK) is a **recommendation**, not a requirement. The Purchasely SDK is fully usable when called directly from ViewModels, UI code, or anywhere else.

@@ -13,18 +13,27 @@ When a topic also has a deeper platform-specific take (e.g. SwiftUI lifecycle, J
 | [running-modes.md](running-modes.md) | Full vs Observer modes, log levels |
 | [paywall-actions.md](paywall-actions.md) | `PLYPresentationAction` enum + interceptor `proceed/processAction` rules |
 | [presentation-types.md](presentation-types.md) | `PLYPresentationType` enum (NORMAL / FALLBACK / DEACTIVATED / CLIENT) guard |
-| [presentation-cache.md](presentation-cache.md) | App-side caching to avoid `FlowsManager.flowSteps` accumulation |
+| [presentation-cache.md](presentation-cache.md) | App-side caching + preload pattern (avoid `FlowsManager.flowSteps` accumulation) |
 | [observer-mode-post-purchase.md](observer-mode-post-purchase.md) | `proceed → closeAllScreens` ordering, chaining follow-up placements |
 | [user-attributes-targeting.md](user-attributes-targeting.md) | Setting user attributes for audience targeting + GDPR consent |
-| [subscription-checks.md](subscription-checks.md) | Gating content via `userSubscriptions`, restoring purchases |
+| [user-identity.md](user-identity.md) | `userLogin` / `userLogout` timing, anonymous→logged-in merge, foreground resync |
+| [subscription-checks.md](subscription-checks.md) | Gating content via `userSubscriptions`, restoring purchases (with Purchasely-paywall caveat) |
+| [subscription-management.md](subscription-management.md) | Opening the native Manage Subscription page (App Store / Play Store) |
+| [promotional-offers.md](promotional-offers.md) | Offer types, Apple promo offers, Google developer-determined offers, offer codes, win-back |
+| [campaigns.md](campaigns.md) | No-code Console automations (trigger / placement-based), `readyToOpenDeeplink`, SDK ≥ 5.1.0 |
+| [analytics-integration.md](analytics-integration.md) | Forwarding UI events to Firebase / Amplitude / AppsFlyer + analytics wrapper pattern |
 
 ## When to load
 
 | Task | Load |
 |------|------|
-| Integrating from scratch | `running-modes.md`, `paywall-actions.md`, `presentation-types.md` |
+| Integrating from scratch | `running-modes.md`, `paywall-actions.md`, `presentation-types.md`, `user-identity.md` |
 | Adding Observer mode | `observer-mode-post-purchase.md`, `paywall-actions.md` |
 | Adding audience targeting | `user-attributes-targeting.md` |
-| Adding subscription gating | `subscription-checks.md` |
+| Adding subscription gating | `subscription-checks.md`, `subscription-management.md` |
+| Adding retention / win-back paywalls | `promotional-offers.md`, `campaigns.md` |
+| Adding scheduled or event-driven paywalls | `campaigns.md` |
+| Wiring analytics / tracking | `analytics-integration.md`, `user-identity.md` |
+| Improving paywall perceived performance | `presentation-cache.md` (preload pattern) |
 | Debugging stuck paywalls / blank presentations | `presentation-types.md`, `presentation-cache.md`, `paywall-actions.md` |
 | Reviewing an existing integration | all of the above |

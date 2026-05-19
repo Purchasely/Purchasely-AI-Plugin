@@ -105,6 +105,8 @@ Build this on top of the [presentation-types.md](presentation-types.md) guard �
 
 Restore is a user-initiated action (usually a "Restore Purchases" button in Settings). It pulls receipt state from the store and re-applies any active subscriptions to the current user.
 
+> ⚠️ **Before adding an app-side Restore button, check the Purchasely paywall.** Most Screens built in the Purchasely Screen Composer expose a built-in "Restore" button — the Console operator can toggle it on. If the paywall already has one on every relevant screen, **an app-side button is duplicate work and confuses users with two paths**. Confirm with the customer / Console operator first. Add an app-side button only when (a) the Purchasely Screen does not have one, **and** (b) you need restore reachable outside the paywall — typically in Settings, which Apple requires for App Store review (Guideline 3.1.1).
+
 | Platform | API |
 |----------|-----|
 | iOS | `Purchasely.restoreAllProducts(success:failure:)` |

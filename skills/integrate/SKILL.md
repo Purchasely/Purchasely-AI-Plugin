@@ -7,17 +7,41 @@ description: "Use when integrating the Purchasely SDK into a mobile app — guid
 
 You are guiding a developer through integrating the Purchasely SDK into their mobile app. You must write actual code into the user's project — not just explain what to do.
 
-Reference documentation is available in the `references/` directory of this plugin. Before integrating, read `references/purchasely-architecture.md` to understand the end-to-end platform (SDK ↔ Purchasely Server ↔ stores ↔ your backend ↔ third-party tools) and the Full-mode purchase flow.
+Reference documentation is available in the `references/` directory of this plugin. Before integrating, read `references/purchasely-architecture.md` to understand the end-to-end platform (SDK ↔ Purchasely Server ↔ stores ↔ your backend ↔ third-party tools) and the Full-mode purchase flow. If the app already sells subscriptions on the web (Stripe, RevenueCat, in-house billing), also read `references/cross-platform-subscriptions.md` — Purchasely accepts S2S Stripe receipts and the coexistence model has subtle defaults to know about.
 
 **Universal SDK concepts** (apply to every platform — iOS, Android, React Native, Flutter, Cordova) are in `references/concepts/`. Load them as needed:
 
 - `references/concepts/running-modes.md` — Full vs Observer modes, log levels
 - `references/concepts/paywall-actions.md` — `PLYPresentationAction` enum, interceptor `proceed/processAction` rules
 - `references/concepts/presentation-types.md` — `PLYPresentationType` guard (NORMAL / FALLBACK / DEACTIVATED / CLIENT)
-- `references/concepts/presentation-cache.md` — App-side cache to avoid `FlowsManager.flowSteps` accumulation
+- `references/concepts/presentation-cache.md` — App-side cache + **preload pattern** (fetch ahead, display instantly)
 - `references/concepts/observer-mode-post-purchase.md` — `proceed → closeAllScreens` ordering, chaining follow-up placements
 - `references/concepts/user-attributes-targeting.md` — Audience targeting attributes + GDPR consent
+- `references/concepts/user-identity.md` — `userLogin` / `userLogout` timing + anonymous→logged-in merge
 - `references/concepts/subscription-checks.md` — Gating premium content via `userSubscriptions`, restore purchases
+- `references/concepts/subscription-management.md` — Opening the native Manage Subscription page (App Store / Play Store)
+- `references/concepts/promotional-offers.md` — Offer types, Apple promotional offers, Google developer-determined offers, offer codes
+- `references/concepts/campaigns.md` — No-code automations (trigger/placement-based), `readyToOpenDeeplink`, use cases
+- `references/concepts/analytics-integration.md` — Forwarding UI events to Firebase / Amplitude / AppsFlyer + recommended analytics wrapper pattern
+
+**Platform-specific deep dives** (load the one(s) matching the project's platform — they hold the authoritative install snippets, init signatures, and platform-only patterns):
+
+- `references/ios/initialization.md` — iOS install (CocoaPods / SPM / Carthage), `Purchasely.start(...)` signature, App Tracking Transparency hook order, StoreKit 2 setup
+- `references/ios/api-reference.md` — full iOS API surface with signatures (init, fetch, present, attributes, login, sync, errors)
+- `references/ios/common-patterns.md` — SwiftUI lifecycle, UIKit container embedding, `@MainActor` rules, presentation cache implementation
+- `references/android/initialization.md` — Android install (Maven Central, store dependencies, ProGuard/R8 rules), `Purchasely.Builder` setup
+- `references/android/api-reference.md` — full Android API surface with Kotlin/Java signatures
+- `references/android/common-patterns.md` — Jetpack Compose embedding, Fragment vs View, lifecycle-aware patterns
+- `references/react-native/integration.md` — RN-specific install, Metro setup, plugin alignment, store package
+- `references/flutter/integration.md` — Flutter-specific install, MethodChannel/EventChannel bridge, plugin alignment
+- `references/cordova/integration.md` — Cordova-specific install, plugin add, store plugin, JS callbacks
+
+**Troubleshooting & ops** (load when needed):
+
+- `references/testing/README.md` — Sandbox testing on iOS (Sandbox Apple ID) and Android (License Tester, internal track)
+- `references/troubleshooting/debug-mode.md` — Enabling SDK debug logs + Purchasely Console-side Debug Mode (preview drafts on device)
+- `references/troubleshooting/error-codes.md` — `PLYError` reference (iOS + Android), promotional-offer errors, Google Play Billing v8 hang
+- `references/troubleshooting/screen-issue-report.md` — Template for escalating Screen Composer bugs to Purchasely Support
 
 **Latest SDK versions** — always pin to the versions listed in `references/sdk-versions.md` (single source of truth). When this skill mentions installation, pin to exact versions from that doc, not floating versions.
 
@@ -719,6 +743,8 @@ Purchasely.setPaywallActionInterceptor(function(result) {
 
 After the user authenticates in the app, call `userLogin` so Purchasely can associate purchases with the user. On sign out, call `userLogout`.
 
+> **Ordering matters.** Call `userLogin` **before** any subscription gating or `fetchPresentation` call that depends on audience targeting — otherwise the SDK evaluates audience rules against the anonymous user. Also call `synchronize()` on foreground (`applicationDidBecomeActive` / `onResume` / `AppState 'active'`) to refresh state when renewals or cancellations happened in the background. Full per-platform guidance in `references/concepts/user-identity.md` (anonymous→logged-in merge, sign-out caveats, code samples).
+
 ### iOS
 ```swift
 Purchasely.userLogin(with: "USER_ID")
@@ -756,6 +782,30 @@ Purchasely.setUserAttribute("gender", "male")
 ```
 
 **Action:** Find the app's authentication flow (login/signup success handler and logout handler) and add the `userLogin`/`userLogout` calls. If no auth flow exists, add a TODO comment where it should go.
+
+---
+
+## Step 5b: Restore Purchases
+
+A user can lose access to their subscription on a new device, after a reinstall, or after switching account on the store. Apple **requires** a "Restore Purchases" entry point for App Store review (Guideline 3.1.1) — Google does not require but strongly recommends one.
+
+> ⚠️ **Check the Purchasely paywall first.** Most Purchasely Screens built with the Screen Composer already include a "Restore" button — the Console operator can toggle it on. If it's already there on every relevant paywall, **do not add a duplicate** in app code; clarify the situation with the customer / Console operator and surface the existing button. Only add an app-side restore button when (a) the Purchasely Screen does **not** have one, **and** (b) you need a Restore action outside the paywall (e.g. in app Settings — recommended for Apple review).
+
+If you do add it, wire it to `Purchasely.restoreAllProducts(...)`. See `references/concepts/subscription-checks.md` for the full per-platform code samples and the Observer-mode variant (intercept the `RESTORE` paywall action, run your own restore, call `Purchasely.synchronize()` + `proceed(true)`).
+
+**Action:** Search the project for a Settings screen / Account screen. If one exists and the Purchasely paywalls don't already provide restore, add a "Restore Purchases" button there with the SDK call. If the Purchasely paywalls do provide restore, leave the in-paywall button as the canonical entry point and tell the user.
+
+---
+
+## Step 5c: Manage Subscription Entry Point
+
+App Store and Play Store both require an in-app entry point to **manage the subscription** (cancel, upgrade, downgrade). This is a native OS page — your app only opens the right deeplink. See `references/concepts/subscription-management.md` for the per-platform helpers:
+
+- iOS 15+: `AppStore.showManageSubscriptions(in: scene)` (in-app sheet)
+- iOS legacy / fallback: open `https://apps.apple.com/account/subscriptions`
+- Android: open `https://play.google.com/store/account/subscriptions?sku=<sku>&package=<pkg>` (per-product) or the general subscriptions URL
+
+**Action:** Add a "Manage subscription" link in the Settings / Account screen, visible only to active subscribers (gate on `userSubscriptions`).
 
 ---
 
@@ -951,7 +1001,24 @@ For platform-specific elaborations (SwiftUI structured-concurrency guard on iOS,
 
 ---
 
-## Step 9: Diagnostic Markers
+## Step 9: Beyond the Basics — Recommended Next Steps
+
+Once Steps 1-8 are in place and verified, walk the user through the **optional but high-value** add-ons. Each is documented in a dedicated concept reference so you can load only what's relevant.
+
+| Feature | When to suggest | Reference |
+|---------|-----------------|-----------|
+| **Preload paywalls** — call `fetchPresentation` ahead of the display (e.g. on app launch, on screen mount) and keep the result for instant display. Avoids the FlowsManager step accumulation on every re-fetch. | Any production integration — significant perceived-perf win | `references/concepts/presentation-cache.md` |
+| **Campaigns** — schedule paywalls (Black Friday, anniversary), centralise display rules across placements, trigger paywalls on events. Requires SDK ≥ 5.1.0 and `Purchasely.readyToOpenDeeplink(true)`. | Any team running marketing operations | `references/concepts/campaigns.md` |
+| **Promotional offers & promo codes** — retain / win back subscribers with Apple promotional offers, Google developer-determined offers, App Store / Play Store offer codes. Requires SDK ≥ 4.0.0. | Apps with churn, seasonal promos, win-back funnels | `references/concepts/promotional-offers.md` |
+| **Analytics integration** — forward Purchasely UI events to Firebase / Amplitude / AppsFlyer (client-side) and subscription lifecycle events via 3rd-party integrations / webhooks (server-side, recommended). | Any team with an analytics stack — recommend a single analytics wrapper / manager to centralise the routing | `references/concepts/analytics-integration.md` |
+| **Subscription gating + restore** — gate premium content via `userSubscriptions`, restore purchases from Settings | Any app with premium features | `references/concepts/subscription-checks.md` |
+| **Audience attributes + GDPR consent** — target users with `setUserAttribute`, gate event flow on consent | Apps with marketing audiences or EU users | `references/concepts/user-attributes-targeting.md` |
+
+Pick the ones the user's roadmap actually needs — don't push all six on day one.
+
+---
+
+## Step 10: Diagnostic Markers
 
 Add app-side log markers around the key Purchasely decision points — they make every future bug 10× faster to diagnose. The SDK already emits `[Purchasely]` lines; add an app-side prefix (e.g. `[YourApp]`) at:
 

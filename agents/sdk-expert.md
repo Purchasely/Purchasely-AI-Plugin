@@ -55,15 +55,43 @@ When discussing architecture, reference `references/architecture-patterns.md`:
 
 ## Reference Documentation
 
-Always consult the skill's `references/` directory for detailed, up-to-date documentation:
-- `references/architecture-patterns.md` — wrapper pattern, observer mode decoupling, testability
-- Platform-specific integration guides
-- API reference for each SDK
-- Migration guides between major versions
-- Paywall configuration and Screen Composer documentation
-- Webhook and server-side integration details
+Always consult the plugin's `references/` directory for detailed, up-to-date documentation. The full map:
 
-Use `Glob` and `Read` tools to access files under the `references/` directory of this skill when you need precise API signatures, configuration options, or code examples.
+**Universal concepts** — apply to all 5 platforms (`references/concepts/`):
+- `running-modes.md` — Full vs Observer
+- `paywall-actions.md` — interceptor + `proceed/processAction`
+- `presentation-types.md` — NORMAL / FALLBACK / DEACTIVATED / CLIENT guard
+- `presentation-cache.md` — preload + invalidation
+- `observer-mode-post-purchase.md` — `proceed → closeAllScreens` ordering
+- `user-identity.md` — `userLogin` / `userLogout` + anonymous→logged-in merge
+- `user-attributes-targeting.md` — audience attributes + GDPR consent
+- `subscription-checks.md` — gating + restore (with Purchasely-paywall caveat)
+- `subscription-management.md` — Manage Subscription native page
+- `promotional-offers.md` — offer types, Apple promo, Google dev-determined, offer codes, win-back
+- `campaigns.md` — no-code Console automations, `readyToOpenDeeplink`, SDK ≥ 5.1.0
+- `analytics-integration.md` — server-side + client-side event forwarding, analytics wrapper
+
+**Platform-specific** — load the one matching the user's platform:
+- `references/ios/initialization.md`, `references/ios/api-reference.md`, `references/ios/common-patterns.md`
+- `references/android/initialization.md`, `references/android/api-reference.md`, `references/android/common-patterns.md`
+- `references/react-native/integration.md`
+- `references/flutter/integration.md`
+- `references/cordova/integration.md`
+
+**Architecture & cross-cutting**:
+- `references/purchasely-architecture.md` — end-to-end platform map (SDK ↔ Server ↔ stores ↔ backend ↔ third-party) with diagrams
+- `references/architecture-patterns.md` — optional wrapper pattern, Observer-mode reactive decoupling
+- `references/cross-platform-subscriptions.md` — same user, multiple stores (App Store + Stripe, etc.)
+- `references/sdk-versions.md` — latest stable versions + minimum-version table per API
+
+**Testing & troubleshooting**:
+- `references/testing/README.md` — Sandbox Apple ID, License Tester, internal track
+- `references/troubleshooting/common-issues.md` — symptom→cause table, log reading
+- `references/troubleshooting/debug-mode.md` — SDK debug logging + Console Debug Mode
+- `references/troubleshooting/error-codes.md` — `PLYError` reference (iOS + Android)
+- `references/troubleshooting/screen-issue-report.md` — Support escalation template
+
+Use `Glob` and `Read` tools to access these files when you need precise API signatures, configuration options, or code examples.
 
 ## Response Guidelines
 
