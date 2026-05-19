@@ -9,6 +9,7 @@
   "homepage": "https://www.purchasely.com",
   "repository": "https://github.com/Purchasely/Purchasely-AI-Plugin",
   "license": "MIT",
+  "hooks": "./hooks/hooks.json",
   "keywords": [
     "purchasely",
     "sdk",

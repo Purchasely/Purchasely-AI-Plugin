@@ -1,0 +1,53 @@
+#!/bin/sh
+# Purchasely AI Plugin — SessionStart hook
+#
+# Emits a short pointer to the plugin's skills + slash command so the host
+# (Claude Code, Cursor, Copilot CLI, …) knows the Purchasely playbook is
+# available without the user having to type a slash command first.
+#
+# Output format is chosen at runtime:
+#   - Claude Code  -> {"hookSpecificOutput": {"hookEventName": "SessionStart",
+#                                             "additionalContext": "..."}}
+#   - Cursor       -> {"additional_context": "..."}
+#   - Standard SDK -> {"additionalContext": "..."}   (top-level)
+#
+# Zero runtime dependencies: pure /bin/sh, no jq, no node.
+
+set -eu
+
+DIR=$(cd -- "$(dirname -- "$0")" && pwd)
+INTRO_FILE="$DIR/intro.md"
+
+if [ ! -f "$INTRO_FILE" ]; then
+  echo "session-start: missing $INTRO_FILE" >&2
+  exit 1
+fi
+
+# JSON-escape stdin (\, ", control chars, newlines) without external tools.
+json_escape() {
+  awk '
+    BEGIN { ORS = "" }
+    {
+      s = $0
+      gsub(/\\/, "\\\\", s)
+      gsub(/"/,  "\\\"", s)
+      gsub(/\r/, "\\r",  s)
+      gsub(/\t/, "\\t",  s)
+      printf "%s\\n", s
+    }
+  ' "$1"
+}
+
+ESCAPED=$(json_escape "$INTRO_FILE")
+
+# Platform detection.
+#   CLAUDECODE / CLAUDE_PLUGIN_ROOT -> Claude Code
+#   CURSOR_AGENT / CURSOR_TRACE_ID  -> Cursor
+#   anything else                   -> generic SDK envelope
+if [ "${CLAUDECODE:-}" = "1" ] || [ -n "${CLAUDE_PLUGIN_ROOT:-}" ]; then
+  printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"%s"}}\n' "$ESCAPED"
+elif [ -n "${CURSOR_AGENT:-}" ] || [ -n "${CURSOR_TRACE_ID:-}" ]; then
+  printf '{"additional_context":"%s"}\n' "$ESCAPED"
+else
+  printf '{"additionalContext":"%s"}\n' "$ESCAPED"
+fi
