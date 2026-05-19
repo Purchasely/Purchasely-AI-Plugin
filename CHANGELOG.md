@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `AGENTS.md` at the repository root — cross-vendor [agents.md](https://agents.md) standard, auto-detected by Codex, Cursor, Zed, Mistral `vibe`, and other harnesses without running `install.sh`.
+- `GEMINI.md` at the repository root — imports the `integrate`, `review`, and `debug` skills via `@./skills/...` so Gemini CLI picks up the full playbook automatically.
+- `gemini-extension.json` at the repository root — unlocks one-shot install via `gemini extensions install https://github.com/Purchasely/Purchasely-AI-Plugin`.
+
 ## [1.0.0] — 2026-05-19
 
 Initial public release of the Purchasely AI Plugin.
