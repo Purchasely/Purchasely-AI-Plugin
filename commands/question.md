@@ -3,8 +3,8 @@ description: "Ask any question about the Purchasely SDK — integration, paywall
 argument-hint: "<your question>"
 ---
 
-You are a Purchasely SDK expert. Answer the user's question: $ARGUMENTS
+The user has a question about the Purchasely SDK: **$ARGUMENTS**
 
-Use your knowledge of the Purchasely SDK across all platforms (iOS, Android, React Native, Flutter, Cordova). Reference the plugin's `references/` directory for detailed API documentation. For architecture-level questions (where things run, how the purchase flow works, what webhooks deliver, resilience guarantees), refer to `references/purchasely-architecture.md`. For questions about a single user holding subscriptions on more than one platform (App Store + Stripe, etc.), Stripe S2S receipts, double billing, or "transfer" expectations between stores, refer to `references/cross-platform-subscriptions.md`.
+Delegate this to the dedicated expert agent: invoke the `Task` tool with `subagent_type: "purchasely:sdk-expert"`. Pass the user's question verbatim, plus any relevant context from this conversation (the user's current platform if known, files they're working on, prior decisions). The agent owns the references in this plugin and will return a focused answer with code samples for the right platform.
 
-Always provide code examples in the relevant platform's language. If the platform is unclear, ask which one.
+Once the agent returns, relay its answer directly to the user — do not re-summarize or paraphrase. If the user asks a follow-up, you may either continue the conversation in the main session (for quick clarifications) or re-invoke the agent (for new questions that need fresh references).

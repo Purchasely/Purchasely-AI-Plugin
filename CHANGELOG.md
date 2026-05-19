@@ -24,6 +24,9 @@ All notable changes to this project are documented here. The format is based on 
 - `skills/integrate` — new sections **Step 5b** (Restore Purchases with the Purchasely-paywall caveat) and **Step 5c** (Manage Subscription entry point); new **Step 9** (Beyond the Basics — preload, campaigns, promo offers, analytics, subscription gating, attributes); identity-ordering note added to Step 5; references header extended with new concept files
 - `skills/review` — new checks: `userLogin` ordering vs `fetchPresentation`, foreground `synchronize` on resume, Restore button (with Purchasely-paywall awareness), Manage Subscription entry point, `PrivacyInfo.xcprivacy` (iOS 17 SDK / May 2024 App Store requirement), Google Play Billing v8 awareness, `LogLevel.DEBUG` build-flag gating; new sections **3.9 Campaigns**, **3.10 Promotional Offers**, **3.11 Analytics & Events Forwarding**
 
+#### Command routing
+- `/purchasely:question` now explicitly delegates to the `purchasely:sdk-expert` agent via the `Task` tool, instead of priming the main session as an expert. This honors the agent's `model: sonnet` selection, isolates the Q&A context, and makes the routing symmetric with the other three commands (which trigger their matching skill). The command's `description` and `argument-hint` are unchanged — the user-visible UX is the same.
+
 #### Documentation hygiene
 - `CLAUDE.md` now mandates keeping `CHANGELOG.md` up to date on every user-visible change
 - `README.md` clarifies the **skill vs slash command** distinction (`/purchasely:question` is a slash command only — no matching skill); SECURITY and CHANGELOG sections now actively reference the disclosure / release-notes flow

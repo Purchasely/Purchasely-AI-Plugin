@@ -247,7 +247,7 @@ Purchasely-AI-Plugin/
 | `/purchasely:integrate` | Slash command + matching `integrate` skill | The command launches the skill; the skill is also auto-invoked when Claude detects an SDK integration task |
 | `/purchasely:review` | Slash command + matching `review` skill | Same as above |
 | `/purchasely:debug` | Slash command + matching `debug` skill | Same as above |
-| `/purchasely:question` | **Slash command only** | Free-form SDK Q&A routed to the `sdk-expert` agent — no auto-invoked skill (use the command explicitly) |
+| `/purchasely:question` | **Slash command → agent** | Free-form SDK Q&A — the command explicitly delegates to the `purchasely:sdk-expert` agent via the `Task` tool. No matching auto-invoked skill (use the command explicitly) |
 
 ## Supported Platforms
 
