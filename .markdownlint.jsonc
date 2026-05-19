@@ -13,6 +13,7 @@
   "MD041": false,   // first line must be H1 — front-matter blocks confuse this
   "MD046": false,   // code block style (we mix fenced and indented)
   "MD051": false,   // link fragments — we don't enforce anchor validity here
+  "MD028": false,   // blank line inside blockquote — intentional in technical docs
   "MD059": false,   // descriptive link text
 
   // Disable rules that conflict with compact skill/agent file formatting:
