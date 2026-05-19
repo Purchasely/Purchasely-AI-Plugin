@@ -25,31 +25,36 @@ Works with: **Claude Code** · **Cursor** · **GitHub Copilot** · **Windsurf** 
 
 ### Option 1 — Claude Code Plugin (best experience)
 
-```bash
-# Inside Claude Code, add the marketplace:
-/plugin marketplace add Purchasely/AI-Plugin
+Inside Claude Code, run the two slash commands below — the first registers the GitHub marketplace, the second installs the `purchasely` plugin from it:
 
-# Then install the plugin:
-/plugin install purchasely@Purchasely
+```text
+/plugin marketplace add Purchasely/Purchasely-AI-Plugin
+/plugin install purchasely@Purchasely-AI-Plugin
 ```
 
-You get 4 slash commands, an `sdk-expert` agent, and 3 skills that Claude invokes automatically when relevant.
+You get 4 slash commands (`/purchasely:integrate`, `/purchasely:review`, `/purchasely:debug`, `/purchasely:question`), an `sdk-expert` agent, and 3 skills that Claude invokes automatically when relevant.
+
+To update later, re-run `/plugin marketplace update Purchasely-AI-Plugin` then `/plugin update purchasely`.
 
 ### Option 2 — Install Script (all tools)
 
-```bash
-git clone https://github.com/Purchasely/AI-Plugin.git
-cd AI-Plugin
+Clone the repo and run the POSIX-compatible installer. It auto-detects which AI coding tools you have and installs the right config for each one:
 
-# Auto-detect installed AI tools and install configs
+```bash
+git clone https://github.com/Purchasely/Purchasely-AI-Plugin.git
+cd Purchasely-AI-Plugin
+
+# Auto-detect installed AI tools and install configs in the current directory
 ./install.sh
 
-# Or install for a specific tool
+# Install for a specific tool in a target project
 ./install.sh --tool cursor --project /path/to/your/app
 
-# Install for all detected tools without prompting
+# Install for every detected tool without prompting
 ./install.sh --all --project /path/to/your/app
 ```
+
+Supported `--tool` values: `claude`, `cursor`, `copilot`, `windsurf`, `codex`, `gemini`, `mistral`.
 
 ### Option 3 — Manual Setup Per Tool
 
@@ -181,7 +186,7 @@ AI: Provides a complete SwiftUI example with fetchPresentation + display,
 ## Project Structure
 
 ```
-AI-Plugin/
+Purchasely-AI-Plugin/
 ├── .claude-plugin/
 │   ├── plugin.json              # Claude Code plugin manifest
 │   └── marketplace.json         # Marketplace definition
@@ -243,7 +248,7 @@ AI-Plugin/
 This plugin is also published on:
 
 - 🤖 **[agentskill.sh](https://agentskill.sh)** — community marketplace for AI agent skills (search `purchasely`)
-- 📦 **Claude Code marketplace** — `/plugin marketplace add Purchasely/AI-Plugin`
+- 📦 **Claude Code marketplace** — `/plugin marketplace add Purchasely/Purchasely-AI-Plugin`
 
 ## Contributing
 
@@ -252,7 +257,7 @@ Contributions welcome — bug reports, new troubleshooting recipes, platform imp
 1. Fork the repository
 2. Create a feature branch (`feat/my-improvement`)
 3. Update the relevant files in `skills/`, `references/`, or `configs/`
-4. Test with Claude Code: `claude --plugin-dir ./AI-Plugin`
+4. Test with Claude Code: `claude --plugin-dir ./Purchasely-AI-Plugin`
 5. Submit a pull request
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.

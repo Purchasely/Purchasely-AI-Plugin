@@ -1,5 +1,5 @@
 {
-  "name": "AI-Plugin",
+  "name": "Purchasely-AI-Plugin",
   "owner": {
     "name": "Purchasely",
     "url": "https://github.com/Purchasely"
@@ -17,7 +17,7 @@
         "name": "Purchasely",
         "email": "engineering@purchasely.com"
       },
-      "homepage": "https://github.com/Purchasely/AI-Plugin",
+      "homepage": "https://github.com/Purchasely/Purchasely-AI-Plugin",
       "tags": ["purchasely", "sdk", "in-app-purchase", "paywalls", "subscriptions", "ios", "android", "react-native", "flutter", "cordova"],
       "source": "./"
     }

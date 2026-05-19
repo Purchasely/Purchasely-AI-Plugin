@@ -30,5 +30,5 @@ All notable changes to this project are documented here. The format is based on 
 - POSIX-compatible `install.sh` with auto-detection of installed AI tools
 - MIT License
 
-[Unreleased]: https://github.com/Purchasely/AI-Plugin/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/Purchasely/AI-Plugin/releases/tag/v1.0.0
+[Unreleased]: https://github.com/Purchasely/Purchasely-AI-Plugin/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Purchasely/Purchasely-AI-Plugin/releases/tag/v1.0.0

@@ -194,8 +194,8 @@ install_claude() {
   if confirm "Install Purchasely plugin for Claude Code?"; then
     printf "\n"
     info "Preferred: Run these commands inside Claude Code:"
-    printf "\n    %s%s/plugin marketplace add Purchasely/AI-Plugin%s\n" "$BOLD" "$CYAN" "$RESET"
-    printf "    %s%s/plugin install purchasely@Purchasely%s\n\n" "$BOLD" "$CYAN" "$RESET"
+    printf "\n    %s%s/plugin marketplace add Purchasely/Purchasely-AI-Plugin%s\n" "$BOLD" "$CYAN" "$RESET"
+    printf "    %s%s/plugin install purchasely@Purchasely-AI-Plugin%s\n\n" "$BOLD" "$CYAN" "$RESET"
     info "Alternatively, you can manually copy configs from:"
     info "  ${SCRIPT_DIR}/configs/claude/"
     info "to your project's .claude/ directory."
