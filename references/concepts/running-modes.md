@@ -67,12 +67,16 @@ await Purchasely.start(
 ### Cordova (JavaScript)
 
 ```js
-Purchasely.start({
-  apiKey: 'YOUR_API_KEY',
-  storeKit1: false,
-  logLevel: Purchasely.LogLevel.WARN,
-  runningMode: Purchasely.RunningMode.FULL, // or PAYWALL_OBSERVER
-}, success => {}, error => {});
+Purchasely.start(
+  'YOUR_API_KEY',
+  ['Google'],
+  false,
+  null,
+  Purchasely.LogLevel.WARN,
+  Purchasely.RunningMode.full, // or paywallObserver
+  success => {},
+  error => {},
+);
 ```
 
 ## Log Levels

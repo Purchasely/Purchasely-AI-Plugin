@@ -9,14 +9,18 @@ You are guiding a developer through integrating the Purchasely SDK into their mo
 
 Reference documentation is available in the `../../references/` directory of this plugin. Before integrating, read `../../references/purchasely-architecture.md` to understand the end-to-end platform (SDK ↔ Purchasely Server ↔ stores ↔ your backend ↔ third-party tools) and the Full-mode purchase flow. If the app already sells subscriptions on the web (Stripe, another subscription platform, in-house billing), also read `../../references/cross-platform-subscriptions.md` — Purchasely accepts S2S Stripe receipts and the coexistence model has subtle defaults to know about.
 
+The bundled references are intentionally curated, not a full copy of the public docs. If a required integration detail is missing, looks stale, or depends on an exact SDK signature / current Console behavior, verify it against the official Purchasely documentation at https://docs.purchasely.com/ before writing code.
+
 **Universal SDK concepts** (apply to every platform — iOS, Android, React Native, Flutter, Cordova) are in `../../references/concepts/`. Load them as needed:
 
 - `../../references/concepts/running-modes.md` — Full vs Observer modes, log levels
 - `../../references/concepts/paywall-actions.md` — `PLYPresentationAction` enum, interceptor `proceed/processAction` rules
 - `../../references/concepts/presentation-types.md` — `PLYPresentationType` guard (NORMAL / FALLBACK / DEACTIVATED / CLIENT)
 - `../../references/concepts/presentation-cache.md` — App-side cache + **preload pattern** (fetch ahead, display instantly)
-- `../../references/concepts/observer-mode-post-purchase.md` — `proceed → closeAllScreens` ordering, chaining follow-up placements
-- `../../references/concepts/user-attributes-targeting.md` — Audience targeting attributes + GDPR consent
+- `../../references/concepts/observer-mode-post-purchase.md` — `proceed/processAction → dismiss` ordering, chaining follow-up placements
+- `../../references/concepts/programmatic-purchases.md` — Exact app-side purchase APIs by platform
+- `../../references/concepts/user-attributes-targeting.md` — Audience targeting attributes
+- `../../references/concepts/privacy-settings.md` — `revokeDataProcessingConsent`, essential/optional processing, GDPR/CMP choices
 - `../../references/concepts/user-identity.md` — `userLogin` / `userLogout` timing + anonymous→logged-in merge
 - `../../references/concepts/subscription-checks.md` — Gating premium content via `userSubscriptions`, restore purchases
 - `../../references/concepts/subscription-management.md` — Opening the native Manage Subscription page (App Store / Play Store)
@@ -44,6 +48,10 @@ Reference documentation is available in the `../../references/` directory of thi
 - `../../references/troubleshooting/screen-issue-report.md` — Template for escalating Screen Composer bugs to Purchasely Support
 
 **Latest SDK versions** — always pin to the versions listed in `../../references/sdk-versions.md` (single source of truth). When this skill mentions installation, pin to exact versions from that doc, not floating versions.
+
+## Expert checkpoint
+
+Before writing integration code, invoke the `Task` tool with `subagent_type: "purchasely:sdk-expert"` and ask it to validate the intended implementation. Pass the detected platform, running mode, target store(s), SDK version, placement/display approach, purchase handling plan, privacy/consent requirements if any, and any uncertainty from the local project. Incorporate the expert's corrections before editing files.
 
 ## Arguments
 
@@ -865,23 +873,23 @@ When the interceptor receives a `PURCHASE` action in Observer mode, you run the 
 
 1. **`Purchasely.synchronize()`** — uploads the receipt to Purchasely
 2. **`proceed(false)` / `processAction(false)`** — tell the SDK you handled the purchase (skip its own flow)
-3. **`Purchasely.closeAllScreens()`** — force-dismiss the paywall
+3. **Dismiss the paywall** — native iOS/Android use `Purchasely.closeAllScreens()`; React Native / Flutter / Cordova public bridges use `Purchasely.closePresentation()`
 
 **The order matters:** the interceptor must learn the action was handled BEFORE the paywall tears down. Reversing it leaves the paywall in an inconsistent state.
 
-### SDK version requirements for `closeAllScreens()`
+### SDK version requirements for dismissal
 
 | Platform | Minimum version |
 |----------|-----------------|
 | iOS (native) | **5.7.5+** — `@MainActor`-isolated. Wrap in `Task { @MainActor in Purchasely.closeAllScreens() }` when called from a non-isolated synchronous context. |
 | Android (native) | **5.7.4+** — no threading constraint. |
-| React Native | Cross-platform plugin **5.7.3+** (bridges to native 5.7.5 / 5.7.4). |
-| Flutter | Cross-platform plugin **5.7.3+**. |
-| Cordova | Cross-platform plugin **5.7.3+**. |
+| React Native | Use `Purchasely.closePresentation()` in the public JS bridge. |
+| Flutter | Use `Purchasely.closePresentation()` in the public Dart bridge. |
+| Cordova | Use `Purchasely.closePresentation()` in the public JS bridge. |
 
 Full version list: `../../references/sdk-versions.md`.
 
-> Use `closeAllScreens()` (not `closeDisplayedPresentation()`) — it correctly tears down Flow paywalls with multiple steps and is required if you plan to chain a follow-up placement (see Optional section below).
+> On native iOS/Android, use `closeAllScreens()` (not `closeDisplayedPresentation()`) — it correctly tears down Flow paywalls with multiple steps. On React Native / Flutter / Cordova, use the public bridge `closePresentation()` unless the app added its own native `closeAllScreens()` bridge.
 
 ### iOS Observer-mode post-purchase
 
@@ -924,14 +932,14 @@ private fun onPurchaseSuccess(processAction: (Boolean) -> Unit) {
 
 ### React Native / Flutter / Cordova Observer-mode post-purchase
 
-The cross-platform plugins expose `synchronize()` as an awaitable promise and `closeAllScreens()` as a sync method. The pattern collapses to three lines:
+The public bridge APIs differ: React Native and Cordova `synchronize()` are fire-and-forget; Flutter `synchronize()` is awaitable. All three public bridges dismiss with `closePresentation()`.
 
 **React Native (TypeScript)**
 
 ```ts
-await Purchasely.synchronize();
+Purchasely.synchronize();
 Purchasely.onProcessAction(false);
-Purchasely.closeAllScreens();
+Purchasely.closePresentation();
 ```
 
 **Flutter (Dart)**
@@ -939,19 +947,15 @@ Purchasely.closeAllScreens();
 ```dart
 await Purchasely.synchronize();
 Purchasely.onProcessAction(false);
-Purchasely.closeAllScreens();
+await Purchasely.closePresentation();
 ```
 
 **Cordova (JavaScript)**
 
 ```js
-Purchasely.synchronize(() => {
-  Purchasely.onProcessAction(false);
-  Purchasely.closeAllScreens();
-}, err => {
-  Purchasely.onProcessAction(false);
-  Purchasely.closeAllScreens();
-});
+Purchasely.synchronize();
+Purchasely.onProcessAction(false);
+Purchasely.closePresentation();
 ```
 
 For chained follow-up placements on cross-platform SDKs, see `../../references/concepts/observer-mode-post-purchase.md`.
@@ -1023,7 +1027,7 @@ Pick the ones the user's roadmap actually needs — don't push all six on day on
 Add app-side log markers around the key Purchasely decision points — they make every future bug 10× faster to diagnose. The SDK already emits `[Purchasely]` lines; add an app-side prefix (e.g. `[YourApp]`) at:
 
 - After `synchronize()` completes (success or failure)
-- Before each `closeAllScreens()` call
+- Before each platform dismiss call (`closeAllScreens()` on native iOS/Android, `closePresentation()` on React Native / Flutter / Cordova)
 - Inside the `fetchPresentation` completion (placement, type, error)
 - When chaining a follow-up placement (and what it resolves to)
 

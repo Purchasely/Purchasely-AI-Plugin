@@ -1,13 +1,15 @@
 # Flutter Integration
 
-> **Cross-platform reference.** This file covers Flutter-specific syntax. Many concepts (Observer-mode post-purchase flow, presentation type guard, presentation cache, audience-targeting attributes, GDPR consent, subscription checks) are **universal across iOS / Android / RN / Flutter / Cordova** and live in `../concepts/`. Load:
+> **Cross-platform reference.** This file covers Flutter-specific syntax. Many concepts (Observer-mode post-purchase flow, presentation type guard, presentation cache, programmatic purchases, audience-targeting attributes, GDPR consent, subscription checks) are **universal across iOS / Android / RN / Flutter / Cordova** and live in `../concepts/`. Load:
 >
 > - [`../concepts/running-modes.md`](../concepts/running-modes.md) — Full vs Observer + log levels
 > - [`../concepts/paywall-actions.md`](../concepts/paywall-actions.md) — `PLYPresentationAction` enum + interceptor rules
 > - [`../concepts/presentation-types.md`](../concepts/presentation-types.md) — `NORMAL` / `FALLBACK` / `DEACTIVATED` / `CLIENT` guard
 > - [`../concepts/presentation-cache.md`](../concepts/presentation-cache.md) — app-side cache (recommended)
-> - [`../concepts/observer-mode-post-purchase.md`](../concepts/observer-mode-post-purchase.md) — `proceed → closeAllScreens` ordering, chaining follow-up placements
+> - [`../concepts/observer-mode-post-purchase.md`](../concepts/observer-mode-post-purchase.md) — `proceed → closePresentation` ordering, chaining follow-up placements
+> - [`../concepts/programmatic-purchases.md`](../concepts/programmatic-purchases.md) — exact `purchaseWithPlanVendorId` syntax
 > - [`../concepts/user-attributes-targeting.md`](../concepts/user-attributes-targeting.md) — audience targeting + GDPR consent
+> - [`../concepts/privacy-settings.md`](../concepts/privacy-settings.md) — `revokeDataProcessingConsent` and privacy purposes
 > - [`../concepts/subscription-checks.md`](../concepts/subscription-checks.md) — gating premium content, restore purchases
 > - [`../sdk-versions.md`](../sdk-versions.md) — latest stable versions (pin to **5.7.3** for Flutter)
 
@@ -91,54 +93,47 @@ void main() async {
 }
 ```
 
-## Display a Paywall
+## Display a Paywall or Flow
 
-### Full-Screen Presentation
+Use `fetchPresentation()` and then `presentPresentation()` for standard paywalls and Flows. The bridge calls native `presentation.display()`, which is required for Flow close controls and step transitions.
 
 ```dart
 try {
-  final result = await Purchasely.presentPresentationForPlacement(
-    placementVendorId: 'ONBOARDING',
-    isFullscreen: true,
-    contentId: null,  // optional content targeting
-  );
+  final presentation = await Purchasely.fetchPresentation('ONBOARDING');
 
-  switch (result.result) {
-    case PLYPurchaseResult.purchased:
-      print('Purchased plan: ${result.plan?.vendorId}');
+  if (presentation == null) {
+    print('No presentation found');
+    return;
+  }
+
+  switch (presentation.type) {
+    case PLYPresentationType.normal:
+    case PLYPresentationType.fallback:
+      final result = await Purchasely.presentPresentation(
+        presentation,
+        isFullscreen: true,
+      );
+
+      switch (result.result) {
+        case PLYPurchaseResult.purchased:
+          print('Purchased plan: ${result.plan?.vendorId}');
+          break;
+        case PLYPurchaseResult.restored:
+          print('Restored purchases');
+          break;
+        case PLYPurchaseResult.cancelled:
+          print('User cancelled');
+          break;
+      }
       break;
-    case PLYPurchaseResult.restored:
-      print('Restored purchases');
-      break;
-    case PLYPurchaseResult.cancelled:
-      print('User cancelled');
-      break;
+    case PLYPresentationType.deactivated:
+      return; // Do NOT display
+    case PLYPresentationType.client:
+      showCustomPaywall(presentation.plans);
+      return;
   }
 } catch (e) {
   print('Presentation error: $e');
-}
-```
-
-### Fetch Presentation (check type before displaying)
-
-```dart
-final presentation = await Purchasely.fetchPresentation(
-  placementVendorId: 'PREMIUM',
-);
-
-switch (presentation.type) {
-  case PLYPresentationType.normal:
-  case PLYPresentationType.fallback:
-    // Safe to display
-    Purchasely.presentPresentation(presentation: presentation);
-    break;
-  case PLYPresentationType.deactivated:
-    // Do NOT display
-    break;
-  case PLYPresentationType.client:
-    // Use your own UI with Purchasely plan data
-    showCustomPaywall(presentation.plans);
-    break;
 }
 ```
 
@@ -227,6 +222,18 @@ Purchasely.userLogin('user_123');
 Purchasely.userLogout();
 ```
 
+## Programmatic Purchases
+
+For app-side purchase buttons in Full mode, use `purchaseWithPlanVendorId`. Do not use `Purchasely.purchase(planId: ...)`; that API is not exposed by the Flutter bridge.
+
+```dart
+final purchasedPlan = await Purchasely.purchaseWithPlanVendorId(
+  vendorId: 'premium_yearly',
+  offerId: null,
+  contentId: null,
+);
+```
+
 ## User Attributes
 
 Set attributes for audience targeting and personalization:
@@ -296,7 +303,7 @@ Purchasely.readyToOpenDeeplink(true);
 Force synchronization with Purchasely servers:
 
 ```dart
-Purchasely.synchronize();
+await Purchasely.synchronize();
 ```
 
 ## Complete Integration Example
@@ -347,11 +354,26 @@ class MyApp extends StatelessWidget {
 
 class HomeScreen extends StatelessWidget {
   Future<void> _showPaywall() async {
-    final result = await Purchasely.presentPresentationForPlacement(
-      placementVendorId: 'ONBOARDING',
-      isFullscreen: true,
-    );
-    print('Result: ${result.result}');
+    final presentation = await Purchasely.fetchPresentation('ONBOARDING');
+
+    if (presentation == null) {
+      return;
+    }
+
+    switch (presentation.type) {
+      case PLYPresentationType.normal:
+      case PLYPresentationType.fallback:
+        final result = await Purchasely.presentPresentation(
+          presentation,
+          isFullscreen: true,
+        );
+        print('Result: ${result.result}');
+        break;
+      case PLYPresentationType.deactivated:
+        return;
+      case PLYPresentationType.client:
+        return;
+    }
   }
 
   @override

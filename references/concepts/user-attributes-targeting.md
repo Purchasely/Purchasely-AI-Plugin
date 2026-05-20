@@ -2,7 +2,7 @@
 
 Applies to: **iOS, Android, React Native, Flutter, Cordova**.
 
-User attributes are key-value pairs the SDK forwards to Purchasely servers. They power **audience targeting**, **paywall personalization**, and **flow gating** on the dashboard. Set them whenever your app learns something about the user.
+User attributes are key-value pairs the SDK forwards to Purchasely servers. They power **audience targeting**, **paywall personalization**, and **flow gating** on the dashboard. Set them whenever your app learns something about the user. For SDK-level processing consent and revocation, use [privacy-settings.md](privacy-settings.md).
 
 ## When to set attributes
 
@@ -65,7 +65,8 @@ Purchasely.setUserAttributeWithBoolean('is_power_user', user.isPowerUser);
 ```dart
 Purchasely.setUserAttributeWithString('first_name',   user.firstName);
 Purchasely.setUserAttributeWithString('email',        user.email);
-Purchasely.setUserAttributeWithNumber('age',          user.age);
+Purchasely.setUserAttributeWithInt('age',             user.age);
+Purchasely.setUserAttributeWithDouble('score',        user.score);
 Purchasely.setUserAttributeWithDate('signup_date',    user.signupDate);
 Purchasely.setUserAttributeWithBoolean('is_power_user', user.isPowerUser);
 ```
@@ -75,7 +76,8 @@ Purchasely.setUserAttributeWithBoolean('is_power_user', user.isPowerUser);
 ```js
 Purchasely.setUserAttributeWithString('first_name',   user.firstName);
 Purchasely.setUserAttributeWithString('email',        user.email);
-Purchasely.setUserAttributeWithNumber('age',          user.age);
+Purchasely.setUserAttributeWithInt('age',             user.age);
+Purchasely.setUserAttributeWithDouble('score',        user.score);
 Purchasely.setUserAttributeWithDate('signup_date',    user.signupDate.toISOString());
 Purchasely.setUserAttributeWithBoolean('is_power_user', user.isPowerUser);
 ```
@@ -91,7 +93,7 @@ Purchasely.setUserAttributeWithBoolean('is_power_user', user.isPowerUser);
 
 ## GDPR consent pattern
 
-Initialize the SDK **always** (paywall display requires it). Set consent-related attributes only after the user grants consent.
+Initialize the SDK **always** (paywall display and subscription operations require it). Set consent-related attributes only after the user grants consent, and call `revokeDataProcessingConsent(...)` for processing categories the user declines.
 
 ### iOS
 
@@ -113,11 +115,12 @@ func enableTracking() {
 
 ### Android / RN / Flutter / Cordova
 
-Same shape — initialize unconditionally, then set `gdpr_consent` (Bool) and `consent_date` (Date / ISO string) once the user opts in. If consent is revoked later, call `clearUserAttribute("gdpr_consent")` and `clearUserAttribute("consent_date")`, and reset any PII attributes you stored.
+Same shape — initialize unconditionally, then set `gdpr_consent` (Bool) and `consent_date` (Date / ISO string) once the user opts in. If consent is revoked later, call `revokeDataProcessingConsent(...)` for the declined processing purposes, clear consent marker attributes if you store them, and reset any PII attributes you stored.
 
 ## Anti-patterns
 
 - ❌ Skipping `Purchasely.start()` until consent is granted — paywalls won't display, fetch errors propagate.
+- ❌ Treating `clearUserAttributes()` as GDPR revocation — use [privacy-settings.md](privacy-settings.md) and `revokeDataProcessingConsent(...)` for SDK processing control.
 - ❌ Setting all attributes once at app start with stale values — refresh on login and profile updates.
 - ❌ Forgetting to invalidate the [presentation cache](presentation-cache.md) after attribute changes — audiences resolve against old state.
 - ❌ Storing very large strings as attributes — the dashboard truncates and audience rules misfire.
@@ -125,4 +128,5 @@ Same shape — initialize unconditionally, then set `gdpr_consent` (Bool) and `c
 ## See also
 
 - [presentation-cache.md](presentation-cache.md) — when to invalidate after attribute changes
+- [privacy-settings.md](privacy-settings.md) — data processing purposes, revocation, essential vs optional processing
 - [subscription-checks.md](subscription-checks.md) — gating content based on subscription, not just attributes

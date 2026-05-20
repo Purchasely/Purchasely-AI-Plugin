@@ -21,7 +21,7 @@ Every call to `Purchasely.fetchPresentation(...)` resolves with a `PLYPresentati
 |----------|------|
 | iOS | `PLYPresentationType.normal` / `.fallback` / `.deactivated` / `.client` |
 | Android | `PLYPresentationType.NORMAL` / `.FALLBACK` / `.DEACTIVATED` / `.CLIENT` |
-| React Native | `Purchasely.PresentationType.NORMAL` / `.FALLBACK` / `.DEACTIVATED` / `.CLIENT` |
+| React Native | `PLYPresentationType.NORMAL` / `.FALLBACK` / `.DEACTIVATED` / `.CLIENT` |
 | Flutter | `PLYPresentationType.normal` / `.fallback` / `.deactivated` / `.client` |
 | Cordova | String values: `'NORMAL'`, `'FALLBACK'`, `'DEACTIVATED'`, `'CLIENT'` |
 
@@ -34,8 +34,7 @@ Purchasely.fetchPresentation(for: "PREMIUM_PAYWALL") { presentation, error in
     guard let presentation = presentation else { return }
     switch presentation.type {
     case .normal, .fallback:
-        guard let controller = presentation.controller else { return }
-        UIApplication.shared.topViewController()?.present(controller, animated: true)
+        presentation.display()
     case .deactivated:
         // Dashboard disabled this presentation — skip
         return
@@ -49,6 +48,8 @@ Purchasely.fetchPresentation(for: "PREMIUM_PAYWALL") { presentation, error in
     // purchase outcome
 }
 ```
+
+If the app explicitly needs to own the container (embedded `UIViewController`, custom `UIWindow`, nested inline Screen in an article/list, or push inside an existing navigation stack), use `presentation.controller` instead of `display()`. For regular modal/full-screen Flow display, prefer `display()` so the SDK owns Flow close controls and step transitions.
 
 ### Android (Kotlin)
 
@@ -67,20 +68,23 @@ Purchasely.fetchPresentation("PREMIUM_PAYWALL") { presentation, error ->
 ### React Native (TypeScript)
 
 ```ts
+import Purchasely, { PLYPresentationType } from 'react-native-purchasely';
+
 const presentation = await Purchasely.fetchPresentation({
   placementId: 'PREMIUM_PAYWALL',
 });
 
 switch (presentation.type) {
-  case Purchasely.PresentationType.NORMAL:
-  case Purchasely.PresentationType.FALLBACK: {
+  case PLYPresentationType.NORMAL:
+  case PLYPresentationType.FALLBACK: {
+    // presentPresentation bridges to native presentation.display(), which is required for Flows.
     const result = await Purchasely.presentPresentation({ presentation });
     handleResult(result);
     break;
   }
-  case Purchasely.PresentationType.DEACTIVATED:
+  case PLYPresentationType.DEACTIVATED:
     return; // skip silently
-  case Purchasely.PresentationType.CLIENT:
+  case PLYPresentationType.CLIENT:
     showCustomPaywall(presentation.plans);
     break;
 }
@@ -89,13 +93,16 @@ switch (presentation.type) {
 ### Flutter (Dart)
 
 ```dart
-final presentation = await Purchasely.fetchPresentation(
-  placementId: 'PREMIUM_PAYWALL',
-);
+final presentation = await Purchasely.fetchPresentation('PREMIUM_PAYWALL');
+
+if (presentation == null) {
+  return;
+}
 
 switch (presentation.type) {
   case PLYPresentationType.normal:
   case PLYPresentationType.fallback:
+    // presentPresentation bridges to native presentation.display(), which is required for Flows.
     final result = await Purchasely.presentPresentation(presentation);
     handleResult(result);
     break;
@@ -110,14 +117,17 @@ switch (presentation.type) {
 ### Cordova (JavaScript)
 
 ```js
-Purchasely.fetchPresentation(
-  { placementId: 'PREMIUM_PAYWALL' },
+Purchasely.fetchPresentationForPlacement(
+  'PREMIUM_PAYWALL',
+  null,
   presentation => {
     switch (presentation.type) {
       case 'NORMAL':
       case 'FALLBACK':
         Purchasely.presentPresentation(
-          { presentation },
+          presentation,
+          true,
+          null,
           result => handleResult(result),
           err => console.error(err),
         );
@@ -140,6 +150,18 @@ The dashboard can disable a placement for an audience without redeploying the ap
 - Display a deactivated placement (visible to users you wanted to exclude).
 - Crash or show a blank screen when the SDK returns `CLIENT` and they call `display()` on it.
 - Mis-attribute analytics events when a fallback fires silently.
+
+## Display vs embedded container
+
+Use `display()` / bridge `presentPresentation(...)` by default. Switch to container APIs only when the app explicitly needs to embed or control the Purchasely UI:
+
+| Platform | Default display | Embedded / nested API |
+|----------|-----------------|-----------------------|
+| iOS | `presentation.display(from:)` | `presentation.controller` / `Purchasely.presentationController(...)` |
+| Android | `presentation.display(activity)` | `presentation.buildView(...)` or `presentation.getFragment(...)` |
+| React Native | `Purchasely.presentPresentation({ presentation })` | native view / inline component integration |
+| Flutter | `Purchasely.presentPresentation(presentation)` | `PurchaselyNativeView` |
+| Cordova | `Purchasely.presentPresentation(presentation, isFullscreen, backgroundColor, success, error)` | no general-purpose inline bridge in the public JS API |
 
 ## See also
 

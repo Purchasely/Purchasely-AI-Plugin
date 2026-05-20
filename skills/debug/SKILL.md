@@ -11,15 +11,19 @@ When the issue touches the purchase flow, missing events, or webhook delivery, c
 
 When the issue involves a `user_id` with active subscriptions on more than one platform (App Store + Stripe, Play Store + Stripe, etc.), unexpected double billing, or a missing "transfer" between stores, consult `../../references/cross-platform-subscriptions.md` — coexistence is the documented default behavior, not a bug.
 
+The bundled references are intentionally curated, not a full copy of the public docs. If the diagnosis depends on an exact SDK signature, current Console behavior, or a detail missing from `../../references/`, verify it against the official Purchasely documentation at https://docs.purchasely.com/ before patching code.
+
 **Universal SDK concept references** (apply to every platform — load as needed during diagnosis):
 
 - `../../references/concepts/paywall-actions.md` — interceptor rules + `proceed/processAction` must-call-once invariant (root cause of most "frozen UI" bugs)
 - `../../references/concepts/presentation-types.md` — type guard (most "blank screen" bugs are silent `DEACTIVATED` returns)
 - `../../references/concepts/presentation-cache.md` — stale presentations / stuck Flow paywalls + preload pattern
-- `../../references/concepts/observer-mode-post-purchase.md` — `proceed → closeAllScreens` ordering issues
+- `../../references/concepts/observer-mode-post-purchase.md` — `proceed/processAction → dismiss` ordering issues
 - `../../references/concepts/running-modes.md` — Full vs Observer mode confusion
+- `../../references/concepts/programmatic-purchases.md` — wrong app-side purchase API names (`purchase(planId)`, `purchase({ planId })`, Cordova positional callbacks)
 - `../../references/concepts/user-identity.md` — `userLogin` ordering bugs (audience matches against anonymous user, subscriptions lost on logout, missing `synchronize` on resume)
 - `../../references/concepts/user-attributes-targeting.md` — attributes not flowing to audience targeting
+- `../../references/concepts/privacy-settings.md` — consent revocation, optional attributes ignored, Campaigns/analytics disabled
 - `../../references/concepts/subscription-checks.md` — "user paid but premium gating doesn't unlock" bugs
 - `../../references/concepts/subscription-management.md` — "user cancelled but the app doesn't reflect it" (foreground resync)
 - `../../references/concepts/promotional-offers.md` — promo offer not applied / charged at regular price / `invalidOfferSignature`
@@ -46,6 +50,10 @@ When the issue involves a `user_id` with active subscriptions on more than one p
 - `../../references/troubleshooting/error-codes.md` — what each `PLYError` case means (iOS + Android), promotional-offer-specific errors, Google Play Billing v8 hang
 - `../../references/troubleshooting/screen-issue-report.md` — template to package when escalating a Screen Composer bug to Purchasely Support
 - `../../references/testing/README.md` — sandbox testing (Apple Sandbox Apple ID, Google License Tester)
+
+## Expert checkpoint
+
+Before patching code or declaring a root cause, invoke the `Task` tool with `subagent_type: "purchasely:sdk-expert"` and ask it to validate the diagnosis and fix plan. Pass the platform, SDK version, running mode, logs or symptoms, relevant code paths, suspected root cause, and the smallest proposed fix. Incorporate corrections before editing files or reporting the diagnosis.
 
 ## Step 0: Enable Debug Logging — Always Do This First
 
@@ -124,7 +132,7 @@ This is almost always because `processAction()` / `proceed()` was not called in 
 ### Deeplinks Not Working
 
 1. **Check handler method** -- search for `handleDeeplink` (current) vs `isDeeplinkHandled` (deprecated). If using the deprecated version, recommend switching to `handleDeeplink`.
-2. **Check deeplink readiness flags** -- search for `allowDeeplink` or `readyToOpenDeeplink`. These must be set to `true` before deeplinks will be processed.
+2. **Check deeplink readiness flags** -- search for `readyToOpenDeeplink`. It must be set to `true` before deeplinks will be processed on the current 5.x SDK line.
 3. **Check default presentation result handler** -- `setDefaultPresentationResultHandler` must be configured, or the SDK has nowhere to send deeplink paywall results.
 4. **Check URL scheme / universal links** -- verify the app's URL scheme or associated domains are correctly configured in the platform project settings and match what the Console generates.
 5. **Check timing** -- if `handleDeeplink` is called before `start()` completes, it will silently fail.
@@ -173,14 +181,14 @@ When you identify one of these patterns, apply the known fix immediately:
 | Paywall loads but buttons do nothing | `PLYUIDelegate` / `UIDelegate` not set or not retained | Set the delegate and store a strong reference to the delegate object |
 | Crash on paywall display (Android) | Application context passed instead of Activity context | Pass the current Activity, not `applicationContext` |
 | App freezes after closing a flow paywall (touches don't register) | The X button fires `.close` (back navigation) instead of `.closeAll` (full exit); `PLYWindow` stays alive waiting for a next step that never comes | Fix the paywall in Purchasely Console: change X button action from `close` to `closeAll`. Fallback: map `.close` → `closeAllScreens()` in interceptor. See `../../references/troubleshooting/common-issues.md` §11 |
-| Paywall doesn't dismiss after Observer-mode purchase | `closeAllScreens()` not called, or called BEFORE `proceed(false)` / `processAction(false)` | Order MUST be `proceed(false)` → `closeAllScreens()`. iOS requires SDK 5.7.5+ and `Task { @MainActor in … }` from non-isolated contexts. Android requires SDK 5.7.4+ |
+| Paywall doesn't dismiss after Observer-mode purchase | Dismiss API not called, or called BEFORE `proceed(false)` / `processAction(false)` | Order MUST be `proceed(false)` → dismiss. Native iOS/Android use `closeAllScreens()`; React Native / Flutter / Cordova public bridges use `closePresentation()`. iOS requires SDK 5.7.5+ and `Task { @MainActor in … }` from non-isolated contexts |
 | Wrong screen reappears after Observer-mode purchase (e.g. the onboarding paywall replays) | The flow hosting the placement chains a post-purchase step to the wrong paywall on the Console | Inspect `flow_id` + `displayed_presentation` in the `PRESENTATION_LOADED` event after purchase. Dashboard → Flows → fix the post-purchase branch |
 | Chained follow-up placement shows the wrong/fallback screen | The follow-up `fetchPresentation` resolved against stale subscription state | iOS: await `synchronize()` via `withCheckedThrowingContinuation` BEFORE fetching the next placement. Android: fire-and-forget — accept brief stale-state risk |
 | Paywall not updating after Console changes | SDK presentation cache | Clear app data, force kill, or invalidate the app-side cache via attribute change (iOS `PLYUserAttributeDelegate`) or explicit `wrapper.synchronize()`/`wrapper.restart()` (Android) |
 | iOS compile error: *"Call to main actor-isolated class method 'closeAllScreens()' in a synchronous nonisolated context."* | Calling `closeAllScreens()` from a `DispatchQueue.main.async` block, a `synchronize(success:)` callback, or a `nonisolated` delegate | Wrap in `Task { @MainActor in Purchasely.closeAllScreens() }` |
 | iOS: presentation re-fetches on every `.onAppear` (and Flow paywalls get stuck) | SDK has no native placement-level cache; repeated fetches accumulate `flowSteps` entries in `FlowsManager` | Add an app-side `PresentationCache` keyed by `placementId[/contentId]`. Invalidate on user-attribute changes and `synchronize()`. See `../../references/ios/common-patterns.md` |
 | RN/Flutter/Cordova: same stuck-paywall / repeated-fetch issue as iOS above | Same SDK quirk — the cross-platform bridge calls native fetch every time and has no shared cache | Apply the universal cache pattern from `../../references/concepts/presentation-cache.md` (skeleton implementations included for RN, Flutter, Cordova) |
-| RN/Flutter/Cordova: `closeAllScreens()` not exposed on JS/Dart side | Cross-platform plugin pinned to a version older than 5.7.3 | Upgrade the plugin per `../../references/sdk-versions.md`. 5.7.3 bridges native 5.7.4/5.7.5 |
+| RN/Flutter/Cordova: `closeAllScreens()` not exposed on JS/Dart side | Expected public bridge API mismatch | Use `closePresentation()` on the public JS/Dart side. `closeAllScreens()` is the native iOS/Android method unless the app has added a custom bridge |
 | RN/Flutter/Cordova: Flow paywall opens but cannot be closed (no X, no step transitions) | App uses the shorthand `Purchasely.presentPresentationForPlacement(...)`. On plugin ≤ 5.7.x the cross-platform bridge does not branch on Flow — Flutter routes Flows through `PLYProductActivity` / `showController(_, type: .productPage)`, bypassing `presentation.display()`. The Flow manager never owns the window, so close affordance and step navigation are absent. `presentPresentationForPlacement` itself remains valid for simple non-Flow paywalls; the bug only surfaces when a Flow is assigned to the placement | Switch to the doc-recommended path: `fetchPresentation(placementId)` → `presentPresentation(presentation)`. The `presentPresentation` bridge correctly checks `isFlow` / `flowId != null` and calls native `display()`. See https://docs.purchasely.com/docs/general-in-app-experiences-display#how-to-display-an-in-app-experience-associated-to-a-placement |
 | RN/Flutter/Cordova: native crash on init or missing API | Plugin packages out of alignment (e.g. `react-native-purchasely 5.7.3` + `@purchasely/react-native-purchasely-google 5.6.0`) | Pin all plugin packages to the same `5.7.3`. See `../../references/sdk-versions.md` |
 

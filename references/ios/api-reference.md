@@ -20,9 +20,24 @@ Purchasely.start(withAPIKey: "YOUR_API_KEY",
 
 ## Paywall Presentation
 
+### `Purchasely.display(...)` / `PLYPresentation.display(from:)`
+
+Default display API for full-screen or modal paywalls and Flows. Prefer this unless the app explicitly needs to embed or push the Purchasely screen inside its own container.
+
+```swift
+Purchasely.fetchPresentation(for: "PLACEMENT_ID") { presentation, error in
+    guard let presentation,
+          presentation.type == .normal || presentation.type == .fallback else { return }
+
+    presentation.display(from: self)
+} completion: { result, plan in
+    // result: .purchased, .restored, .cancelled
+}
+```
+
 ### `Purchasely.presentationController(for:contentId:loaded:completion:)`
 
-Returns a `UIViewController` for the given placement. Use this to push or present the paywall.
+Returns a `UIViewController` for the given placement. Use this only when the app needs to own the container: push onto a custom navigation stack, embed in SwiftUI via `UIViewControllerRepresentable`, host in a custom `UIWindow`, or render a nested/inline Purchasely Screen.
 
 ```swift
 let controller = Purchasely.presentationController(
@@ -52,9 +67,8 @@ Purchasely.fetchPresentation(
         // presentation.type: .normal, .fallback, .deactivated, .client
         guard presentation?.type != .deactivated else { return }
 
-        // Display the presentation
-        let controller = presentation?.controller
-        self.present(controller!, animated: true)
+        // Default Flow-safe display path
+        presentation?.display(from: self)
     },
     completion: { result, plan in
         // Purchase result callback
@@ -113,13 +127,13 @@ func application(_ app: UIApplication, open url: URL, options: [UIApplication.Op
 }
 ```
 
-### `Purchasely.allowDeeplink(_:)`
+### `Purchasely.readyToOpenDeeplink(_:)`
 
-Indicate when the app is ready to display deeplinked content (e.g., after onboarding). Replaces the deprecated `readyToOpenDeeplink`.
+Indicate when the app is ready to display deeplinked content (e.g., after onboarding). Use `readyToOpenDeeplink` on the current 5.x SDK line.
 
 ```swift
 // Call when your root view controller is ready
-Purchasely.allowDeeplink(true)
+Purchasely.readyToOpenDeeplink(true)
 ```
 
 ## Presentation Result Handler
@@ -213,10 +227,31 @@ To force a cache refresh:
 
 ```swift
 Purchasely.userSubscriptions(
-    refresh: true,
+    true,
     success: { subscriptions in ... },
     failure: { error in ... }
 )
+```
+
+## Programmatic Purchases
+
+Use this for app-side purchase buttons in Full mode. Fetch a `PLYPlan` first; there is no `purchase(planId:)` API.
+
+```swift
+Purchasely.plan(with: "premium_yearly") { plan in
+    Purchasely.purchase(
+        plan: plan,
+        contentId: nil,
+        success: {
+            // Refresh premium state
+        },
+        failure: { error in
+            // Surface purchase error
+        }
+    )
+} failure: { error in
+    // Surface plan lookup error
+}
 ```
 
 ## Restore Purchases
@@ -227,8 +262,8 @@ Restore the user's previous purchases. Should be triggered by a user action (e.g
 
 ```swift
 Purchasely.restoreAllProducts(
-    success: { plan in
-        print("Restored plan: \(plan?.vendorId ?? "unknown")")
+    success: {
+        print("Restore completed")
     },
     failure: { error in
         print("Restore failed: \(error?.localizedDescription ?? "")")

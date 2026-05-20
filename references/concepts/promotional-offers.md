@@ -82,7 +82,7 @@ Purchasely.plan(with: "your_plan_vendor_id") { plan in
     Purchasely.purchaseWithPromotionalOffer(
         plan: plan,
         contentId: nil,
-        storePromotionalOffer: promoOffer,
+        storeOfferId: promoOffer.storeOfferId,
         success: { /* purchased */ },
         failure: { error in /* surface */ }
     )
@@ -131,8 +131,8 @@ Purchasely.setPaywallActionInterceptorCallback((result) => {
     // to get { identifier, signature, keyIdentifier, timestamp } and pass them to your purchase flow
 
     // After your own purchase flow resolves:
-    Purchasely.hidePresentation();
-    Purchasely.onProcessAction(false);   // SDK closes
+    Purchasely.onProcessAction(false);
+    Purchasely.closePresentation();
   } else {
     Purchasely.onProcessAction(true);
   }

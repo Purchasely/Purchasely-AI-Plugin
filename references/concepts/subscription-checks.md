@@ -17,7 +17,7 @@ Two related concerns sit outside the paywall display flow but are essential for 
 | After `synchronize()` succeeds | Receipt state may have changed. |
 | Pull-to-refresh in account screens | User-initiated refresh. |
 
-> The SDK caches subscription state. Pass `invalidateCache=true` (Android) / equivalent on other platforms only when you need a forced re-pull — e.g. right after a known purchase or restore.
+> The SDK caches subscription state. Use the platform's cache-busting parameter only when it exists and you need a forced re-pull — e.g. right after a known purchase or restore. iOS and Android expose `invalidateCache`; React Native exposes `{ invalidateCache }`; Flutter and Cordova do not expose this parameter in the inspected public bridge.
 
 ## `userSubscriptions` — code per platform
 
@@ -39,15 +39,18 @@ Purchasely.userSubscriptions(
 ### Android (Kotlin)
 
 ```kotlin
-Purchasely.userSubscriptions(invalidateCache = false, object : SubscriptionsListener {
-    override fun onSuccess(subscriptions: List<PLYSubscription>) {
-        val hasActive = subscriptions.any {
-            it.plan?.vendorId in setOf("premium_monthly", "premium_yearly")
+Purchasely.userSubscriptions(
+    false,
+    object : SubscriptionsListener {
+        override fun onSuccess(subscriptions: List<PLYSubscriptionData>) {
+            val hasActive = subscriptions.any {
+                it.plan?.vendorId in setOf("premium_monthly", "premium_yearly")
+            }
+            callback(hasActive)
         }
-        callback(hasActive)
+        override fun onFailure(error: PLYError) { callback(false) }
     }
-    override fun onFailure(error: PLYError) { callback(false) }
-})
+)
 ```
 
 ### React Native (TypeScript)
@@ -119,7 +122,7 @@ Restore is a user-initiated action (usually a "Restore Purchases" button in Sett
 
 ```swift
 Purchasely.restoreAllProducts(
-    success: { plan in /* restored */ },
+    success: { /* restored */ },
     failure: { error in /* surface to UI */ }
 )
 ```
@@ -135,10 +138,19 @@ Purchasely.restoreAllProducts(
 
 ### React Native / Flutter / Cordova
 
+React Native and Flutter return a boolean; Cordova uses positional callbacks.
+
 ```ts
 try {
-  const plan = await Purchasely.restoreAllProducts();
+  const restored = await Purchasely.restoreAllProducts();
 } catch (err) { /* surface */ }
+```
+
+```js
+Purchasely.restoreAllProducts(
+  () => { /* restored */ },
+  err => { /* surface */ },
+);
 ```
 
 > On iOS, restore may prompt the user to sign in to the App Store. On Android, it queries Google Play Billing locally (no prompt). The user experience differs; account for that in your UI copy.
@@ -147,7 +159,7 @@ try {
 
 ## Close paywalls programmatically
 
-After a manual gate-then-purchase flow, dismiss the paywall via `Purchasely.closeAllScreens()` (see [observer-mode-post-purchase.md](observer-mode-post-purchase.md) for SDK version requirements). Universal API across all platforms; iOS has an `@MainActor` requirement.
+After a manual gate-then-purchase flow, dismiss the paywall after resolving the action interceptor. Native iOS/Android use `Purchasely.closeAllScreens()`; current React Native / Flutter / Cordova public bridges use `Purchasely.closePresentation()`. See [observer-mode-post-purchase.md](observer-mode-post-purchase.md) for exact per-platform ordering.
 
 ## Anti-patterns
 
@@ -160,4 +172,4 @@ After a manual gate-then-purchase flow, dismiss the paywall via `Purchasely.clos
 
 - [running-modes.md](running-modes.md) — Full vs Observer mode affects who runs the restore
 - [paywall-actions.md](paywall-actions.md) — intercepting the `RESTORE` action in Observer mode
-- [observer-mode-post-purchase.md](observer-mode-post-purchase.md) — `closeAllScreens()` version requirements
+- [observer-mode-post-purchase.md](observer-mode-post-purchase.md) — per-platform Observer-mode dismissal APIs

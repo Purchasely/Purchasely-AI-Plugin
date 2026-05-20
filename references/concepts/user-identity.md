@@ -183,4 +183,4 @@ document.addEventListener('resume', () => {
 - [running-modes.md](running-modes.md) — Full vs Observer responsibilities around receipts
 - [user-attributes-targeting.md](user-attributes-targeting.md) — setting attributes after `userLogin`
 - [subscription-checks.md](subscription-checks.md) — gating premium content after login
-- [observer-mode-post-purchase.md](observer-mode-post-purchase.md) — `synchronize → proceed → closeAllScreens` ordering
+- [observer-mode-post-purchase.md](observer-mode-post-purchase.md) — `synchronize → proceed → dismiss` ordering

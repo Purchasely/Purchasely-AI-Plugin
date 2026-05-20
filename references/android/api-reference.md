@@ -77,8 +77,11 @@ Object returned from `fetchPresentation`:
 | `type` | `PLYPresentationType` | NORMAL, FALLBACK, DEACTIVATED, CLIENT |
 | `plans` | `List<PLYPlan>` | Plans associated with the presentation |
 | `id` | `String` | Presentation identifier |
-| `display(context)` | `void` | Display the paywall as a full-screen activity |
-| `getFragment()` | `Fragment` | Get a Fragment for custom embedding |
+| `display(activity/context)` | `void` | Default display path; opens the paywall or Flow in a separate Activity |
+| `buildView(context, properties, callback)` | `PLYPresentationView?` | Build a View for explicit inline/nested embedding |
+| `getFragment(callback)` | `Fragment` | Get a Fragment for explicit custom embedding |
+
+Use `display(...)` by default. Use `buildView(...)` / `getFragment(...)` only when the app explicitly needs to own the container, such as a nested Screen inside an article, list, Fragment, Activity, or Compose layout.
 
 ### `Purchasely.presentationView(placementId, contentId, callback)` -- DEPRECATED
 
@@ -132,13 +135,13 @@ override fun onCreate(savedInstanceState: Bundle?) {
 }
 ```
 
-### `Purchasely.allowDeeplink`
+### `Purchasely.readyToOpenDeeplink`
 
-Property to indicate when the app is ready to display deeplinked content. Replaces the deprecated `readyToOpenDeeplink`.
+Property to indicate when the app is ready to display deeplinked content.
 
 ```kotlin
 // Set when your main activity is ready
-Purchasely.allowDeeplink = true
+Purchasely.readyToOpenDeeplink(true)
 ```
 
 ## User Management
@@ -181,6 +184,33 @@ Purchasely.setUserAttribute("articles_read", 42)
 
 ## Subscriptions
 
+## Programmatic Purchases
+
+Use this for app-side purchase buttons in Full mode. Fetch a `PLYPlan` first; there is no `purchase(planId = ...)` overload.
+
+```kotlin
+Purchasely.plan(
+    "premium_yearly",
+    onSuccess = { plan ->
+        Purchasely.purchase(
+            activity = activity,
+            plan = plan,
+            offer = null,
+            contentId = null,
+            onSuccess = {
+                // Refresh premium state
+            },
+            onError = { error ->
+                // Surface purchase error
+            }
+        )
+    },
+    onError = { error ->
+        // Surface plan lookup error
+    }
+)
+```
+
 ### `Purchasely.userSubscriptions(invalidateCache, listener)`
 
 Fetch the user's active subscriptions. The first parameter is a **`Boolean`** that controls cache invalidation: `true` forces a fresh fetch, `false` uses the SDK cache.
@@ -210,16 +240,18 @@ Purchasely.userSubscriptions(
 
 > Use `subscription.plan.store_product_id` (not `productId`) to read the underlying Google Play product ID.
 
-Named-parameter style (equivalent):
+To force cache invalidation, pass `true` as the first argument:
 
 ```kotlin
 Purchasely.userSubscriptions(
-    invalidate = false,
-    onSuccess = { subscriptions ->
-        subscriptions.forEach { Log.d("PLY", it.plan.vendorId) }
-    },
-    onError = { error ->
-        Log.e("PLY", "Error", error)
+    true,
+    object : SubscriptionsListener {
+        override fun onSuccess(subscriptions: List<PLYSubscriptionData>) {
+            subscriptions.forEach { Log.d("PLY", it.plan?.vendorId ?: "") }
+        }
+        override fun onFailure(error: PLYError) {
+            Log.e("PLY", "Error fetching subscriptions", error)
+        }
     }
 )
 ```

@@ -16,6 +16,17 @@ All notable changes to this project are documented here. The format is based on 
 - `.cursor-plugin/marketplace.json` now points to the `purchasely` plugin folder, matching Cursor's multi-plugin marketplace layout.
 - `AGENTS.md` and `GEMINI.md` now act as thin bootstraps to the canonical `skills/` playbooks instead of duplicating SDK guidance.
 - Skill reference links now use paths relative to each `SKILL.md`, so Copilot CLI, Claude Code, and Codex installs resolve bundled `references/` files correctly.
+- React Native and Flutter display guidance now favors `fetchPresentation()` + `presentPresentation()` for Flow-compatible rendering via native `display()`.
+- Skills and the SDK expert now explicitly fall back to the official Purchasely docs when bundled references are incomplete or exact current API details are needed.
+- `integrate`, `review`, and `debug` skills now require an SDK expert checkpoint to validate implementation plans, review findings, or debug diagnoses.
+- Added `programmatic-purchases.md` and wired skills/expert to exact app-side purchase APIs per platform.
+- Added `privacy-settings.md` with `revokeDataProcessingConsent(...)`, privacy purposes, and essential/optional processing guidance.
+- Corrected bridge dismissal guidance: React Native, Flutter, and Cordova use `closePresentation()` in their public bridges, while native iOS/Android use `closeAllScreens()`.
+- Clarified Flow display guidance: prefer `display()` / bridge `presentPresentation()` by default, but use iOS controllers or Android `buildView()` / fragments for explicit embedded or nested Screens.
+- Refreshed Cordova signatures and Flutter/Cordova numeric user-attribute examples.
+- Added exact API signature matrix to the SDK expert and guard checks for known-bad SDK snippets.
+- Corrected iOS action-interceptor, deeplink readiness, promotional-offer, restore, and `userSubscriptions()` examples.
+- Added support-derived known issue / known fix troubleshooting snippets for iOS StoreKit, Flow, promo offers, Promoted IAP, Android promo-code placements, and user migration.
 
 ### Removed
 

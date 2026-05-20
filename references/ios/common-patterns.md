@@ -6,6 +6,8 @@
 
 ## Displaying a Paywall from SwiftUI
 
+For normal modal/full-screen paywalls and Flows, prefer `fetchPresentation(...)` followed by `presentation.display(from:)`. Use the controller patterns below only when SwiftUI must own the embedded container.
+
 Use a `UIViewControllerRepresentable` wrapper to embed the Purchasely paywall in SwiftUI:
 
 ```swift
@@ -50,6 +52,20 @@ struct ContentView: View {
 ```
 
 ## Displaying a Paywall from UIKit
+
+For regular modal display, prefer:
+
+```swift
+Purchasely.fetchPresentation(for: "ONBOARDING") { presentation, error in
+    guard let presentation,
+          presentation.type == .normal || presentation.type == .fallback else { return }
+    presentation.display(from: self)
+} completion: { result, plan in
+    // Handle result
+}
+```
+
+Use `presentationController(...)` only when you need to push/embed the controller yourself.
 
 ### Modal Presentation
 

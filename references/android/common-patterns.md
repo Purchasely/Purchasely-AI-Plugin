@@ -48,7 +48,7 @@ class PaywallActivity : AppCompatActivity() {
 
 ## Display Paywall in a Fragment
 
-Embed a paywall as a Fragment within your layout:
+Use `presentation.display(activity)` for regular full-screen/modal display. Embed a paywall as a Fragment only when the app explicitly needs to own the container:
 
 ```kotlin
 class PaywallContainerFragment : Fragment(R.layout.fragment_paywall_container) {
@@ -83,7 +83,7 @@ class PaywallContainerFragment : Fragment(R.layout.fragment_paywall_container) {
 
 ## Display Paywall in Jetpack Compose
 
-Use `AndroidView` or `AndroidViewBinding` to embed the paywall Fragment:
+Use `presentation.display(activity)` for regular display. Use `AndroidView`, `AndroidViewBinding`, `presentation.buildView(...)`, or `presentation.getFragment(...)` only for inline/nested Screens where Compose owns the container:
 
 ```kotlin
 @Composable

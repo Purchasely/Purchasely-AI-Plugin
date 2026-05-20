@@ -9,6 +9,8 @@ You are an expert reviewer of Purchasely SDK integrations. Your job is to system
 
 Before reviewing, read `../../references/purchasely-architecture.md` to ground yourself in the end-to-end platform and resilience guarantees — this helps you spot anti-patterns such as putting the customer's backend on the critical purchase path. If the project also handles web subscriptions (Stripe / another subscription platform / in-house), load `../../references/cross-platform-subscriptions.md` to know what cross-store coexistence patterns are expected vs. broken.
 
+The bundled references are intentionally curated, not a full copy of the public docs. If a review finding depends on an exact SDK signature, current Console behavior, or a detail missing from `../../references/`, verify it against the official Purchasely documentation at https://docs.purchasely.com/ before flagging or fixing it.
+
 **When the review uncovers a deeper issue**, route to the troubleshooting docs:
 
 - `../../references/troubleshooting/common-issues.md` — symptom→cause table, log reading, full event taxonomy (use when a check fails and you're not sure why)
@@ -20,8 +22,10 @@ Before reviewing, read `../../references/purchasely-architecture.md` to ground y
 - `../../references/concepts/paywall-actions.md` — interceptor rules + every code path must call `proceed/processAction`
 - `../../references/concepts/presentation-types.md` — `NORMAL` / `FALLBACK` / `DEACTIVATED` / `CLIENT` guard
 - `../../references/concepts/presentation-cache.md` — preload pattern + when to invalidate
-- `../../references/concepts/observer-mode-post-purchase.md` — `proceed → closeAllScreens` ordering
-- `../../references/concepts/user-attributes-targeting.md` — attributes + GDPR consent
+- `../../references/concepts/observer-mode-post-purchase.md` — `proceed/processAction → dismiss` ordering
+- `../../references/concepts/programmatic-purchases.md` — exact app-side purchase APIs by platform
+- `../../references/concepts/user-attributes-targeting.md` — attributes for audiences
+- `../../references/concepts/privacy-settings.md` — `revokeDataProcessingConsent`, privacy purposes, essential/optional processing
 - `../../references/concepts/user-identity.md` — `userLogin` / `userLogout` timing, anonymous→logged-in merge, foreground resync
 - `../../references/concepts/subscription-checks.md` — gating + restore purchases
 - `../../references/concepts/subscription-management.md` — native Manage Subscription entry point (App Store / Play)
@@ -62,6 +66,10 @@ If no Purchasely SDK is detected, stop and tell the user: "No Purchasely SDK int
 
 These hold the canonical install/init snippets, full API signatures, and platform-only patterns. Use them to verify the user's code matches the expected setup (e.g. correct CocoaPods version, ProGuard rules, MethodChannel registration on Flutter, plugin package alignment on cross-platform SDKs).
 
+## Expert checkpoint
+
+Before returning review findings, invoke the `Task` tool with `subagent_type: "purchasely:sdk-expert"` and ask it to sanity-check the review reasoning. Pass the detected platform(s), SDK versions, running mode, key code paths inspected, candidate findings, and the evidence for each finding. Only keep findings that remain supported after this expert check, unless you explicitly document a reasoned disagreement.
+
 ---
 
 ## Step 2 — Search for Purchasely-Related Code
@@ -83,14 +91,17 @@ Search the entire codebase using these patterns to build a map of all Purchasely
 - `processAction` / `proceed` / `closePresentation`
 - `PLYPresentationAction`
 
+**Programmatic purchase patterns:**
+- `purchaseWithPlanVendorId` / `Purchasely.purchase(` / `planWithIdentifier`
+
 **Deeplink patterns:**
 - `isDeeplinkHandled` / `handleDeeplink` / `readyToOpenDeeplink`
 - `setDefaultPresentationResultHandler`
-- `allowDeeplink`
 
 **User management patterns:**
 - `userLogin` / `userLogout` / `setUserAttribute`
 - `setAttribute` / `setAttributes`
+- `revokeDataProcessingConsent` / `clearBuiltInAttributes`
 
 **Import statements:**
 - `import Purchasely` / `@import Purchasely`
@@ -180,8 +191,8 @@ See `../../references/architecture-patterns.md` for recommended patterns and imp
 
 ### 3.8 Observer Mode Post-Purchase (if Observer mode is detected)
 
-- [ ] **Correct ordering** — Code must call `synchronize()` → `proceed/processAction(false)` → `closeAllScreens()` in this order. FAIL if reversed. See `../../references/concepts/observer-mode-post-purchase.md`.
-- [ ] **`closeAllScreens()` (not `closeDisplayedPresentation()`)** — for proper Flow-paywall teardown. WARNING if the older API is used.
+- [ ] **Correct ordering** — Code must call `synchronize()` → `proceed/processAction(false)` → dismiss in this order. Native iOS/Android dismiss with `closeAllScreens()`; React Native / Flutter / Cordova public bridges dismiss with `closePresentation()`. FAIL if reversed. See `../../references/concepts/observer-mode-post-purchase.md`.
+- [ ] **Correct dismiss API** — native iOS/Android should use `closeAllScreens()` (not `closeDisplayedPresentation()`); React Native / Flutter / Cordova should use `closePresentation()` unless the app added a custom native bridge. WARNING if the older or wrong-platform API is used.
 - [ ] **iOS `@MainActor` wrap** (iOS only) — when calling `closeAllScreens()` from a non-isolated context (inside `synchronize` callback or `DispatchQueue.main.async`), it must be wrapped in `Task { @MainActor in ... }`. FAIL if missing on iOS 5.7.5+.
 
 ### 3.9 Campaigns (if Campaigns are used in the Console)

@@ -1,13 +1,15 @@
 # Cordova Integration
 
-> **Cross-platform reference.** This file covers Cordova-specific syntax. Many concepts (Observer-mode post-purchase flow, presentation type guard, presentation cache, audience-targeting attributes, GDPR consent, subscription checks) are **universal across iOS / Android / RN / Flutter / Cordova** and live in `../concepts/`. Load:
+> **Cross-platform reference.** This file covers Cordova-specific syntax. Many concepts (Observer-mode post-purchase flow, presentation type guard, presentation cache, programmatic purchases, audience-targeting attributes, GDPR consent, subscription checks) are **universal across iOS / Android / RN / Flutter / Cordova** and live in `../concepts/`. Load:
 >
 > - [`../concepts/running-modes.md`](../concepts/running-modes.md) — Full vs Observer + log levels
 > - [`../concepts/paywall-actions.md`](../concepts/paywall-actions.md) — `PLYPresentationAction` enum + interceptor rules
 > - [`../concepts/presentation-types.md`](../concepts/presentation-types.md) — `NORMAL` / `FALLBACK` / `DEACTIVATED` / `CLIENT` guard
 > - [`../concepts/presentation-cache.md`](../concepts/presentation-cache.md) — app-side cache (recommended)
-> - [`../concepts/observer-mode-post-purchase.md`](../concepts/observer-mode-post-purchase.md) — `proceed → closeAllScreens` ordering, chaining follow-up placements
+> - [`../concepts/observer-mode-post-purchase.md`](../concepts/observer-mode-post-purchase.md) — `proceed → closePresentation` ordering, chaining follow-up placements
+> - [`../concepts/programmatic-purchases.md`](../concepts/programmatic-purchases.md) — exact `purchaseWithPlanVendorId` syntax
 > - [`../concepts/user-attributes-targeting.md`](../concepts/user-attributes-targeting.md) — audience targeting + GDPR consent
+> - [`../concepts/privacy-settings.md`](../concepts/privacy-settings.md) — `revokeDataProcessingConsent` and privacy purposes
 > - [`../concepts/subscription-checks.md`](../concepts/subscription-checks.md) — gating premium content, restore purchases
 > - [`../sdk-versions.md`](../sdk-versions.md) — latest stable versions (pin to **5.7.3** for Cordova)
 
@@ -53,8 +55,9 @@ document.addEventListener('deviceready', function() {
     'YOUR_API_KEY',           // apiKey
     ['Google'],                // androidStores: 'Google', 'Huawei', 'Amazon'
     false,                     // storeKit1: false = use StoreKit 2 (recommended)
+    null,                      // userId (optional)
     Purchasely.LogLevel.DEBUG, // logLevel
-    Purchasely.RunningMode.FULL, // runningMode: FULL or OBSERVER
+    Purchasely.RunningMode.full, // runningMode: full or paywallObserver
     function(success) {
       console.log('Purchasely started:', success);
     },
@@ -67,7 +70,9 @@ document.addEventListener('deviceready', function() {
 
 ## Display a Paywall
 
-### Full-Screen Presentation
+### Placement shortcut for simple non-Flow paywalls
+
+`presentPresentationForPlacement(...)` is still available for simple placements guaranteed to host only a non-Flow paywall. For Flow-compatible display, use the fetch + type guard path below.
 
 ```javascript
 Purchasely.presentPresentationForPlacement(
@@ -96,15 +101,20 @@ Purchasely.presentPresentationForPlacement(
 ### Fetch Presentation (check type before displaying)
 
 ```javascript
-Purchasely.fetchPresentation(
-  'PREMIUM',  // placementVendorId
+Purchasely.fetchPresentationForPlacement(
+  'PREMIUM',  // placementId
   null,       // contentId
   function(presentation) {
     switch (presentation.type) {
       case 'NORMAL':
       case 'FALLBACK':
-        // Safe to display
-        Purchasely.presentPresentation(presentation);
+        Purchasely.presentPresentation(
+          presentation,
+          true,  // isFullscreen
+          null,  // backgroundColor
+          handlePurchaseResult,
+          function(error) { console.error('Presentation error:', error); }
+        );
         break;
       case 'DEACTIVATED':
         // Do NOT display
@@ -123,10 +133,10 @@ Purchasely.fetchPresentation(
 
 ## Action Interceptor
 
-Intercept paywall actions to inject custom behavior:
+Intercept paywall actions to inject custom behavior. Cordova uses `setPaywallActionInterceptor(...)`, not `setPaywallActionInterceptorCallback(...)`.
 
 ```javascript
-Purchasely.setPaywallActionInterceptorCallback(function(result) {
+Purchasely.setPaywallActionInterceptor(function(result) {
   var action = result.action;
   var parameters = result.parameters;
   var info = result.info;
@@ -163,6 +173,26 @@ Purchasely.setPaywallActionInterceptorCallback(function(result) {
 ```
 
 **Important:** You must call `Purchasely.onProcessAction(true/false)` in every code path. Failing to do so will freeze the paywall UI.
+
+## Programmatic Purchases
+
+For an app-side purchase button in Full mode, use the Cordova positional API:
+
+```javascript
+Purchasely.purchaseWithPlanVendorId(
+  'premium_yearly',
+  null, // offerId
+  null, // contentId
+  function(plan) {
+    console.log('Purchased plan:', plan);
+  },
+  function(error) {
+    console.error('Purchase failed:', error);
+  }
+);
+```
+
+Do not use `Purchasely.purchase(...)` on Cordova; it is not exposed by the public JS bridge.
 
 ## Purchase Result Handling
 
@@ -201,9 +231,6 @@ Purchasely.userLogin(
   'user_123',
   function(success) {
     console.log('User logged in:', success);
-  },
-  function(error) {
-    console.error('Login failed:', error);
   }
 );
 ```
@@ -220,8 +247,9 @@ Purchasely.userLogout();
 // String attribute
 Purchasely.setUserAttributeWithString('first_name', 'John');
 
-// Number attribute
-Purchasely.setUserAttributeWithNumber('age', 30);
+// Numeric attributes
+Purchasely.setUserAttributeWithInt('age', 30, Purchasely.DataProcessingLegalBasis.optional);
+Purchasely.setUserAttributeWithDouble('score', 4.5, Purchasely.DataProcessingLegalBasis.optional);
 
 // Boolean attribute
 Purchasely.setUserAttributeWithBoolean('is_premium', true);
@@ -275,6 +303,8 @@ Purchasely.readyToOpenDeeplink(true);
 Purchasely.synchronize();
 ```
 
+Cordova `synchronize()` is fire-and-forget in the public JS bridge; it does not accept success/error callbacks.
+
 ## Complete Integration Example
 
 ```javascript
@@ -289,13 +319,14 @@ var app = {
       'YOUR_API_KEY',
       ['Google'],
       false,
+      null,
       Purchasely.LogLevel.DEBUG,
-      Purchasely.RunningMode.FULL,
+      Purchasely.RunningMode.full,
       function() {
         console.log('Purchasely ready');
 
         // Set up action interceptor
-        Purchasely.setPaywallActionInterceptorCallback(function(result) {
+        Purchasely.setPaywallActionInterceptor(function(result) {
           if (result.action === 'LOGIN') {
             app.showLogin();
           } else {
@@ -313,15 +344,26 @@ var app = {
   },
 
   showPaywall: function() {
-    Purchasely.presentPresentationForPlacement(
+    Purchasely.fetchPresentationForPlacement(
       'ONBOARDING',
       null,
-      true,
-      function(result) {
-        console.log('Result:', result.result);
+      function(presentation) {
+        if (presentation.type === 'NORMAL' || presentation.type === 'FALLBACK') {
+          Purchasely.presentPresentation(
+            presentation,
+            true,
+            null,
+            function(result) {
+              console.log('Result:', result.result);
+            },
+            function(error) {
+              console.error('Presentation error:', error);
+            }
+          );
+        }
       },
       function(error) {
-        console.error('Error:', error);
+        console.error('Fetch error:', error);
       }
     );
   },

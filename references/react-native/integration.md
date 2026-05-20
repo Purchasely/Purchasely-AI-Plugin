@@ -1,13 +1,15 @@
 # React Native Integration
 
-> **Cross-platform reference.** This file covers React Native-specific syntax. Many concepts (Observer-mode post-purchase flow, presentation type guard, presentation cache, audience-targeting attributes, GDPR consent, subscription checks) are **universal across iOS / Android / RN / Flutter / Cordova** and live in `../concepts/`. Load:
+> **Cross-platform reference.** This file covers React Native-specific syntax. Many concepts (Observer-mode post-purchase flow, presentation type guard, presentation cache, programmatic purchases, audience-targeting attributes, GDPR consent, subscription checks) are **universal across iOS / Android / RN / Flutter / Cordova** and live in `../concepts/`. Load:
 >
 > - [`../concepts/running-modes.md`](../concepts/running-modes.md) — Full vs Observer + log levels
 > - [`../concepts/paywall-actions.md`](../concepts/paywall-actions.md) — `PLYPresentationAction` enum + interceptor rules
 > - [`../concepts/presentation-types.md`](../concepts/presentation-types.md) — `NORMAL` / `FALLBACK` / `DEACTIVATED` / `CLIENT` guard
 > - [`../concepts/presentation-cache.md`](../concepts/presentation-cache.md) — app-side cache (recommended)
-> - [`../concepts/observer-mode-post-purchase.md`](../concepts/observer-mode-post-purchase.md) — `proceed → closeAllScreens` ordering, chaining follow-up placements
+> - [`../concepts/observer-mode-post-purchase.md`](../concepts/observer-mode-post-purchase.md) — `proceed → closePresentation` ordering, chaining follow-up placements
+> - [`../concepts/programmatic-purchases.md`](../concepts/programmatic-purchases.md) — exact `purchaseWithPlanVendorId` syntax
 > - [`../concepts/user-attributes-targeting.md`](../concepts/user-attributes-targeting.md) — audience targeting + GDPR consent
+> - [`../concepts/privacy-settings.md`](../concepts/privacy-settings.md) — `revokeDataProcessingConsent` and privacy purposes
 > - [`../concepts/subscription-checks.md`](../concepts/subscription-checks.md) — gating premium content, restore purchases
 > - [`../sdk-versions.md`](../sdk-versions.md) — latest stable versions (pin to **5.7.3** for React Native)
 
@@ -74,54 +76,48 @@ async function initializePurchasely() {
 }
 ```
 
-## Display a Paywall
+## Display a Paywall or Flow
 
-### Full-Screen Presentation
+Use `fetchPresentation()` and then `presentPresentation()` for standard paywalls and Flows. The bridge calls native `presentation.display()`, which is required for Flow close controls and step transitions.
 
 ```typescript
+import Purchasely, { PLYPresentationType, ProductResult } from 'react-native-purchasely';
+
 try {
-  const result = await Purchasely.presentPresentationForPlacement({
-    placementVendorId: 'ONBOARDING',
-    isFullscreen: true,
-    contentId: null,  // optional content targeting
+  const presentation = await Purchasely.fetchPresentation({
+    placementId: 'ONBOARDING',
+    contentId: null,
   });
 
-  switch (result.result) {
-    case Purchasely.PurchaseResult.PURCHASED:
-      console.log('Purchased plan:', result.plan);
+  switch (presentation.type) {
+    case PLYPresentationType.NORMAL:
+    case PLYPresentationType.FALLBACK: {
+      const result = await Purchasely.presentPresentation({
+        presentation,
+        isFullscreen: true,
+      });
+
+      switch (result.result) {
+        case ProductResult.PRODUCT_RESULT_PURCHASED:
+          console.log('Purchased plan:', result.plan);
+          break;
+        case ProductResult.PRODUCT_RESULT_RESTORED:
+          console.log('Restored purchases');
+          break;
+        case ProductResult.PRODUCT_RESULT_CANCELLED:
+          console.log('User cancelled');
+          break;
+      }
       break;
-    case Purchasely.PurchaseResult.RESTORED:
-      console.log('Restored purchases');
-      break;
-    case Purchasely.PurchaseResult.CANCELLED:
-      console.log('User cancelled');
-      break;
+    }
+    case PLYPresentationType.DEACTIVATED:
+      return; // Do NOT display
+    case PLYPresentationType.CLIENT:
+      showCustomPaywall(presentation.plans);
+      return;
   }
 } catch (error) {
   console.error('Presentation error:', error);
-}
-```
-
-### Fetch Presentation (check type before displaying)
-
-```typescript
-const presentation = await Purchasely.fetchPresentation({
-  placementVendorId: 'PREMIUM',
-});
-
-switch (presentation.type) {
-  case Purchasely.PresentationType.NORMAL:
-  case Purchasely.PresentationType.FALLBACK:
-    // Safe to display
-    Purchasely.presentPresentation({ presentation });
-    break;
-  case Purchasely.PresentationType.DEACTIVATED:
-    // Do NOT display
-    break;
-  case Purchasely.PresentationType.CLIENT:
-    // Use your own UI with Purchasely plan data
-    showCustomPaywall(presentation.plans);
-    break;
 }
 ```
 
@@ -180,6 +176,18 @@ Purchasely.userLogin('user_123');
 
 ```typescript
 Purchasely.userLogout();
+```
+
+## Programmatic Purchases
+
+For app-side purchase buttons in Full mode, use `purchaseWithPlanVendorId`. Do not use `Purchasely.purchase({ planId: ... })`; that API is not exposed by the React Native bridge.
+
+```typescript
+const purchasedPlan = await Purchasely.purchaseWithPlanVendorId({
+  planVendorId: 'premium_yearly',
+  offerId: null,
+  contentId: null,
+});
 ```
 
 ## User Attributes
@@ -261,7 +269,7 @@ Purchasely.synchronize();
 ```typescript
 import React, { useEffect } from 'react';
 import { Button, View } from 'react-native';
-import Purchasely from 'react-native-purchasely';
+import Purchasely, { PLYPresentationType } from 'react-native-purchasely';
 
 export default function App() {
   useEffect(() => {
@@ -296,11 +304,25 @@ export default function App() {
   }, []);
 
   const showPaywall = async () => {
-    const result = await Purchasely.presentPresentationForPlacement({
-      placementVendorId: 'ONBOARDING',
-      isFullscreen: true,
+    const presentation = await Purchasely.fetchPresentation({
+      placementId: 'ONBOARDING',
     });
-    console.log('Result:', result.result);
+
+    switch (presentation.type) {
+      case PLYPresentationType.NORMAL:
+      case PLYPresentationType.FALLBACK: {
+        const result = await Purchasely.presentPresentation({
+          presentation,
+          isFullscreen: true,
+        });
+        console.log('Result:', result.result);
+        break;
+      }
+      case PLYPresentationType.DEACTIVATED:
+        return;
+      case PLYPresentationType.CLIENT:
+        return;
+    }
   };
 
   return (

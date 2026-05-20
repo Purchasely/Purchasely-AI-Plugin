@@ -43,7 +43,7 @@ Register **once** at initialization, ideally right after `start()`. Re-registeri
 ### iOS (Swift)
 
 ```swift
-Purchasely.setPaywallActionsInterceptor { [weak self] info, action, parameters, proceed in
+Purchasely.setPaywallActionsInterceptor { [weak self] action, parameters, info, proceed in
     switch action {
     case .login:
         self?.showLogin { success in proceed(success) }
@@ -136,5 +136,5 @@ Purchasely.setPaywallActionInterceptor(result => {
 
 ## See also
 
-- [observer-mode-post-purchase.md](observer-mode-post-purchase.md) — exact `proceed → closeAllScreens` sequence after Observer-mode purchases
+- [observer-mode-post-purchase.md](observer-mode-post-purchase.md) — exact `proceed → dismiss` sequence after Observer-mode purchases
 - [presentation-types.md](presentation-types.md) — what to do when `fetchPresentation` returns `DEACTIVATED` or `CLIENT`

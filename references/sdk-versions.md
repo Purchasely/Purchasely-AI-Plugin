@@ -90,9 +90,9 @@ When you install `react-native-purchasely@5.7.3` (or the Flutter / Cordova equiv
 | `purchasely_flutter 5.7.3` | iOS SDK 5.7.x | Android SDK 5.7.x |
 | `@purchasely/cordova-plugin-purchasely 5.7.3` | iOS SDK 5.7.x | Android SDK 5.7.x |
 
-This means a cross-platform 5.7.3 plugin gets the **5.7.4 / 5.7.5 native APIs** transitively — including `closeAllScreens()`. You do not need to bump the native pods/gradle dependencies yourself; the plugin's pinning is correct.
+This means a cross-platform 5.7.3 plugin gets the **5.7.x native SDKs** transitively. You do not need to bump the native pods/gradle dependencies yourself; the plugin's pinning is correct. However, the public JS / Dart bridge may expose a different method name than the native SDK — for example current React Native / Flutter / Cordova bridges expose `closePresentation()`, not `closeAllScreens()`.
 
-> If a user is on a cross-platform plugin version older than 5.7.3, `closeAllScreens()` and other recent native APIs may not be exposed on the JS / Dart side. Upgrade the plugin first.
+> If a user is on a cross-platform plugin version older than 5.7.3, recent native behavior may not be bridged. Upgrade the plugin first, then verify the public bridge method name in that platform's integration reference.
 
 ## Universal rules
 
@@ -106,7 +106,7 @@ This means a cross-platform 5.7.3 plugin gets the **5.7.4 / 5.7.5 native APIs** 
 
 Always recommend upgrading to the versions above when:
 
-- The project pins an older version that lacks `closeAllScreens()` (iOS < 5.7.5, Android < 5.7.4, cross-platform < 5.7.3 native bridge).
+- The project pins an older version that lacks reliable paywall dismissal (iOS < 5.7.5, Android < 5.7.4, cross-platform < 5.7.3 native bridge).
 - The project uses floating versions (`5.+`, `^5.0.0`) — pin to exact stable for reproducible builds.
 - The user is debugging issues that match a known fixed-in-5.7.x bug — see the platform changelog.
 
@@ -121,5 +121,5 @@ This document is the canonical version source. When a new SDK ships:
 
 ## See also
 
-- [concepts/observer-mode-post-purchase.md](concepts/observer-mode-post-purchase.md) — version requirements for `closeAllScreens()`
+- [concepts/observer-mode-post-purchase.md](concepts/observer-mode-post-purchase.md) — per-platform dismissal APIs after Observer-mode purchases
 - [concepts/running-modes.md](concepts/running-modes.md) — initialization examples (use the versions from this doc when pinning)
