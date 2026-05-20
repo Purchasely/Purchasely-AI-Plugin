@@ -7,11 +7,13 @@ All notable changes to this project are documented here. The format is based on 
 ### Added
 
 - `purchasely/.claude-plugin/plugin.json` and `purchasely/hooks` — make the root `purchasely/` plugin folder self-contained for Claude Code, matching the existing Codex plugin folder layout.
+- `purchasely/.cursor-plugin/plugin.json` — make the root `purchasely/` plugin folder self-contained for Cursor.
 - GitHub Copilot CLI quickstart using `copilot plugin marketplace add Purchasely/Purchasely-AI-Plugin` and `copilot plugin install purchasely@Purchasely-AI-Plugin`.
 
 ### Changed
 
 - `.claude-plugin/marketplace.json` now points to `./purchasely`, and `purchasely/.codex-plugin/plugin.json` uses lowercase Codex capability names.
+- `.cursor-plugin/marketplace.json` now points to the `purchasely` plugin folder, matching Cursor's multi-plugin marketplace layout.
 - `AGENTS.md` and `GEMINI.md` now act as thin bootstraps to the canonical `skills/` playbooks instead of duplicating SDK guidance.
 - Skill reference links now use paths relative to each `SKILL.md`, so Copilot CLI, Claude Code, and Codex installs resolve bundled `references/` files correctly.
 

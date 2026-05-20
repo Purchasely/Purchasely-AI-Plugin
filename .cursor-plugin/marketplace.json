@@ -6,12 +6,14 @@
   },
   "metadata": {
     "version": "1.0.0",
-    "description": "Purchasely SDK plugins for Cursor."
+    "description": "Purchasely SDK plugins for Cursor.",
+    "pluginRoot": "."
   },
   "plugins": [
     {
       "name": "purchasely",
-      "source": "./"
+      "source": "purchasely",
+      "description": "Purchasely SDK integration assistant for implementation, review, and debugging across iOS, Android, React Native, Flutter, and Cordova."
     }
   ]
 }

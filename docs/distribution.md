@@ -56,7 +56,7 @@ Add this repository as a Cursor plugin marketplace, then install `purchasely`.
 **Still to do:**
 
 1. Submit the plugin to the Cursor marketplace if Purchasely wants first-party discovery.
-2. Keep `.cursor-plugin/marketplace.json`, `.cursor-plugin/plugin.json`, and `skills/` validated in CI.
+2. Keep `.cursor-plugin/marketplace.json`, `purchasely/.cursor-plugin/plugin.json`, and `skills/` validated in CI.
 
 **Tracking issue:** _to be filed_
 

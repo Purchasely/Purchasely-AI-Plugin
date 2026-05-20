@@ -23,6 +23,8 @@ jobs:
           python3 -c "import json; json.load(open('purchasely/.codex-plugin/plugin.json'))"
           test -f .cursor-plugin/plugin.json
           python3 -c "import json; json.load(open('.cursor-plugin/plugin.json'))"
+          test -f purchasely/.cursor-plugin/plugin.json
+          python3 -c "import json; json.load(open('purchasely/.cursor-plugin/plugin.json'))"
 
       - name: Validate marketplace.json
         run: |
@@ -39,6 +41,14 @@ jobs:
           PY
           test -f .cursor-plugin/marketplace.json
           python3 -c "import json; json.load(open('.cursor-plugin/marketplace.json'))"
+          python3 - <<'PY'
+          import json
+          marketplace = json.load(open('.cursor-plugin/marketplace.json'))
+          assert marketplace['metadata']['pluginRoot'] == '.'
+          plugin = marketplace['plugins'][0]
+          assert plugin['name'] == 'purchasely'
+          assert plugin['source'] == 'purchasely'
+          PY
 
       - name: Validate Gemini extension
         run: |

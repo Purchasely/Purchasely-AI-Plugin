@@ -11,7 +11,7 @@ A cross-harness plugin that bundles:
 - **4 slash commands** — `/purchasely:integrate`, `/purchasely:review`, `/purchasely:debug`, `/purchasely:question`
 - **3 auto-invoked skills** — `integrate`, `review`, `debug`
 - **1 expert agent** — `sdk-expert`
-- **Cross-vendor manifests** — `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/`, `purchasely/.claude-plugin/`, `purchasely/.codex-plugin/`, `AGENTS.md`, `GEMINI.md`, `gemini-extension.json`
+- **Cross-vendor manifests** — `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/`, `purchasely/.claude-plugin/`, `purchasely/.codex-plugin/`, `purchasely/.cursor-plugin/`, `AGENTS.md`, `GEMINI.md`, `gemini-extension.json`
 
 Works with **Claude Code**, **Codex CLI**, **Codex App**, **Cursor**, **Gemini CLI**, **OpenCode**, **GitHub Copilot CLI**, and **AGENTS.md-compatible harnesses**.
 
@@ -50,7 +50,7 @@ Then open **Plugins** in the Codex App, select the Purchasely marketplace, and i
 
 ### Cursor
 
-Add this repository as a Cursor plugin marketplace, then install the `purchasely` plugin. Cursor reads `.cursor-plugin/marketplace.json`, `.cursor-plugin/plugin.json`, and `skills/` from this repository.
+Add this repository as a Cursor plugin marketplace, then install the `purchasely` plugin. Cursor reads `.cursor-plugin/marketplace.json`, which points at the self-contained `purchasely/` plugin folder.
 
 For local testing before marketplace publication:
 
@@ -174,6 +174,8 @@ Purchasely-AI-Plugin/
 │   │   └── plugin.json          # Claude Code plugin manifest
 │   ├── .codex-plugin/
 │   │   └── plugin.json          # OpenAI Codex plugin manifest
+│   ├── .cursor-plugin/
+│   │   └── plugin.json          # Cursor plugin manifest
 │   ├── skills -> ../skills
 │   ├── references -> ../references
 │   ├── commands -> ../commands

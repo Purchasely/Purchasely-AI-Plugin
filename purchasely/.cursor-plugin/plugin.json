@@ -1,0 +1,27 @@
+{
+  "name": "purchasely",
+  "displayName": "Purchasely",
+  "version": "1.0.0",
+  "description": "Purchasely SDK integration assistant for implementation, review, and debugging across iOS, Android, React Native, Flutter, and Cordova.",
+  "author": {
+    "name": "Purchasely",
+    "email": "support@purchasely.com",
+    "url": "https://github.com/Purchasely"
+  },
+  "homepage": "https://www.purchasely.com",
+  "repository": "https://github.com/Purchasely/Purchasely-AI-Plugin",
+  "license": "MIT",
+  "keywords": [
+    "purchasely",
+    "sdk",
+    "in-app-purchase",
+    "subscriptions",
+    "paywalls",
+    "monetization",
+    "ios",
+    "android",
+    "react-native",
+    "flutter",
+    "cordova"
+  ]
+}
