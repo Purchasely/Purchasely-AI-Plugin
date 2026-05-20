@@ -35,9 +35,10 @@ for (const file of walk(root)) {
 
   const multilinePurchaseObject = /Purchasely\.purchase\(\{[\s\S]{0,300}\bplanId\b/g;
   for (const match of content.matchAll(multilinePurchaseObject)) {
-    const snippet = match[0];
-    if (!isInstructionalNegative(snippet)) {
-      failures.push(`${rel}:${lineNumberForIndex(content, match.index ?? 0)} uses invented multiline RN/Flutter purchase object syntax`);
+    const matchIndex = match.index ?? 0;
+    const context = content.slice(Math.max(0, matchIndex - 120), matchIndex + match[0].length);
+    if (!isInstructionalNegative(context)) {
+      failures.push(`${rel}:${lineNumberForIndex(content, matchIndex)} uses invented multiline RN/Flutter purchase object syntax`);
     }
   }
 
