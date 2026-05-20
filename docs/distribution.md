@@ -56,7 +56,7 @@ Add this repository as a Cursor plugin marketplace, then install `purchasely`.
 **Still to do:**
 
 1. Submit the plugin to the Cursor marketplace if Purchasely wants first-party discovery.
-2. Keep `.cursor-plugin/marketplace.json`, `purchasely/.cursor-plugin/plugin.json`, and `skills/` validated in CI.
+2. Keep `.cursor-plugin/marketplace.json`, `purchasely/.cursor-plugin/plugin.json`, and `purchasely/skills/` validated in CI.
 
 **Tracking issue:** _to be filed_
 
@@ -93,7 +93,7 @@ copilot plugin install purchasely@Purchasely-AI-Plugin
 **Still to do:**
 
 1. Submit the plugin to one of Copilot CLI's included marketplaces if Purchasely wants first-party discovery.
-2. Keep `.claude-plugin/marketplace.json` and the `purchasely/` plugin folder validated in CI.
+2. Keep `.claude-plugin/marketplace.json` and the self-contained `purchasely/` plugin folder validated in CI.
 
 **Tracking issue:** _to be filed_
 
@@ -117,7 +117,7 @@ copilot plugin install purchasely@Purchasely-AI-Plugin
 | Channel | Status | Install |
 |---|---|---|
 | GitHub-backed Claude Code marketplace | ✅ live | `/plugin marketplace add Purchasely/Purchasely-AI-Plugin` then `/plugin install purchasely@Purchasely-AI-Plugin` |
-| Cross-vendor `AGENTS.md` (Zed, Mistral `vibe`, …) | ✅ live | Use the repository root `AGENTS.md`, which points to the canonical `skills/` playbooks |
+| Cross-vendor `AGENTS.md` (Zed, Mistral `vibe`, …) | ✅ live | Use the repository root `AGENTS.md`, which points to the `skills/` compatibility link backed by `purchasely/skills/` |
 | Codex repo marketplace | ✅ live | `codex plugin marketplace add Purchasely/Purchasely-AI-Plugin`, then install `purchasely` |
 | Cursor repo marketplace | ✅ live | Add this repository as a Cursor plugin marketplace, then install `purchasely` |
 | GitHub Copilot CLI repo marketplace | ✅ live | `copilot plugin marketplace add Purchasely/Purchasely-AI-Plugin`, then `copilot plugin install purchasely@Purchasely-AI-Plugin` |

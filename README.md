@@ -88,11 +88,11 @@ copilot plugin marketplace add Purchasely/Purchasely-AI-Plugin
 copilot plugin install purchasely@Purchasely-AI-Plugin
 ```
 
-Copilot CLI reads the repository marketplace and installs the `purchasely/` plugin folder, including the canonical `skills/` playbooks.
+Copilot CLI reads the repository marketplace and installs the self-contained `purchasely/` plugin folder, including the canonical `purchasely/skills/` playbooks.
 
 ### AGENTS.md-compatible harnesses
 
-Tools that read the repository-level `AGENTS.md` should use this repository directly. `AGENTS.md` is intentionally only a bootstrap that points to the canonical `skills/` playbooks.
+Tools that read the repository-level `AGENTS.md` should use this repository directly. `AGENTS.md` is intentionally only a bootstrap that points to the canonical `skills/` compatibility link.
 
 ## What It Does
 
@@ -158,17 +158,11 @@ Purchasely-AI-Plugin/
 ├── AGENTS.md                    # Cross-vendor agents.md (Codex, Cursor, Zed, Mistral, …)
 ├── GEMINI.md                    # Gemini CLI context (imports skills via @./skills/...)
 ├── gemini-extension.json        # `gemini extensions install` manifest
-├── skills/                      # AI-invoked skills (automatic)
-│   ├── integrate/SKILL.md
-│   ├── review/SKILL.md
-│   └── debug/SKILL.md
-├── agents/
-│   └── sdk-expert.md            # Purchasely SDK expert agent
-├── commands/                    # User-invoked slash commands
-│   ├── integrate.md
-│   ├── review.md
-│   ├── debug.md
-│   └── question.md
+├── skills -> purchasely/skills   # Root compatibility link for AGENTS.md/GEMINI.md users
+├── agents -> purchasely/agents
+├── commands -> purchasely/commands
+├── references -> purchasely/references
+├── hooks -> purchasely/hooks
 ├── purchasely/
 │   ├── .claude-plugin/
 │   │   └── plugin.json          # Claude Code plugin manifest
@@ -176,21 +170,28 @@ Purchasely-AI-Plugin/
 │   │   └── plugin.json          # OpenAI Codex plugin manifest
 │   ├── .cursor-plugin/
 │   │   └── plugin.json          # Cursor plugin manifest
-│   ├── skills -> ../skills
-│   ├── references -> ../references
-│   ├── commands -> ../commands
-│   ├── hooks -> ../hooks
-│   └── agents -> ../agents
-├── references/                  # SDK documentation (used by skills)
-│   ├── concepts/                # 🌐 Universal SDK concepts (all 5 platforms)
-│   ├── testing/                 # Sandbox setup (Apple, Google)
-│   ├── troubleshooting/         # Common issues, error codes, debug mode
-│   ├── ios/  android/  react-native/  flutter/  cordova/
-│   ├── diagrams/                # Architecture diagrams (SVG)
-│   ├── architecture-patterns.md
-│   ├── cross-platform-subscriptions.md
-│   ├── purchasely-architecture.md
-│   └── sdk-versions.md          # 📌 Latest stable SDK versions (single source of truth)
+│   ├── skills/                  # AI-invoked skills (automatic)
+│   │   ├── integrate/SKILL.md
+│   │   ├── review/SKILL.md
+│   │   └── debug/SKILL.md
+│   ├── agents/
+│   │   └── sdk-expert.md        # Purchasely SDK expert agent
+│   ├── commands/                # User-invoked slash commands
+│   │   ├── integrate.md
+│   │   ├── review.md
+│   │   ├── debug.md
+│   │   └── question.md
+│   ├── hooks/
+│   └── references/              # SDK documentation (used by skills)
+│       ├── concepts/            # Universal SDK concepts (all 5 platforms)
+│       ├── testing/             # Sandbox setup (Apple, Google)
+│       ├── troubleshooting/     # Common issues, error codes, debug mode
+│       ├── ios/  android/  react-native/  flutter/  cordova/
+│       ├── diagrams/            # Architecture diagrams (SVG)
+│       ├── architecture-patterns.md
+│       ├── cross-platform-subscriptions.md
+│       ├── purchasely-architecture.md
+│       └── sdk-versions.md      # Latest stable SDK versions (single source of truth)
 ├── package.json
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md
@@ -240,7 +241,7 @@ Contributions welcome — bug reports, new troubleshooting recipes, platform imp
 
 1. Fork the repository
 2. Create a feature branch (`feat/my-improvement`)
-3. Update the relevant files in `skills/` or `references/`
+3. Update the relevant files in `purchasely/skills/` or `purchasely/references/`
 4. Test with Claude Code: `claude --plugin-dir ./Purchasely-AI-Plugin`
 5. Submit a pull request
 
@@ -250,9 +251,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 
 When a new SDK version is released:
 
-1. **Update `references/sdk-versions.md`** — single source of truth for pinned versions.
-2. Update version references in `skills/integrate/SKILL.md` and each platform's `references/<platform>/`.
-3. Update `references/` with new/changed APIs.
+1. **Update `purchasely/references/sdk-versions.md`** — single source of truth for pinned versions.
+2. Update version references in `purchasely/skills/integrate/SKILL.md` and each platform's `purchasely/references/<platform>/`.
+3. Update `purchasely/references/` with new/changed APIs.
 4. Bump `version` in `.claude-plugin/plugin.json`, `purchasely/.claude-plugin/plugin.json`, `purchasely/.codex-plugin/plugin.json`, and `package.json`.
 5. Add an entry to [CHANGELOG.md](CHANGELOG.md).
 6. Tag and release.

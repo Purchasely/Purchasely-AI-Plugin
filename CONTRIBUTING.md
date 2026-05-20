@@ -5,10 +5,10 @@ Thanks for helping make Purchasely easier to integrate. This guide covers how to
 ## Ways to contribute
 
 - **Bug reports** — open an issue with a reproducible scenario (which AI tool, which command, what happened)
-- **Documentation fixes** — correct or improve any file under `references/`
-- **New troubleshooting recipes** — add diagnostic trees to `references/troubleshooting/common-issues.md` or extend `skills/debug/SKILL.md`
-- **New AI tool support** — add or update a plugin manifest/bootstrap that points to the canonical `skills/`
-- **SDK API updates** — keep `references/<platform>/api-reference.md` in sync with the latest public SDK
+- **Documentation fixes** — correct or improve any file under `purchasely/references/`
+- **New troubleshooting recipes** — add diagnostic trees to `purchasely/references/troubleshooting/common-issues.md` or extend `purchasely/skills/debug/SKILL.md`
+- **New AI tool support** — add or update a plugin manifest/bootstrap that points to the canonical `purchasely/skills/`
+- **SDK API updates** — keep `purchasely/references/<platform>/api-reference.md` in sync with the latest public SDK
 
 ## Development workflow
 
@@ -42,8 +42,8 @@ Thanks for helping make Purchasely easier to integrate. This guide covers how to
 To add support for a new AI coding tool (e.g. a new vendor):
 
 1. Add the tool's plugin manifest or bootstrap file.
-2. Make the manifest/bootstrap point to `skills/`, not to a duplicated SDK rule file.
-3. Add any required symlinks under `purchasely/` if the tool installs from that plugin folder.
+2. Make the manifest/bootstrap point to `purchasely/skills/` or to `./skills/` from inside the `purchasely/` plugin folder, not to a duplicated SDK rule file.
+3. Keep `purchasely/` self-contained; do not add symlinks from `purchasely/` to files outside that folder.
 4. Update the README quickstart and `docs/distribution.md`.
 5. Test the install flow in a small project.
 

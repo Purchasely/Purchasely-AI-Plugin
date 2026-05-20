@@ -9,6 +9,11 @@
   "homepage": "https://www.purchasely.com",
   "repository": "https://github.com/Purchasely/Purchasely-AI-Plugin",
   "license": "MIT",
+  "skills": "./skills/",
+  "commands": "./commands/",
+  "agents": [
+    "./agents/sdk-expert.md"
+  ],
   "hooks": "./hooks/hooks.json",
   "keywords": [
     "purchasely",
@@ -22,6 +27,5 @@
     "flutter",
     "cordova",
     "monetization"
-  ],
-  "category": "sdk-integration"
+  ]
 }
