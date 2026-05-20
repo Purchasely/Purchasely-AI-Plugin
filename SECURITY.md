@@ -17,11 +17,10 @@ We aim to acknowledge security reports within **3 business days** and to release
 
 ## Scope
 
-This repository contains AI prompts, documentation, and configuration templates — no executable runtime code that handles end-user data. The most relevant security concerns are:
+This repository contains AI prompts, documentation, plugin manifests, and bootstrap files — no executable runtime code that handles end-user data. The most relevant security concerns are:
 
 - **Prompt injection** in skills or reference files that could mislead an AI assistant
 - **Credential leakage** in example code (we use `YOUR_API_KEY` placeholders — please report any committed real keys)
-- **Malicious install script behavior** in `install.sh`
 - **Supply-chain risks** if the plugin is installed via the Claude Code marketplace
 
 For vulnerabilities in the Purchasely SDK itself (iOS, Android, React Native, Flutter, Cordova) or the Purchasely backend, please contact security@purchasely.com directly.

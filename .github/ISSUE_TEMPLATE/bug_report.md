@@ -24,7 +24,7 @@ What correct guidance should have looked like.
 
 If you can pinpoint the reference or skill file, link it:
 
-- `skills/...` or `references/...` or `configs/...`
+- `skills/...`, `references/...`, or a plugin manifest/bootstrap file
 
 ## Additional context
 

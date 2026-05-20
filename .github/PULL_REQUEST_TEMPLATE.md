@@ -6,7 +6,7 @@
 
 - [ ] Bug fix (corrects wrong guidance, deprecated API, broken example)
 - [ ] New content (skill, recipe, reference doc, new platform)
-- [ ] New AI tool integration (added a `configs/<tool>/` and wired `install.sh`)
+- [ ] New AI tool integration (added/updated a plugin manifest or bootstrap pointing to `skills/`)
 - [ ] Documentation / README / governance
 - [ ] Refactor (no functional change)
 
@@ -15,8 +15,8 @@
 <!--
 Examples:
 - Loaded the plugin in Claude Code and ran `/purchasely:integrate ios`
-- Copied configs/cursor/purchasely.mdc into a test project and confirmed Cursor picked it up
-- Ran `./install.sh --tool mistral --project /tmp/test`
+- Installed the plugin/extension in a test project and confirmed the tool picked up `skills/`
+- Confirmed root `AGENTS.md`/`GEMINI.md` imports the matching skill instead of duplicating SDK guidance
 -->
 
 ## Checklist
@@ -24,5 +24,5 @@ Examples:
 - [ ] Code examples reference APIs that exist in the current public Purchasely SDK
 - [ ] No real API keys or credentials committed (placeholders only)
 - [ ] Updated `CHANGELOG.md` under `[Unreleased]`
-- [ ] If a new AI tool was added: README, `install.sh`, and `configs/<tool>/` are all updated
+- [ ] If a new AI tool was added: README, manifests/bootstrap files, and validation workflow are updated
 - [ ] If a public-facing description changed: `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` are still consistent

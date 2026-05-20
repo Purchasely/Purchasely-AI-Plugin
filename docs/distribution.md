@@ -118,13 +118,9 @@ copilot plugin install purchasely
 | Channel | Status | Install |
 |---|---|---|
 | GitHub-backed Claude Code marketplace | ✅ live | `/plugin marketplace add Purchasely/Purchasely-AI-Plugin` then `/plugin install purchasely@Purchasely-AI-Plugin` |
-| Cross-vendor `AGENTS.md` (Zed, Mistral `vibe`, …) | ✅ live | Copy `configs/codex/AGENTS.md` (or use the root `AGENTS.md`) |
+| Cross-vendor `AGENTS.md` (Zed, Mistral `vibe`, …) | ✅ live | Use the repository root `AGENTS.md`, which points to the canonical `skills/` playbooks |
 | Codex repo marketplace | ✅ live | `codex plugin marketplace add Purchasely/Purchasely-AI-Plugin`, then install `purchasely` |
 | Cursor repo marketplace | ✅ live | Add this repository as a Cursor plugin marketplace, then install `purchasely` |
-| Cursor rules fallback | ✅ live | Copy `configs/cursor/purchasely.mdc` to `.cursor/rules/` |
-| GitHub Copilot instructions file | ✅ live | Copy `configs/copilot/copilot-instructions.md` to `.github/` |
-| Windsurf | ✅ live | Copy `configs/windsurf/.windsurfrules` |
-| Mistral `vibe` (`AGENTS.md`) | ✅ live | Copy `configs/mistral/AGENTS.md` |
 | Gemini CLI extension | ✅ live | `gemini extensions install https://github.com/Purchasely/Purchasely-AI-Plugin` |
 | OpenCode | ⏳ pending #6 | See `.opencode/INSTALL.md` |
 

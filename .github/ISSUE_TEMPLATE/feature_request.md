@@ -16,7 +16,7 @@ What should the skill produce? Where should the content live?
 - [ ] New troubleshooting recipe (`references/troubleshooting/`)
 - [ ] New platform-specific guidance (`references/<platform>/`)
 - [ ] New slash command (`commands/`)
-- [ ] New AI tool integration (`configs/<tool>/` + `install.sh`)
+- [ ] New AI tool integration (plugin manifest/bootstrap pointing to `skills/`)
 - [ ] Other:
 
 ## Example interaction

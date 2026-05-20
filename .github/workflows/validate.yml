@@ -17,6 +17,8 @@ jobs:
         run: |
           test -f .claude-plugin/plugin.json
           python3 -c "import json; json.load(open('.claude-plugin/plugin.json'))"
+          test -f purchasely/.claude-plugin/plugin.json
+          python3 -c "import json; json.load(open('purchasely/.claude-plugin/plugin.json'))"
           test -f purchasely/.codex-plugin/plugin.json
           python3 -c "import json; json.load(open('purchasely/.codex-plugin/plugin.json'))"
           test -f .cursor-plugin/plugin.json
@@ -50,7 +52,7 @@ jobs:
 
       - name: Check required files
         run: |
-          for f in README.md LICENSE CONTRIBUTING.md SECURITY.md CODE_OF_CONDUCT.md CHANGELOG.md .gitignore install.sh; do
+          for f in README.md LICENSE CONTRIBUTING.md SECURITY.md CODE_OF_CONDUCT.md CHANGELOG.md .gitignore; do
             test -f "$f" || { echo "::error file=$f::Missing required file"; exit 1; }
           done
 
@@ -58,6 +60,18 @@ jobs:
         run: |
           for d in skills/*/; do
             test -f "$d/SKILL.md" || { echo "::error file=$d::Missing SKILL.md"; exit 1; }
+          done
+
+      - name: Check plugin folder links
+        run: |
+          for f in \
+            purchasely/skills/integrate/SKILL.md \
+            purchasely/references/android/initialization.md \
+            purchasely/commands/integrate.md \
+            purchasely/agents/sdk-expert.md \
+            purchasely/hooks/hooks.json
+          do
+            test -f "$f" || { echo "::error file=$f::Missing plugin folder link"; exit 1; }
           done
 
       - name: Validate SKILL.md front-matter
@@ -105,54 +119,3 @@ jobs:
             !node_modules
             !.github/PULL_REQUEST_TEMPLATE.md
             !.github/ISSUE_TEMPLATE/**
-
-  shellcheck:
-    name: ShellCheck install.sh
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Verify install.sh is executable
-        run: |
-          test -x install.sh || { echo "::error file=install.sh::Not executable"; exit 1; }
-
-      - name: POSIX syntax check
-        run: sh -n install.sh
-
-      - uses: ludeeus/action-shellcheck@master
-        with:
-          scandir: '.'
-          severity: warning
-          additional_files: install.sh
-
-  test-installer:
-    name: Test installer (${{ matrix.tool }})
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        tool: [cursor, copilot, windsurf, codex, gemini, mistral]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Prepare detection conditions
-        run: |
-          mkdir -p /tmp/test-project
-          case "${{ matrix.tool }}" in
-            cursor)   mkdir -p /tmp/test-project/.cursor ;;
-            copilot)  mkdir -p /tmp/test-project/.github ;;
-            windsurf) mkdir -p /tmp/test-project/.codeium ;;
-            codex)    touch /tmp/test-project/AGENTS.md ;;
-            gemini)   sudo ln -sf /bin/true /usr/local/bin/gemini ;;
-            mistral)  touch /tmp/test-project/AGENTS.md ;;
-          esac
-
-      - name: Run installer with auto-yes
-        run: |
-          # Pipe "y" repeatedly so confirm() prompts auto-accept
-          yes | ./install.sh --tool ${{ matrix.tool }} --project /tmp/test-project || true
-
-      - name: Show resulting test project
-        run: |
-          ls -la /tmp/test-project
-          find /tmp/test-project -type f -maxdepth 3

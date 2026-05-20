@@ -11,6 +11,11 @@ All notable changes to this project are documented here. The format is based on 
 ### Changed
 
 - `.claude-plugin/marketplace.json` now points to `./purchasely`, and `purchasely/.codex-plugin/plugin.json` uses lowercase Codex capability names.
+- `AGENTS.md` and `GEMINI.md` now act as thin bootstraps to the canonical `skills/` playbooks instead of duplicating SDK guidance.
+
+### Removed
+
+- Removed legacy `configs/` rule copies and `install.sh`; supported harnesses should install the plugin/extension or use root bootstraps that point to `skills/`.
 
 ## [1.0.0] — 2026-05-19
 

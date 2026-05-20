@@ -7,7 +7,7 @@ Thanks for helping make Purchasely easier to integrate. This guide covers how to
 - **Bug reports** — open an issue with a reproducible scenario (which AI tool, which command, what happened)
 - **Documentation fixes** — correct or improve any file under `references/`
 - **New troubleshooting recipes** — add diagnostic trees to `references/troubleshooting/common-issues.md` or extend `skills/debug/SKILL.md`
-- **New AI tool support** — add a config under `configs/<tool>/` and wire it up in `install.sh`
+- **New AI tool support** — add or update a plugin manifest/bootstrap that points to the canonical `skills/`
 - **SDK API updates** — keep `references/<platform>/api-reference.md` in sync with the latest public SDK
 
 ## Development workflow
@@ -20,7 +20,7 @@ Thanks for helping make Purchasely easier to integrate. This guide covers how to
 3. **Edit** the relevant files. Skill front-matter and structure are explained inline.
 4. **Test** locally:
    - Claude Code: `claude --plugin-dir ./Purchasely-AI-Plugin` then invoke `/purchasely:integrate`, `/purchasely:review`, etc.
-   - Other tools: copy the relevant `configs/<tool>/` file into a small test project and ask the AI a Purchasely question
+   - Other tools: install the plugin/extension in a small test project and ask the AI a Purchasely question
 5. **Commit** atomically using [Conventional Commits](https://www.conventionalcommits.org/):
    ```
    feat(android): document Huawei IAP setup
@@ -41,11 +41,11 @@ Thanks for helping make Purchasely easier to integrate. This guide covers how to
 
 To add support for a new AI coding tool (e.g. a new vendor):
 
-1. Create `configs/<tool>/` with the tool's native config format (e.g. `AGENTS.md`, `.windsurfrules`, `.mdc`)
-2. Add a `detect_<tool>` and `install_<tool>` function in `install.sh`
-3. Add the tool to the help text, valid tools list, and the detection/install loops
-4. Update the README "Manual Setup Per Tool" section
-5. Test the installer: `./install.sh --tool <tool> --project /tmp/test`
+1. Add the tool's plugin manifest or bootstrap file.
+2. Make the manifest/bootstrap point to `skills/`, not to a duplicated SDK rule file.
+3. Add any required symlinks under `purchasely/` if the tool installs from that plugin folder.
+4. Update the README quickstart and `docs/distribution.md`.
+5. Test the install flow in a small project.
 
 ## Reporting security issues
 

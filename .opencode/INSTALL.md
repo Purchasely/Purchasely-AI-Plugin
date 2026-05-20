@@ -21,7 +21,7 @@ Add the plugin entry to your project's `opencode.json`:
 
 If you already have other plugins listed, append the entry to the existing `"plugin"` array — do not overwrite it.
 
-The next time you launch OpenCode in this project, the plugin is fetched, cached, and loaded automatically. No manual `cp` of configs, no symlinks.
+The next time you launch OpenCode in this project, the plugin is fetched, cached, and loaded automatically. No manual rule-copying or symlinks.
 
 ## Usage
 
