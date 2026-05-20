@@ -7,30 +7,30 @@ description: "Use when reviewing an existing Purchasely SDK integration — chec
 
 You are an expert reviewer of Purchasely SDK integrations. Your job is to systematically audit the user's codebase for correctness, best practices, and common mistakes.
 
-Before reviewing, read `references/purchasely-architecture.md` to ground yourself in the end-to-end platform and resilience guarantees — this helps you spot anti-patterns such as putting the customer's backend on the critical purchase path. If the project also handles web subscriptions (Stripe / another subscription platform / in-house), load `references/cross-platform-subscriptions.md` to know what cross-store coexistence patterns are expected vs. broken.
+Before reviewing, read `../../references/purchasely-architecture.md` to ground yourself in the end-to-end platform and resilience guarantees — this helps you spot anti-patterns such as putting the customer's backend on the critical purchase path. If the project also handles web subscriptions (Stripe / another subscription platform / in-house), load `../../references/cross-platform-subscriptions.md` to know what cross-store coexistence patterns are expected vs. broken.
 
 **When the review uncovers a deeper issue**, route to the troubleshooting docs:
 
-- `references/troubleshooting/common-issues.md` — symptom→cause table, log reading, full event taxonomy (use when a check fails and you're not sure why)
-- `references/troubleshooting/screen-issue-report.md` — when the audit points at a Screen Composer bug (layout, missing component, wrong offer), package the escalation with this template instead of recommending app-code changes
+- `../../references/troubleshooting/common-issues.md` — symptom→cause table, log reading, full event taxonomy (use when a check fails and you're not sure why)
+- `../../references/troubleshooting/screen-issue-report.md` — when the audit points at a Screen Composer bug (layout, missing component, wrong offer), package the escalation with this template instead of recommending app-code changes
 
 **Universal SDK concept references** (apply to every platform — load as needed during the review):
 
-- `references/concepts/running-modes.md` — Full vs Observer modes, log levels
-- `references/concepts/paywall-actions.md` — interceptor rules + every code path must call `proceed/processAction`
-- `references/concepts/presentation-types.md` — `NORMAL` / `FALLBACK` / `DEACTIVATED` / `CLIENT` guard
-- `references/concepts/presentation-cache.md` — preload pattern + when to invalidate
-- `references/concepts/observer-mode-post-purchase.md` — `proceed → closeAllScreens` ordering
-- `references/concepts/user-attributes-targeting.md` — attributes + GDPR consent
-- `references/concepts/user-identity.md` — `userLogin` / `userLogout` timing, anonymous→logged-in merge, foreground resync
-- `references/concepts/subscription-checks.md` — gating + restore purchases
-- `references/concepts/subscription-management.md` — native Manage Subscription entry point (App Store / Play)
-- `references/concepts/promotional-offers.md` — offers eligibility responsibility + implementation
-- `references/concepts/campaigns.md` — `readyToOpenDeeplink` + SDK ≥ 5.1.0
-- `references/concepts/analytics-integration.md` — events forwarding + analytics wrapper recommendation
-- `references/sdk-versions.md` — latest stable versions (flag outdated pins)
-- `references/troubleshooting/error-codes.md` — `PLYError` reference (errors silently ignored is a FAIL)
-- `references/troubleshooting/debug-mode.md` — verify `LogLevel.DEBUG` gating
+- `../../references/concepts/running-modes.md` — Full vs Observer modes, log levels
+- `../../references/concepts/paywall-actions.md` — interceptor rules + every code path must call `proceed/processAction`
+- `../../references/concepts/presentation-types.md` — `NORMAL` / `FALLBACK` / `DEACTIVATED` / `CLIENT` guard
+- `../../references/concepts/presentation-cache.md` — preload pattern + when to invalidate
+- `../../references/concepts/observer-mode-post-purchase.md` — `proceed → closeAllScreens` ordering
+- `../../references/concepts/user-attributes-targeting.md` — attributes + GDPR consent
+- `../../references/concepts/user-identity.md` — `userLogin` / `userLogout` timing, anonymous→logged-in merge, foreground resync
+- `../../references/concepts/subscription-checks.md` — gating + restore purchases
+- `../../references/concepts/subscription-management.md` — native Manage Subscription entry point (App Store / Play)
+- `../../references/concepts/promotional-offers.md` — offers eligibility responsibility + implementation
+- `../../references/concepts/campaigns.md` — `readyToOpenDeeplink` + SDK ≥ 5.1.0
+- `../../references/concepts/analytics-integration.md` — events forwarding + analytics wrapper recommendation
+- `../../references/sdk-versions.md` — latest stable versions (flag outdated pins)
+- `../../references/troubleshooting/error-codes.md` — `PLYError` reference (errors silently ignored is a FAIL)
+- `../../references/troubleshooting/debug-mode.md` — verify `LogLevel.DEBUG` gating
 
 If `$ARGUMENTS` specifies a particular area (e.g., "interceptor", "deeplinks", "initialization"), focus the review on that section only. Otherwise, run the full checklist.
 
@@ -54,11 +54,11 @@ If no Purchasely SDK is detected, stop and tell the user: "No Purchasely SDK int
 
 **Platform-specific reference docs** to consult while running the checklist (load the one matching the detected platform):
 
-- `references/ios/initialization.md` + `references/ios/api-reference.md` + `references/ios/common-patterns.md`
-- `references/android/initialization.md` + `references/android/api-reference.md` + `references/android/common-patterns.md`
-- `references/react-native/integration.md`
-- `references/flutter/integration.md`
-- `references/cordova/integration.md`
+- `../../references/ios/initialization.md` + `../../references/ios/api-reference.md` + `../../references/ios/common-patterns.md`
+- `../../references/android/initialization.md` + `../../references/android/api-reference.md` + `../../references/android/common-patterns.md`
+- `../../references/react-native/integration.md`
+- `../../references/flutter/integration.md`
+- `../../references/cordova/integration.md`
 
 These hold the canonical install/init snippets, full API signatures, and platform-only patterns. Use them to verify the user's code matches the expected setup (e.g. correct CocoaPods version, ProGuard rules, MethodChannel registration on Flutter, plugin package alignment on cross-platform SDKs).
 
@@ -147,12 +147,12 @@ For each item below, search the code, analyze the context, and report one of:
 ### 3.5 User Management
 
 - [ ] **userLogin() called after authentication** — `Purchasely.userLogin(userId:)` must be called when the user signs in. WARNING if missing (anonymous users are fine, but logged-in users lose cross-device sync).
-- [ ] **userLogin() runs BEFORE fetchPresentation / synchronize calls that depend on audience** — race-condition check: if both happen in the same async block, verify identity is set first. FAIL if `fetchPresentation` resolves while still anonymous and the placement depends on logged-in audience attributes. See `references/concepts/user-identity.md`.
+- [ ] **userLogin() runs BEFORE fetchPresentation / synchronize calls that depend on audience** — race-condition check: if both happen in the same async block, verify identity is set first. FAIL if `fetchPresentation` resolves while still anonymous and the placement depends on logged-in audience attributes. See `../../references/concepts/user-identity.md`.
 - [ ] **userLogout() called on sign out** — `Purchasely.userLogout()` must be called when the user signs out. WARNING if missing (stale user data).
 - [ ] **Foreground resync** — `Purchasely.synchronize()` should be called from `applicationDidBecomeActive` (iOS), `ProcessLifecycleOwner` `ON_START` (Android), `AppState 'active'` (RN), `didChangeAppLifecycleState(.resumed)` (Flutter), or the `resume` event (Cordova). WARNING if missing — renewals or cancellations that happen while the app is backgrounded won't reflect in the client until the user re-opens. SKIP if running in Full mode AND the user never backgrounds the app for >1 day.
 - [ ] **User attributes set** — If the app uses audience targeting, `setUserAttribute` should be called with relevant attributes. SKIP if audience targeting is not used.
-- [ ] **Restore Purchases entry point** — Apple **requires** a Restore button reachable outside the paywall (Settings / Account) for App Store review. CRITICAL: **check the Purchasely paywall first** — if the Console operator has enabled the in-paywall Restore button on every relevant screen, an app-side button is duplicate work. If neither the paywall nor an app-side button exists, FAIL (App Store rejection risk). If only an app-side button exists but the paywall could also expose one, WARNING — confirm with the user / Console operator. See `references/concepts/subscription-checks.md`.
-- [ ] **Manage Subscription entry point** — both stores require an in-app link to native subscription management. WARNING if missing from Settings / Account. See `references/concepts/subscription-management.md`.
+- [ ] **Restore Purchases entry point** — Apple **requires** a Restore button reachable outside the paywall (Settings / Account) for App Store review. CRITICAL: **check the Purchasely paywall first** — if the Console operator has enabled the in-paywall Restore button on every relevant screen, an app-side button is duplicate work. If neither the paywall nor an app-side button exists, FAIL (App Store rejection risk). If only an app-side button exists but the paywall could also expose one, WARNING — confirm with the user / Console operator. See `../../references/concepts/subscription-checks.md`.
+- [ ] **Manage Subscription entry point** — both stores require an in-app link to native subscription management. WARNING if missing from Settings / Account. See `../../references/concepts/subscription-management.md`.
 
 ### 3.6 Architecture (If a wrapper class exists)
 
@@ -164,23 +164,23 @@ If the project routes its Purchasely SDK calls through a single dedicated class 
 - [ ] **Wrapper owns init and interceptor** — `start()` and `setPaywallActionsInterceptor` should be in the wrapper, not scattered. WARNING if init logic is outside.
 - [ ] **Testable wrapper** — iOS: protocol for mocking. Android: DI-injectable. WARNING if not mockable.
 
-See `references/architecture-patterns.md` for recommended patterns and improvements to suggest.
+See `../../references/architecture-patterns.md` for recommended patterns and improvements to suggest.
 
 ### 3.7 Production Readiness
 
-- [ ] **SDK version is current** — Compare the pinned version against `references/sdk-versions.md` (iOS 5.7.5, Android 5.7.4, RN/Flutter/Cordova 5.7.3). FAIL if older than minimum, WARNING if not at latest. FAIL if a floating version (`5.+`, `^5.0.0`, etc.) is used instead of an exact pin.
+- [ ] **SDK version is current** — Compare the pinned version against `../../references/sdk-versions.md` (iOS 5.7.5, Android 5.7.4, RN/Flutter/Cordova 5.7.3). FAIL if older than minimum, WARNING if not at latest. FAIL if a floating version (`5.+`, `^5.0.0`, etc.) is used instead of an exact pin.
 - [ ] **Plugin packages aligned** (cross-platform only) — All `react-native-purchasely*`, `purchasely_*`, or `@purchasely/cordova-plugin-*` packages MUST be the same `5.x.y`. FAIL if mismatched.
 - [ ] **ProGuard/R8 rules added** (Android only) — `proguard-rules.pro` must include Purchasely keep rules or the dependency must use `consumerProguardFiles`. WARNING if missing.
 - [ ] **No deprecated methods** — Flag any use of deprecated Purchasely APIs: `presentationViewControllerFor`, `presentationView(for:)`, `isDeeplinkHandled`, `productViewControllerFor`, `planViewControllerFor`, `subscriptionViewController`. WARNING for each occurrence.
-- [ ] **Error handling around fetchPresentation** — `fetchPresentation` can fail (network error, invalid placement). The error/failure case must be handled gracefully. FAIL if errors are silently ignored. Map known `PLYError` cases (see `references/troubleshooting/error-codes.md`) when surfacing failure to the user.
+- [ ] **Error handling around fetchPresentation** — `fetchPresentation` can fail (network error, invalid placement). The error/failure case must be handled gracefully. FAIL if errors are silently ignored. Map known `PLYError` cases (see `../../references/troubleshooting/error-codes.md`) when surfacing failure to the user.
 - [ ] **`PrivacyInfo.xcprivacy` present** (iOS only, builds against Xcode 15+ / iOS 17 SDK) — Apple requires a Privacy Manifest declaring the app's required reason API usage, third-party SDKs, and tracking domains. The Purchasely SDK ships its own `PrivacyInfo.xcprivacy` for its data collection. WARNING if the **app's** root `PrivacyInfo.xcprivacy` is missing — App Store Connect rejects submissions without it since May 2024.
-- [ ] **Google Play Billing v8 awareness** (Android only) — If the project pins `com.android.billingclient:billing` (non-KTX) ≥ 8.x while Purchasely uses `billing-ktx`, prices can hang on `queryProductDetails()`. WARNING — recommend `com.android.billingclient:billing-ktx` and/or a Gradle `resolutionStrategy.force(...)`. See `references/troubleshooting/error-codes.md` § Google Play Billing v8.
+- [ ] **Google Play Billing v8 awareness** (Android only) — If the project pins `com.android.billingclient:billing` (non-KTX) ≥ 8.x while Purchasely uses `billing-ktx`, prices can hang on `queryProductDetails()`. WARNING — recommend `com.android.billingclient:billing-ktx` and/or a Gradle `resolutionStrategy.force(...)`. See `../../references/troubleshooting/error-codes.md` § Google Play Billing v8.
 - [ ] **`LogLevel.DEBUG` not shipped in release** — Confirm that `LogLevel.DEBUG` is gated behind a build flag (`#if DEBUG`, `BuildConfig.DEBUG`, `__DEV__`, etc.). WARNING if always-on. Debug logs leak placement IDs, audience matches, and presentation IDs.
-- [ ] **Suggest real device testing** — Always recommend testing on a real device with a sandbox/test account, as simulators cannot process real purchases. See `references/testing/README.md` for Sandbox Apple ID and Play License Tester setup.
+- [ ] **Suggest real device testing** — Always recommend testing on a real device with a sandbox/test account, as simulators cannot process real purchases. See `../../references/testing/README.md` for Sandbox Apple ID and Play License Tester setup.
 
 ### 3.8 Observer Mode Post-Purchase (if Observer mode is detected)
 
-- [ ] **Correct ordering** — Code must call `synchronize()` → `proceed/processAction(false)` → `closeAllScreens()` in this order. FAIL if reversed. See `references/concepts/observer-mode-post-purchase.md`.
+- [ ] **Correct ordering** — Code must call `synchronize()` → `proceed/processAction(false)` → `closeAllScreens()` in this order. FAIL if reversed. See `../../references/concepts/observer-mode-post-purchase.md`.
 - [ ] **`closeAllScreens()` (not `closeDisplayedPresentation()`)** — for proper Flow-paywall teardown. WARNING if the older API is used.
 - [ ] **iOS `@MainActor` wrap** (iOS only) — when calling `closeAllScreens()` from a non-isolated context (inside `synchronize` callback or `DispatchQueue.main.async`), it must be wrapped in `Task { @MainActor in ... }`. FAIL if missing on iOS 5.7.5+.
 
@@ -197,13 +197,13 @@ SKIP this entire section if the project doesn't use Campaigns. To detect: ask th
 SKIP if the app does not surface promotional offers, developer-determined offers, or offer codes. Otherwise:
 
 - [ ] **SDK ≥ 4.0.0** — required for promotional offer purchase APIs.
-- [ ] **Eligibility audiences defined** — Apple promotional offers and Google developer-determined offers are **your** responsibility to gate. WARNING if a promo paywall has no audience restriction (Apple: subscribers in the same group; Google: usually `ignore-offer` tag + opt-in). See `references/concepts/promotional-offers.md`.
+- [ ] **Eligibility audiences defined** — Apple promotional offers and Google developer-determined offers are **your** responsibility to gate. WARNING if a promo paywall has no audience restriction (Apple: subscribers in the same group; Google: usually `ignore-offer` tag + opt-in). See `../../references/concepts/promotional-offers.md`.
 - [ ] **Full mode auto-handles** — in Full mode, no app code is needed. WARNING if app code calls `purchaseWithPromotionalOffer` manually while in Full mode (duplicates the purchase).
 - [ ] **Observer/custom paywall uses `subscriptionOffer` parameters** — `subscriptionId`, `basePlanId`, `offerId`, `offerToken` (Google) or signed offer (Apple). FAIL if a Promo offer purchase is attempted with regular `purchase(...)` instead of the offer-aware API.
 
 ### 3.11 Analytics & Events Forwarding (universal — low blocker, high payoff)
 
-- [ ] **One analytics wrapper / manager / controller** — if the project forwards Purchasely events (`PLYEventDelegate` / `EventListener` / `addEventListener`) into Firebase / Amplitude / AppsFlyer, the recommended pattern is a single class that routes events to N vendor SDKs. WARNING if events are forwarded directly from multiple call sites or scattered across screens. SKIP if no client-side event forwarding is in place (server-side 3rd-party integrations may be sufficient — see `references/concepts/analytics-integration.md`).
+- [ ] **One analytics wrapper / manager / controller** — if the project forwards Purchasely events (`PLYEventDelegate` / `EventListener` / `addEventListener`) into Firebase / Amplitude / AppsFlyer, the recommended pattern is a single class that routes events to N vendor SDKs. WARNING if events are forwarded directly from multiple call sites or scattered across screens. SKIP if no client-side event forwarding is in place (server-side 3rd-party integrations may be sufficient — see `../../references/concepts/analytics-integration.md`).
 - [ ] **User ID reconciliation** — if vendor analytics IDs flow into Purchasely, either as `Purchasely.userLogin(sameId)` or via a `setUserAttribute("xxx_user_id", ...)` convention, the scheme must be consistent. WARNING if mixed (some events identified, others anonymous).
 - [ ] **GDPR consent gated** — if the app operates in the EU, the wrapper should short-circuit forwarding until consent is granted. WARNING if events flow before consent.
 

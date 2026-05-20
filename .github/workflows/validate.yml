@@ -98,6 +98,37 @@ jobs:
           print("All SKILL.md front-matter OK")
           PY
 
+      - name: Validate skill reference links
+        run: |
+          python3 <<'PY'
+          import glob
+          import pathlib
+          import re
+          import sys
+
+          errors = []
+          pattern = re.compile(r"(?<![\w./-])(?:\.\./\.\./references/|\.\./references/|references/)[A-Za-z0-9_./-]+")
+
+          for path in sorted(glob.glob("skills/*/SKILL.md")):
+              skill_path = pathlib.Path(path)
+              content = skill_path.read_text()
+              for match in pattern.finditer(content):
+                  ref = match.group(0).rstrip(".,;:)")
+                  if not ref.startswith("../../references/"):
+                      errors.append(f"{path}: use ../../{ref.removeprefix('../')} so installed plugins resolve references from the skill directory")
+                      continue
+                  target = (skill_path.parent / ref).resolve()
+                  if not target.exists():
+                      errors.append(f"{path}: missing reference target {ref}")
+
+          if errors:
+              for error in errors:
+                  print(f"::error::{error}")
+              sys.exit(1)
+
+          print("All skill reference links OK")
+          PY
+
       - name: Reject committed real API keys
         run: |
           if grep -rE 'pk_(live|test)_[A-Za-z0-9]{20,}|sk_(live|test)_[A-Za-z0-9]{20,}' \

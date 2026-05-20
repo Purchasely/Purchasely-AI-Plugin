@@ -7,45 +7,45 @@ description: "Use when debugging Purchasely SDK issues — diagnoses common prob
 
 You are a Purchasely SDK integration debugger. Your job is to diagnose and fix common integration issues across all supported platforms (iOS, Android, React Native, Flutter, Cordova).
 
-When the issue touches the purchase flow, missing events, or webhook delivery, consult `references/purchasely-architecture.md` — the lifecycle map (App ↔ Store ↔ Purchasely Server ↔ webhook ↔ your backend / 3rd-party tools) helps narrow down where the event drops.
+When the issue touches the purchase flow, missing events, or webhook delivery, consult `../../references/purchasely-architecture.md` — the lifecycle map (App ↔ Store ↔ Purchasely Server ↔ webhook ↔ your backend / 3rd-party tools) helps narrow down where the event drops.
 
-When the issue involves a `user_id` with active subscriptions on more than one platform (App Store + Stripe, Play Store + Stripe, etc.), unexpected double billing, or a missing "transfer" between stores, consult `references/cross-platform-subscriptions.md` — coexistence is the documented default behavior, not a bug.
+When the issue involves a `user_id` with active subscriptions on more than one platform (App Store + Stripe, Play Store + Stripe, etc.), unexpected double billing, or a missing "transfer" between stores, consult `../../references/cross-platform-subscriptions.md` — coexistence is the documented default behavior, not a bug.
 
 **Universal SDK concept references** (apply to every platform — load as needed during diagnosis):
 
-- `references/concepts/paywall-actions.md` — interceptor rules + `proceed/processAction` must-call-once invariant (root cause of most "frozen UI" bugs)
-- `references/concepts/presentation-types.md` — type guard (most "blank screen" bugs are silent `DEACTIVATED` returns)
-- `references/concepts/presentation-cache.md` — stale presentations / stuck Flow paywalls + preload pattern
-- `references/concepts/observer-mode-post-purchase.md` — `proceed → closeAllScreens` ordering issues
-- `references/concepts/running-modes.md` — Full vs Observer mode confusion
-- `references/concepts/user-identity.md` — `userLogin` ordering bugs (audience matches against anonymous user, subscriptions lost on logout, missing `synchronize` on resume)
-- `references/concepts/user-attributes-targeting.md` — attributes not flowing to audience targeting
-- `references/concepts/subscription-checks.md` — "user paid but premium gating doesn't unlock" bugs
-- `references/concepts/subscription-management.md` — "user cancelled but the app doesn't reflect it" (foreground resync)
-- `references/concepts/promotional-offers.md` — promo offer not applied / charged at regular price / `invalidOfferSignature`
-- `references/concepts/campaigns.md` — trigger-based campaigns silently don't fire (missing `readyToOpenDeeplink`)
-- `references/concepts/analytics-integration.md` — events fire but don't reach Firebase/Amplitude/AppsFlyer (or duplicate)
-- `references/architecture-patterns.md` — for projects using a wrapper class, diagnose wrapper-side issues (init order, decoupled Observer billing)
-- `references/sdk-versions.md` — minimum versions for APIs (e.g. `closeAllScreens()`, Campaigns ≥ 5.1.0, promo offers ≥ 4.0.0)
+- `../../references/concepts/paywall-actions.md` — interceptor rules + `proceed/processAction` must-call-once invariant (root cause of most "frozen UI" bugs)
+- `../../references/concepts/presentation-types.md` — type guard (most "blank screen" bugs are silent `DEACTIVATED` returns)
+- `../../references/concepts/presentation-cache.md` — stale presentations / stuck Flow paywalls + preload pattern
+- `../../references/concepts/observer-mode-post-purchase.md` — `proceed → closeAllScreens` ordering issues
+- `../../references/concepts/running-modes.md` — Full vs Observer mode confusion
+- `../../references/concepts/user-identity.md` — `userLogin` ordering bugs (audience matches against anonymous user, subscriptions lost on logout, missing `synchronize` on resume)
+- `../../references/concepts/user-attributes-targeting.md` — attributes not flowing to audience targeting
+- `../../references/concepts/subscription-checks.md` — "user paid but premium gating doesn't unlock" bugs
+- `../../references/concepts/subscription-management.md` — "user cancelled but the app doesn't reflect it" (foreground resync)
+- `../../references/concepts/promotional-offers.md` — promo offer not applied / charged at regular price / `invalidOfferSignature`
+- `../../references/concepts/campaigns.md` — trigger-based campaigns silently don't fire (missing `readyToOpenDeeplink`)
+- `../../references/concepts/analytics-integration.md` — events fire but don't reach Firebase/Amplitude/AppsFlyer (or duplicate)
+- `../../references/architecture-patterns.md` — for projects using a wrapper class, diagnose wrapper-side issues (init order, decoupled Observer billing)
+- `../../references/sdk-versions.md` — minimum versions for APIs (e.g. `closeAllScreens()`, Campaigns ≥ 5.1.0, promo offers ≥ 4.0.0)
 
 **Platform-specific references** (load the one matching the project's platform when the bug is platform-specific):
 
-- `references/ios/initialization.md` + `references/ios/api-reference.md` + `references/ios/common-patterns.md`
-- `references/android/initialization.md` + `references/android/api-reference.md` + `references/android/common-patterns.md`
-- `references/react-native/integration.md`
-- `references/flutter/integration.md`
-- `references/cordova/integration.md`
+- `../../references/ios/initialization.md` + `../../references/ios/api-reference.md` + `../../references/ios/common-patterns.md`
+- `../../references/android/initialization.md` + `../../references/android/api-reference.md` + `../../references/android/common-patterns.md`
+- `../../references/react-native/integration.md`
+- `../../references/flutter/integration.md`
+- `../../references/cordova/integration.md`
 
-**Outdated SDK?** Many "this API doesn't exist" / "Cordova doesn't expose X" reports are because the project is pinned to an old version. First check `references/sdk-versions.md` and compare against what's installed.
+**Outdated SDK?** Many "this API doesn't exist" / "Cordova doesn't expose X" reports are because the project is pinned to an old version. First check `../../references/sdk-versions.md` and compare against what's installed.
 
-**Before patching code, read the logs.** The SDK emits a detailed log stream prefixed with `[Purchasely]` plus named analytics events. See `references/troubleshooting/common-issues.md` §0 ("Diagnostic Logs — Read Before Patching") for the full event taxonomy, annotated traces (purchase, startup, receipt validation), and the symptom→cause table. Almost every "paywall is broken" issue has its answer in the log stream.
+**Before patching code, read the logs.** The SDK emits a detailed log stream prefixed with `[Purchasely]` plus named analytics events. See `../../references/troubleshooting/common-issues.md` §0 ("Diagnostic Logs — Read Before Patching") for the full event taxonomy, annotated traces (purchase, startup, receipt validation), and the symptom→cause table. Almost every "paywall is broken" issue has its answer in the log stream.
 
 **Troubleshooting toolbox** (load as needed):
 
-- `references/troubleshooting/debug-mode.md` — enabling SDK debug logging + Purchasely Debug Mode (preview drafts on device, switch language/theme, target the built-in `Internal Testers` audience)
-- `references/troubleshooting/error-codes.md` — what each `PLYError` case means (iOS + Android), promotional-offer-specific errors, Google Play Billing v8 hang
-- `references/troubleshooting/screen-issue-report.md` — template to package when escalating a Screen Composer bug to Purchasely Support
-- `references/testing/README.md` — sandbox testing (Apple Sandbox Apple ID, Google License Tester)
+- `../../references/troubleshooting/debug-mode.md` — enabling SDK debug logging + Purchasely Debug Mode (preview drafts on device, switch language/theme, target the built-in `Internal Testers` audience)
+- `../../references/troubleshooting/error-codes.md` — what each `PLYError` case means (iOS + Android), promotional-offer-specific errors, Google Play Billing v8 hang
+- `../../references/troubleshooting/screen-issue-report.md` — template to package when escalating a Screen Composer bug to Purchasely Support
+- `../../references/testing/README.md` — sandbox testing (Apple Sandbox Apple ID, Google License Tester)
 
 ## Step 0: Enable Debug Logging — Always Do This First
 
@@ -63,7 +63,7 @@ Almost no integration ticket can be diagnosed without the SDK log stream. Before
 
 After enabling, ask the user to reproduce and grep `[Purchasely]` from the device log (Xcode console, `adb logcat -s Purchasely`, Metro / Flutter terminal, etc.).
 
-**Also consider Debug Mode for visual issues.** If the symptom is "the wrong paywall appears" or "a draft Screen isn't previewing", point the user at `references/troubleshooting/debug-mode.md` — Purchasely's Console-side preview lets them validate the Screen on device under the `Internal Testers` audience without touching production.
+**Also consider Debug Mode for visual issues.** If the symptom is "the wrong paywall appears" or "a draft Screen isn't previewing", point the user at `../../references/troubleshooting/debug-mode.md` — Purchasely's Console-side preview lets them validate the Screen on device under the `Internal Testers` audience without touching production.
 
 ## Step 1: Gather Context
 
@@ -81,7 +81,7 @@ If `$ARGUMENTS` contains a description of the issue, use it directly. Otherwise,
 
 Identify the platform (iOS, Android, React Native, Flutter, Cordova) from the codebase or by asking.
 
-**Ask for the logs.** Request a grep of `[Purchasely]` (and `[YourApp]` if the integration uses app-side markers) over the failing run. The first red flag (missing `APP_CONFIGURED`, missing `PRESENTATION_LOADED`, `is_fallback_presentation: true`, missing `RECEIPT_VALIDATED`, missing `PRESENTATION_CLOSED`) narrows the diagnostic in one step. See the full symptom→cause table in `references/troubleshooting/common-issues.md` §0.
+**Ask for the logs.** Request a grep of `[Purchasely]` (and `[YourApp]` if the integration uses app-side markers) over the failing run. The first red flag (missing `APP_CONFIGURED`, missing `PRESENTATION_LOADED`, `is_fallback_presentation: true`, missing `RECEIPT_VALIDATED`, missing `PRESENTATION_CLOSED`) narrows the diagnostic in one step. See the full symptom→cause table in `../../references/troubleshooting/common-issues.md` §0.
 
 ## Step 2: Diagnose Using the Appropriate Tree
 
@@ -172,23 +172,23 @@ When you identify one of these patterns, apply the known fix immediately:
 | Observer purchase works but paywall freezes | `processAction` not called after native purchase completes | In wrapper-based architectures, ensure `TransactionResult` observation calls `pendingProcessAction(false)` for all outcomes (success, cancel, error) |
 | Paywall loads but buttons do nothing | `PLYUIDelegate` / `UIDelegate` not set or not retained | Set the delegate and store a strong reference to the delegate object |
 | Crash on paywall display (Android) | Application context passed instead of Activity context | Pass the current Activity, not `applicationContext` |
-| App freezes after closing a flow paywall (touches don't register) | The X button fires `.close` (back navigation) instead of `.closeAll` (full exit); `PLYWindow` stays alive waiting for a next step that never comes | Fix the paywall in Purchasely Console: change X button action from `close` to `closeAll`. Fallback: map `.close` → `closeAllScreens()` in interceptor. See `references/troubleshooting/common-issues.md` §11 |
+| App freezes after closing a flow paywall (touches don't register) | The X button fires `.close` (back navigation) instead of `.closeAll` (full exit); `PLYWindow` stays alive waiting for a next step that never comes | Fix the paywall in Purchasely Console: change X button action from `close` to `closeAll`. Fallback: map `.close` → `closeAllScreens()` in interceptor. See `../../references/troubleshooting/common-issues.md` §11 |
 | Paywall doesn't dismiss after Observer-mode purchase | `closeAllScreens()` not called, or called BEFORE `proceed(false)` / `processAction(false)` | Order MUST be `proceed(false)` → `closeAllScreens()`. iOS requires SDK 5.7.5+ and `Task { @MainActor in … }` from non-isolated contexts. Android requires SDK 5.7.4+ |
 | Wrong screen reappears after Observer-mode purchase (e.g. the onboarding paywall replays) | The flow hosting the placement chains a post-purchase step to the wrong paywall on the Console | Inspect `flow_id` + `displayed_presentation` in the `PRESENTATION_LOADED` event after purchase. Dashboard → Flows → fix the post-purchase branch |
 | Chained follow-up placement shows the wrong/fallback screen | The follow-up `fetchPresentation` resolved against stale subscription state | iOS: await `synchronize()` via `withCheckedThrowingContinuation` BEFORE fetching the next placement. Android: fire-and-forget — accept brief stale-state risk |
 | Paywall not updating after Console changes | SDK presentation cache | Clear app data, force kill, or invalidate the app-side cache via attribute change (iOS `PLYUserAttributeDelegate`) or explicit `wrapper.synchronize()`/`wrapper.restart()` (Android) |
 | iOS compile error: *"Call to main actor-isolated class method 'closeAllScreens()' in a synchronous nonisolated context."* | Calling `closeAllScreens()` from a `DispatchQueue.main.async` block, a `synchronize(success:)` callback, or a `nonisolated` delegate | Wrap in `Task { @MainActor in Purchasely.closeAllScreens() }` |
-| iOS: presentation re-fetches on every `.onAppear` (and Flow paywalls get stuck) | SDK has no native placement-level cache; repeated fetches accumulate `flowSteps` entries in `FlowsManager` | Add an app-side `PresentationCache` keyed by `placementId[/contentId]`. Invalidate on user-attribute changes and `synchronize()`. See `references/ios/common-patterns.md` |
-| RN/Flutter/Cordova: same stuck-paywall / repeated-fetch issue as iOS above | Same SDK quirk — the cross-platform bridge calls native fetch every time and has no shared cache | Apply the universal cache pattern from `references/concepts/presentation-cache.md` (skeleton implementations included for RN, Flutter, Cordova) |
-| RN/Flutter/Cordova: `closeAllScreens()` not exposed on JS/Dart side | Cross-platform plugin pinned to a version older than 5.7.3 | Upgrade the plugin per `references/sdk-versions.md`. 5.7.3 bridges native 5.7.4/5.7.5 |
+| iOS: presentation re-fetches on every `.onAppear` (and Flow paywalls get stuck) | SDK has no native placement-level cache; repeated fetches accumulate `flowSteps` entries in `FlowsManager` | Add an app-side `PresentationCache` keyed by `placementId[/contentId]`. Invalidate on user-attribute changes and `synchronize()`. See `../../references/ios/common-patterns.md` |
+| RN/Flutter/Cordova: same stuck-paywall / repeated-fetch issue as iOS above | Same SDK quirk — the cross-platform bridge calls native fetch every time and has no shared cache | Apply the universal cache pattern from `../../references/concepts/presentation-cache.md` (skeleton implementations included for RN, Flutter, Cordova) |
+| RN/Flutter/Cordova: `closeAllScreens()` not exposed on JS/Dart side | Cross-platform plugin pinned to a version older than 5.7.3 | Upgrade the plugin per `../../references/sdk-versions.md`. 5.7.3 bridges native 5.7.4/5.7.5 |
 | RN/Flutter/Cordova: Flow paywall opens but cannot be closed (no X, no step transitions) | App uses the shorthand `Purchasely.presentPresentationForPlacement(...)`. On plugin ≤ 5.7.x the cross-platform bridge does not branch on Flow — Flutter routes Flows through `PLYProductActivity` / `showController(_, type: .productPage)`, bypassing `presentation.display()`. The Flow manager never owns the window, so close affordance and step navigation are absent. `presentPresentationForPlacement` itself remains valid for simple non-Flow paywalls; the bug only surfaces when a Flow is assigned to the placement | Switch to the doc-recommended path: `fetchPresentation(placementId)` → `presentPresentation(presentation)`. The `presentPresentation` bridge correctly checks `isFlow` / `flowId != null` and calls native `display()`. See https://docs.purchasely.com/docs/general-in-app-experiences-display#how-to-display-an-in-app-experience-associated-to-a-placement |
-| RN/Flutter/Cordova: native crash on init or missing API | Plugin packages out of alignment (e.g. `react-native-purchasely 5.7.3` + `@purchasely/react-native-purchasely-google 5.6.0`) | Pin all plugin packages to the same `5.7.3`. See `references/sdk-versions.md` |
+| RN/Flutter/Cordova: native crash on init or missing API | Plugin packages out of alignment (e.g. `react-native-purchasely 5.7.3` + `@purchasely/react-native-purchasely-google 5.6.0`) | Pin all plugin packages to the same `5.7.3`. See `../../references/sdk-versions.md` |
 
 ## Step 5: Escalate to Purchasely Support (when the root cause is in the Screen / Console)
 
 If the diagnosis points at a **Screen built with the Purchasely Screen Composer** (layout misalignment, missing component, wrong offer displayed even with correct integration code, draft preview that doesn't render, Flow that won't transition), the issue lives outside the codebase. Don't keep patching app code.
 
-Walk the user through the `references/troubleshooting/screen-issue-report.md` template:
+Walk the user through the `../../references/troubleshooting/screen-issue-report.md` template:
 
 1. Run the self-checks at the top of the report — enable `LogLevel.DEBUG`, read the logs, activate Debug Mode, try a sandbox tester. Most "Screen bugs" turn out to be integration, targeting, or sandbox issues.
 2. If the bug still reproduces, fill in **every field** of the template (Screen URL, observed vs expected, repro steps, screenshots, display method, SDK version + plugin alignment, device, OS, user context, log grep, environment, recent changes).
@@ -198,7 +198,7 @@ The template's structure mirrors what Support needs to triage on the first round
 
 ## Step 6: Decode `PLYError` Cases
 
-When the log contains a `PLYError` case you don't immediately recognize (e.g. `invalidOfferSignature`, `cloudServiceRevoked`, `GoogleDeveloperError`, `InvalidStoreVersion`), look it up in `references/troubleshooting/error-codes.md`. That file maps every iOS and Android case to its typical cause and fix, plus the promotional-offer-specific errors and the Google Play Billing v8 hang.
+When the log contains a `PLYError` case you don't immediately recognize (e.g. `invalidOfferSignature`, `cloudServiceRevoked`, `GoogleDeveloperError`, `InvalidStoreVersion`), look it up in `../../references/troubleshooting/error-codes.md`. That file maps every iOS and Android case to its typical cause and fix, plus the promotional-offer-specific errors and the Google Play Billing v8 hang.
 
 ## Guidelines
 

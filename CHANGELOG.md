@@ -13,6 +13,7 @@ All notable changes to this project are documented here. The format is based on 
 
 - `.claude-plugin/marketplace.json` now points to `./purchasely`, and `purchasely/.codex-plugin/plugin.json` uses lowercase Codex capability names.
 - `AGENTS.md` and `GEMINI.md` now act as thin bootstraps to the canonical `skills/` playbooks instead of duplicating SDK guidance.
+- Skill reference links now use paths relative to each `SKILL.md`, so Copilot CLI, Claude Code, and Codex installs resolve bundled `references/` files correctly.
 
 ### Removed
 
