@@ -11,7 +11,7 @@ A cross-harness plugin that bundles:
 - **4 slash commands** — `/purchasely:integrate`, `/purchasely:review`, `/purchasely:debug`, `/purchasely:question`
 - **3 auto-invoked skills** — `integrate`, `review`, `debug`
 - **1 expert agent** — `sdk-expert`
-- **Cross-vendor manifests** — `AGENTS.md`, `GEMINI.md`, `gemini-extension.json`, `.claude-plugin/`, `configs/`
+- **Cross-vendor manifests** — `.claude-plugin/`, `.codex-plugin/`, `.cursor-plugin/`, `.agents/plugins/`, `AGENTS.md`, `GEMINI.md`, `gemini-extension.json`, `configs/`
 
 Works with **Claude Code**, **Codex CLI**, **Codex App**, **Cursor**, **Gemini CLI**, **OpenCode**, **GitHub Copilot CLI**, **Mistral `vibe`**, **Windsurf**, **JetBrains AI**, and **VS Code + Continue**.
 
@@ -30,24 +30,34 @@ Pick the block matching your harness. Each one is copy-paste-able as is.
 
 ### Codex CLI
 
-```bash
-cp configs/codex/AGENTS.md AGENTS.md
+```text
+codex plugin marketplace add Purchasely/Purchasely-AI-Plugin
 ```
 
-`AGENTS.md` is the cross-vendor [agents.md](https://agents.md) standard. Codex CLI auto-detects it at the project root.
+Start Codex, run `/plugins`, search for `purchasely`, and install it. Codex reads `.agents/plugins/marketplace.json` and the `.codex-plugin/plugin.json` manifest from this repository.
 
 ### Codex App
 
-Open the project in Codex App, then drop the same `AGENTS.md` at the project root (or symlink the one from this repo). No further setup.
+Install the same marketplace first:
+
+```bash
+codex plugin marketplace add Purchasely/Purchasely-AI-Plugin
+```
+
+Then open **Plugins** in the Codex App, select the Purchasely marketplace, and install `purchasely`.
 
 ### Cursor
 
+Add this repository as a Cursor plugin marketplace, then install the `purchasely` plugin. Cursor reads `.cursor-plugin/marketplace.json`, `.cursor-plugin/plugin.json`, and `skills/` from this repository.
+
+For local testing before marketplace publication:
+
 ```bash
-mkdir -p .cursor/rules
-cp configs/cursor/purchasely.mdc .cursor/rules/purchasely.mdc
+mkdir -p ~/.cursor/plugins/local/purchasely
+cp -R . ~/.cursor/plugins/local/purchasely
 ```
 
-Rules activate automatically on Swift, Kotlin, TypeScript, Dart, and JavaScript files.
+Restart Cursor or run **Developer: Reload Window**. The legacy rule-only install is still available under `configs/cursor/purchasely.mdc`.
 
 ### Gemini CLI
 
@@ -197,6 +207,13 @@ Purchasely-AI-Plugin/
 ├── .claude-plugin/
 │   ├── plugin.json              # Claude Code plugin manifest
 │   └── marketplace.json         # Marketplace definition
+├── .codex-plugin/
+│   └── plugin.json              # OpenAI Codex plugin manifest
+├── .cursor-plugin/
+│   ├── plugin.json              # Cursor plugin manifest
+│   └── marketplace.json         # Cursor marketplace definition
+├── .agents/plugins/
+│   └── marketplace.json         # Codex repo marketplace definition
 ├── AGENTS.md                    # Cross-vendor agents.md (Codex, Cursor, Zed, Mistral, …)
 ├── GEMINI.md                    # Gemini CLI context (imports skills via @./skills/...)
 ├── gemini-extension.json        # `gemini extensions install` manifest

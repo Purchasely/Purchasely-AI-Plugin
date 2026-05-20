@@ -16,6 +16,7 @@ yarn-error.log*
 .claude/local/
 .claude/cache/
 .claude-plugin/.cache/
+.rtk/
 
 # Node (in case dev tooling is added later)
 node_modules/

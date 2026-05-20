@@ -24,15 +24,39 @@ Legend: ✅ live · ⏳ in progress · 📋 planned
 
 ## OpenAI Codex plugin marketplace (`openai/plugins`)
 
-**Status:** 📋 planned
+**Status:** ✅ repo marketplace live
 
 **Target experience:** Codex CLI `/plugins` browser and Codex App Plugins sidebar surface a `purchasely` entry.
 
-**Work to do:**
+**Install now:**
 
-1. Add a `scripts/sync-to-codex-plugin.sh` adapted from [`obra/superpowers`](https://github.com/obra/superpowers) — generates a `.codex-plugin/` directory derived from `AGENTS.md`, `skills/`, `commands/`, and `agents/`.
-2. Wire the sync script into CI so the generated artifact stays in sync with `main`.
-3. Open a PR on [`openai/plugins`](https://github.com/openai/plugins) referencing the synced repo (or a dedicated `Purchasely-AI-Plugin-codex` mirror).
+```bash
+codex plugin marketplace add Purchasely/Purchasely-AI-Plugin
+```
+
+Then install `purchasely` from `/plugins` in Codex CLI or from the Plugins sidebar in the Codex App.
+
+**Still to do:**
+
+1. Submit the plugin to the official OpenAI marketplace if Purchasely wants first-party discovery.
+2. Keep `.agents/plugins/marketplace.json` and `.codex-plugin/plugin.json` validated in CI.
+
+**Tracking issue:** _to be filed_
+
+## Cursor plugin marketplace
+
+**Status:** ✅ repo marketplace live
+
+**Target experience:** Cursor's plugin UI surfaces a `purchasely` entry from this repository.
+
+**Install now:**
+
+Add this repository as a Cursor plugin marketplace, then install `purchasely`.
+
+**Still to do:**
+
+1. Submit the plugin to the Cursor marketplace if Purchasely wants first-party discovery.
+2. Keep `.cursor-plugin/marketplace.json`, `.cursor-plugin/plugin.json`, and `skills/` validated in CI.
 
 **Tracking issue:** _to be filed_
 
@@ -94,12 +118,14 @@ copilot plugin install purchasely
 | Channel | Status | Install |
 |---|---|---|
 | GitHub-backed Claude Code marketplace | ✅ live | `/plugin marketplace add Purchasely/Purchasely-AI-Plugin` then `/plugin install purchasely@Purchasely-AI-Plugin` |
-| Cross-vendor `AGENTS.md` (Codex, Cursor, Zed, Mistral `vibe`, …) | ✅ live | Copy `configs/codex/AGENTS.md` (or use the root `AGENTS.md` once #3 lands) |
-| Cursor rules | ✅ live | Copy `configs/cursor/purchasely.mdc` to `.cursor/rules/` |
+| Cross-vendor `AGENTS.md` (Zed, Mistral `vibe`, …) | ✅ live | Copy `configs/codex/AGENTS.md` (or use the root `AGENTS.md`) |
+| Codex repo marketplace | ✅ live | `codex plugin marketplace add Purchasely/Purchasely-AI-Plugin`, then install `purchasely` |
+| Cursor repo marketplace | ✅ live | Add this repository as a Cursor plugin marketplace, then install `purchasely` |
+| Cursor rules fallback | ✅ live | Copy `configs/cursor/purchasely.mdc` to `.cursor/rules/` |
 | GitHub Copilot instructions file | ✅ live | Copy `configs/copilot/copilot-instructions.md` to `.github/` |
 | Windsurf | ✅ live | Copy `configs/windsurf/.windsurfrules` |
 | Mistral `vibe` (`AGENTS.md`) | ✅ live | Copy `configs/mistral/AGENTS.md` |
-| Gemini CLI extension | ⏳ pending #3 | `gemini extensions install https://github.com/Purchasely/Purchasely-AI-Plugin` |
+| Gemini CLI extension | ✅ live | `gemini extensions install https://github.com/Purchasely/Purchasely-AI-Plugin` |
 | OpenCode | ⏳ pending #6 | See `.opencode/INSTALL.md` |
 
 ## How to help

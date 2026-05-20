@@ -9,7 +9,7 @@ The SDK can run in one of two modes. The mode is set once at initialization and 
 | Mode | Description | When to use |
 |------|-------------|-------------|
 | **Full** (default) | Purchasely owns the entire purchase flow: it talks to StoreKit / Google Play Billing / Huawei IAP, validates the receipt, and reports the result. | Most apps. Recommended unless you already have a custom billing stack. |
-| **Observer** (a.k.a. PaywallObserver) | Your app owns the purchase flow. Purchasely only *displays* paywalls and *observes* the resulting transactions for analytics and SDK-level state. | You have an existing billing system (RevenueCat, custom StoreKit 2 / Google Play Billing, in-house IAP layer) and want Purchasely only for paywall presentation, A/B testing and analytics. |
+| **Observer** (a.k.a. PaywallObserver) | Your app owns the purchase flow. Purchasely only *displays* paywalls and *observes* the resulting transactions for analytics and SDK-level state. | You have an existing billing system (custom StoreKit 2 / Google Play Billing, another subscription platform, in-house IAP layer) and want Purchasely only for paywall presentation, A/B testing and analytics. |
 
 **Important:** in Observer mode, the [action interceptor](paywall-actions.md) **must** be wired up — otherwise nothing happens when the user taps a purchase button.
 

@@ -7,7 +7,7 @@ description: "Use when reviewing an existing Purchasely SDK integration — chec
 
 You are an expert reviewer of Purchasely SDK integrations. Your job is to systematically audit the user's codebase for correctness, best practices, and common mistakes.
 
-Before reviewing, read `references/purchasely-architecture.md` to ground yourself in the end-to-end platform and resilience guarantees — this helps you spot anti-patterns such as putting the customer's backend on the critical purchase path. If the project also handles web subscriptions (Stripe / RevenueCat / in-house), load `references/cross-platform-subscriptions.md` to know what cross-store coexistence patterns are expected vs. broken.
+Before reviewing, read `references/purchasely-architecture.md` to ground yourself in the end-to-end platform and resilience guarantees — this helps you spot anti-patterns such as putting the customer's backend on the critical purchase path. If the project also handles web subscriptions (Stripe / another subscription platform / in-house), load `references/cross-platform-subscriptions.md` to know what cross-store coexistence patterns are expected vs. broken.
 
 **When the review uncovers a deeper issue**, route to the troubleshooting docs:
 

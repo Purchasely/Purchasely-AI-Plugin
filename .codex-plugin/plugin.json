@@ -1,0 +1,47 @@
+{
+  "name": "purchasely",
+  "version": "1.0.0",
+  "description": "Purchasely SDK integration assistant for implementation, review, and debugging across iOS, Android, React Native, Flutter, and Cordova.",
+  "author": {
+    "name": "Purchasely",
+    "email": "support@purchasely.com",
+    "url": "https://github.com/Purchasely"
+  },
+  "homepage": "https://github.com/Purchasely/Purchasely-AI-Plugin",
+  "repository": "https://github.com/Purchasely/Purchasely-AI-Plugin",
+  "license": "MIT",
+  "keywords": [
+    "purchasely",
+    "sdk",
+    "in-app-purchase",
+    "subscriptions",
+    "paywalls",
+    "monetization",
+    "ios",
+    "android",
+    "react-native",
+    "flutter",
+    "cordova"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Purchasely",
+    "shortDescription": "Integrate and review Purchasely SDK code.",
+    "longDescription": "Guides Purchasely SDK implementation, review, and debugging across iOS, Android, React Native, Flutter, and Cordova.",
+    "developerName": "Purchasely",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://www.purchasely.com",
+    "privacyPolicyURL": "https://www.purchasely.com/privacy-policy",
+    "termsOfServiceURL": "https://www.purchasely.com/terms-and-conditions",
+    "brandColor": "#00AEEF",
+    "defaultPrompt": [
+      "Integrate Purchasely in my app.",
+      "Review my Purchasely integration.",
+      "Debug my Purchasely paywall issue."
+    ]
+  }
+}

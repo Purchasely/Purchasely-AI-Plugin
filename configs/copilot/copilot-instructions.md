@@ -17,7 +17,13 @@ Purchasely.start(withAPIKey: "YOUR_API_KEY", appUserId: "user_id", runningMode: 
 
 ```kotlin
 // Android
-Purchasely.start(applicationContext, "YOUR_API_KEY", "user_id", PLYRunningMode.Full, PLYLogLevel.DEBUG)
+Purchasely.Builder(applicationContext)
+    .apiKey("YOUR_API_KEY")
+    .userId("user_id")
+    .runningMode(PLYRunningMode.Full)
+    .logLevel(LogLevel.DEBUG)
+    .build()
+    .start { _, _ -> }
 ```
 
 ```typescript

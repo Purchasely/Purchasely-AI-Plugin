@@ -1,0 +1,17 @@
+{
+  "name": "purchasely",
+  "owner": {
+    "name": "Purchasely",
+    "email": "support@purchasely.com"
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "description": "Purchasely SDK plugins for Cursor."
+  },
+  "plugins": [
+    {
+      "name": "purchasely",
+      "source": "./"
+    }
+  ]
+}

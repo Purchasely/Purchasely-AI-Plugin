@@ -17,11 +17,24 @@ jobs:
         run: |
           test -f .claude-plugin/plugin.json
           python3 -c "import json; json.load(open('.claude-plugin/plugin.json'))"
+          test -f .codex-plugin/plugin.json
+          python3 -c "import json; json.load(open('.codex-plugin/plugin.json'))"
+          test -f .cursor-plugin/plugin.json
+          python3 -c "import json; json.load(open('.cursor-plugin/plugin.json'))"
 
       - name: Validate marketplace.json
         run: |
           test -f .claude-plugin/marketplace.json
           python3 -c "import json; json.load(open('.claude-plugin/marketplace.json'))"
+          test -f .agents/plugins/marketplace.json
+          python3 -c "import json; json.load(open('.agents/plugins/marketplace.json'))"
+          test -f .cursor-plugin/marketplace.json
+          python3 -c "import json; json.load(open('.cursor-plugin/marketplace.json'))"
+
+      - name: Validate Gemini extension
+        run: |
+          test -f gemini-extension.json
+          python3 -c "import json; json.load(open('gemini-extension.json'))"
 
       - name: Validate package.json
         run: |

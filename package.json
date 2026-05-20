@@ -2,7 +2,7 @@
   "name": "@purchasely/ai-plugin",
   "version": "1.0.0",
   "description": "AI coding assistant plugin for Purchasely SDK integration across all platforms",
-  "author": "Purchasely <engineering@purchasely.com>",
+  "author": "Purchasely <support@purchasely.com>",
   "license": "MIT",
   "homepage": "https://github.com/Purchasely/Purchasely-AI-Plugin",
   "repository": {

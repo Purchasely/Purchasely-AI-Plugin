@@ -15,7 +15,7 @@
       "version": "1.0.0",
       "author": {
         "name": "Purchasely",
-        "email": "engineering@purchasely.com"
+        "email": "support@purchasely.com"
       },
       "homepage": "https://github.com/Purchasely/Purchasely-AI-Plugin",
       "tags": ["purchasely", "sdk", "in-app-purchase", "paywalls", "subscriptions", "ios", "android", "react-native", "flutter", "cordova"],

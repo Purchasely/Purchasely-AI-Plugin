@@ -106,7 +106,7 @@ Purchasely.start(withAPIKey: "YOUR_API_KEY",
 
 ### Observer Mode
 
-Use this when you already have a purchase system (e.g., RevenueCat, custom StoreKit integration) and want Purchasely only for paywall presentation and analytics:
+Use this when you already have a purchase system (e.g., another subscription platform or custom StoreKit integration) and want Purchasely only for paywall presentation and analytics:
 
 ```swift
 Purchasely.start(withAPIKey: "YOUR_API_KEY",

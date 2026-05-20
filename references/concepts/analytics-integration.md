@@ -2,7 +2,7 @@
 
 Applies to: **iOS, Android, React Native, Flutter, Cordova**.
 
-Purchasely emits a rich event stream — both **on-device** (UI / SDK events) and **server-side** (subscription lifecycle webhooks). Most teams want those events flowing into Firebase, Amplitude, AppsFlyer, Mixpanel, Adjust, Branch, RevenueCat-mirror, etc.
+Purchasely emits a rich event stream — both **on-device** (UI / SDK events) and **server-side** (subscription lifecycle webhooks). Most teams want those events flowing into Firebase, Amplitude, AppsFlyer, Mixpanel, Adjust, Branch, internal mirrors, etc.
 
 There are **two complementary integration paths**, and you should think about both before writing forwarding code.
 

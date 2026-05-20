@@ -1,6 +1,6 @@
 # iOS Common Integration Patterns
 
-> **Platform-specific elaborations.** This file covers iOS idioms (SwiftUI, UIKit, Swift 6 concurrency, RevenueCat / StoreKit 2 bridging). Concepts that apply to **every** Purchasely SDK (Observer-mode post-purchase flow, presentation type guard, presentation cache, audience-targeting attributes, GDPR consent, subscription checks) live in `../concepts/`:
+> **Platform-specific elaborations.** This file covers iOS idioms (SwiftUI, UIKit, Swift 6 concurrency, external billing / StoreKit 2 bridging). Concepts that apply to **every** Purchasely SDK (Observer-mode post-purchase flow, presentation type guard, presentation cache, audience-targeting attributes, GDPR consent, subscription checks) live in `../concepts/`:
 >
 > - [`../concepts/running-modes.md`](../concepts/running-modes.md), [`../concepts/paywall-actions.md`](../concepts/paywall-actions.md), [`../concepts/presentation-types.md`](../concepts/presentation-types.md), [`../concepts/presentation-cache.md`](../concepts/presentation-cache.md), [`../concepts/observer-mode-post-purchase.md`](../concepts/observer-mode-post-purchase.md), [`../concepts/user-attributes-targeting.md`](../concepts/user-attributes-targeting.md), [`../concepts/subscription-checks.md`](../concepts/subscription-checks.md), [`../sdk-versions.md`](../sdk-versions.md) (iOS pinned at **5.7.5**).
 
@@ -116,9 +116,9 @@ func presentLoginScreen(completion: @escaping (Bool, String?) -> Void) {
 }
 ```
 
-## PaywallObserver Mode with RevenueCat
+## PaywallObserver Mode with an Existing Purchase Manager
 
-Use Purchasely for paywall display only while RevenueCat handles purchases:
+Use Purchasely for paywall display only while your existing purchase manager handles purchases:
 
 ```swift
 // Initialize in observer mode
@@ -126,7 +126,7 @@ Purchasely.start(withAPIKey: "YOUR_API_KEY",
                   runningMode: .observer,
                   storekitSettings: .storeKit2) { success, error in }
 
-// Intercept purchase actions to route through RevenueCat
+// Intercept purchase actions to route through your existing purchase manager
 Purchasely.setPaywallActionsInterceptor { action, parameters, presentationInfo, proceed in
     switch action {
     case .purchase:
@@ -135,8 +135,8 @@ Purchasely.setPaywallActionsInterceptor { action, parameters, presentationInfo, 
             proceed(false)
             return
         }
-        // Use RevenueCat to make the purchase
-        Purchases.shared.purchase(product: product) { transaction, info, error, cancelled in
+        ExistingPurchaseManager.shared.purchase(productId: productId) { result in
+            let error = result.error
             if let error = error {
                 proceed(false)
             } else {
@@ -146,7 +146,7 @@ Purchasely.setPaywallActionsInterceptor { action, parameters, presentationInfo, 
             }
         }
     case .restore:
-        Purchases.shared.restorePurchases { info, error in
+        ExistingPurchaseManager.shared.restorePurchases { error in
             Purchasely.synchronize(success: {}, failure: { _ in })
             proceed(error == nil)
         }

@@ -1,0 +1,20 @@
+{
+  "name": "purchasely",
+  "interface": {
+    "displayName": "Purchasely"
+  },
+  "plugins": [
+    {
+      "name": "purchasely",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}
