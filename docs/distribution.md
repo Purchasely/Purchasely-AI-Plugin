@@ -81,20 +81,19 @@ droid plugin install purchasely
 
 ## GitHub Copilot CLI marketplace
 
-**Status:** 📋 planned
+**Status:** ✅ repo marketplace live
 
-**Target command:**
+**Install now:**
 
 ```bash
-copilot plugin marketplace add Purchasely/Purchasely-AI-Plugin-marketplace
-copilot plugin install purchasely
+copilot plugin marketplace add Purchasely/Purchasely-AI-Plugin
+copilot plugin install purchasely@Purchasely-AI-Plugin
 ```
 
-**Work to do:**
+**Still to do:**
 
-1. Create `Purchasely/Purchasely-AI-Plugin-marketplace` (mirroring this repo's `.claude-plugin/marketplace.json` structure) **or** confirm Copilot CLI accepts the existing marketplace manifest from `Purchasely/Purchasely-AI-Plugin`.
-2. Validate end-to-end with `copilot plugin install` against a clean repo.
-3. Submit to GitHub's plugin index when the marketplace API stabilizes.
+1. Submit the plugin to one of Copilot CLI's included marketplaces if Purchasely wants first-party discovery.
+2. Keep `.claude-plugin/marketplace.json` and the `purchasely/` plugin folder validated in CI.
 
 **Tracking issue:** _to be filed_
 
@@ -121,6 +120,7 @@ copilot plugin install purchasely
 | Cross-vendor `AGENTS.md` (Zed, Mistral `vibe`, …) | ✅ live | Use the repository root `AGENTS.md`, which points to the canonical `skills/` playbooks |
 | Codex repo marketplace | ✅ live | `codex plugin marketplace add Purchasely/Purchasely-AI-Plugin`, then install `purchasely` |
 | Cursor repo marketplace | ✅ live | Add this repository as a Cursor plugin marketplace, then install `purchasely` |
+| GitHub Copilot CLI repo marketplace | ✅ live | `copilot plugin marketplace add Purchasely/Purchasely-AI-Plugin`, then `copilot plugin install purchasely@Purchasely-AI-Plugin` |
 | Gemini CLI extension | ✅ live | `gemini extensions install https://github.com/Purchasely/Purchasely-AI-Plugin` |
 | OpenCode | ⏳ pending #6 | See `.opencode/INSTALL.md` |
 

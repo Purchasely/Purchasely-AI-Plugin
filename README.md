@@ -13,7 +13,7 @@ A cross-harness plugin that bundles:
 - **1 expert agent** — `sdk-expert`
 - **Cross-vendor manifests** — `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/`, `purchasely/.claude-plugin/`, `purchasely/.codex-plugin/`, `AGENTS.md`, `GEMINI.md`, `gemini-extension.json`
 
-Works with **Claude Code**, **Codex CLI**, **Codex App**, **Cursor**, **Gemini CLI**, **OpenCode**, and **AGENTS.md-compatible harnesses**.
+Works with **Claude Code**, **Codex CLI**, **Codex App**, **Cursor**, **Gemini CLI**, **OpenCode**, **GitHub Copilot CLI**, and **AGENTS.md-compatible harnesses**.
 
 ---
 
@@ -80,6 +80,15 @@ See [`.opencode/INSTALL.md`](.opencode/INSTALL.md). TL;DR — add to your `openc
 ```json
 { "plugin": ["purchasely@git+https://github.com/Purchasely/Purchasely-AI-Plugin.git"] }
 ```
+
+### GitHub Copilot CLI
+
+```bash
+copilot plugin marketplace add Purchasely/Purchasely-AI-Plugin
+copilot plugin install purchasely@Purchasely-AI-Plugin
+```
+
+Copilot CLI reads the repository marketplace and installs the `purchasely/` plugin folder, including the canonical `skills/` playbooks.
 
 ### AGENTS.md-compatible harnesses
 

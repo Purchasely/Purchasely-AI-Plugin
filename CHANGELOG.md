@@ -7,6 +7,7 @@ All notable changes to this project are documented here. The format is based on 
 ### Added
 
 - `purchasely/.claude-plugin/plugin.json` and `purchasely/hooks` — make the root `purchasely/` plugin folder self-contained for Claude Code, matching the existing Codex plugin folder layout.
+- GitHub Copilot CLI quickstart using `copilot plugin marketplace add Purchasely/Purchasely-AI-Plugin` and `copilot plugin install purchasely@Purchasely-AI-Plugin`.
 
 ### Changed
 
