@@ -11,7 +11,7 @@ A cross-harness plugin that bundles:
 - **4 slash commands** — `/purchasely:integrate`, `/purchasely:review`, `/purchasely:debug`, `/purchasely:question`
 - **3 auto-invoked skills** — `integrate`, `review`, `debug`
 - **1 expert agent** — `sdk-expert`
-- **Cross-vendor manifests** — `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/`, `purchasely/.codex-plugin/`, `AGENTS.md`, `GEMINI.md`, `gemini-extension.json`, `configs/`
+- **Cross-vendor manifests** — `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/`, `purchasely/.claude-plugin/`, `purchasely/.codex-plugin/`, `AGENTS.md`, `GEMINI.md`, `gemini-extension.json`, `configs/`
 
 Works with **Claude Code**, **Codex CLI**, **Codex App**, **Cursor**, **Gemini CLI**, **OpenCode**, **GitHub Copilot CLI**, **Mistral `vibe`**, **Windsurf**, **JetBrains AI**, and **VS Code + Continue**.
 
@@ -27,6 +27,8 @@ Pick the block matching your harness. Each one is copy-paste-able as is.
 /plugin marketplace add Purchasely/Purchasely-AI-Plugin
 /plugin install purchasely@Purchasely-AI-Plugin
 ```
+
+Claude reads `.claude-plugin/marketplace.json`, which points at the self-contained `purchasely/` plugin folder.
 
 ### Codex CLI
 

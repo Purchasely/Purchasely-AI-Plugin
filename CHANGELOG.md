@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Added
+
+- `purchasely/.claude-plugin/plugin.json` and `purchasely/hooks` — make the root `purchasely/` plugin folder self-contained for Claude Code, matching the existing Codex plugin folder layout.
+
+### Changed
+
+- `.claude-plugin/marketplace.json` now points to `./purchasely`, and `purchasely/.codex-plugin/plugin.json` uses lowercase Codex capability names.
+
 ## [1.0.0] — 2026-05-19
 
 Initial public release of the Purchasely AI Plugin.

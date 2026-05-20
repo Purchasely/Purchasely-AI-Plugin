@@ -19,7 +19,7 @@
       },
       "homepage": "https://github.com/Purchasely/Purchasely-AI-Plugin",
       "tags": ["purchasely", "sdk", "in-app-purchase", "paywalls", "subscriptions", "ios", "android", "react-native", "flutter", "cordova"],
-      "source": "./"
+      "source": "./purchasely"
     }
   ]
 }

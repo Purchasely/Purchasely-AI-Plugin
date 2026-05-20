@@ -31,8 +31,8 @@
     "developerName": "Purchasely",
     "category": "Developer Tools",
     "capabilities": [
-      "Read",
-      "Write"
+      "read",
+      "write"
     ],
     "websiteURL": "https://www.purchasely.com",
     "privacyPolicyURL": "https://www.purchasely.com/privacy-policy",
