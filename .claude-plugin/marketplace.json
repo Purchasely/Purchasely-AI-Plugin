@@ -6,13 +6,13 @@
   },
   "metadata": {
     "description": "Purchasely SDK integration plugin for AI coding assistants",
-    "version": "1.0.0"
+    "version": "1.0.1"
   },
   "plugins": [
     {
       "name": "purchasely",
       "description": "Purchasely SDK integration assistant — guides implementation, reviews code, and debugs issues across iOS, Android, React Native, Flutter, and Cordova. Includes 3 skills, 1 agent, and 4 slash commands.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "author": {
         "name": "Purchasely",
         "email": "support@purchasely.com"
