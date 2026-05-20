@@ -39,7 +39,7 @@ Then install `purchasely` from `/plugins` in Codex CLI or from the Plugins sideb
 **Still to do:**
 
 1. Submit the plugin to the official OpenAI marketplace if Purchasely wants first-party discovery.
-2. Keep `.agents/plugins/marketplace.json` and `.codex-plugin/plugin.json` validated in CI.
+2. Keep `.agents/plugins/marketplace.json` and `purchasely/.codex-plugin/plugin.json` validated in CI.
 
 **Tracking issue:** _to be filed_
 

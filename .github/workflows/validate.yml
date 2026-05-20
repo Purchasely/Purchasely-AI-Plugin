@@ -17,8 +17,8 @@ jobs:
         run: |
           test -f .claude-plugin/plugin.json
           python3 -c "import json; json.load(open('.claude-plugin/plugin.json'))"
-          test -f .codex-plugin/plugin.json
-          python3 -c "import json; json.load(open('.codex-plugin/plugin.json'))"
+          test -f purchasely/.codex-plugin/plugin.json
+          python3 -c "import json; json.load(open('purchasely/.codex-plugin/plugin.json'))"
           test -f .cursor-plugin/plugin.json
           python3 -c "import json; json.load(open('.cursor-plugin/plugin.json'))"
 
@@ -28,6 +28,13 @@ jobs:
           python3 -c "import json; json.load(open('.claude-plugin/marketplace.json'))"
           test -f .agents/plugins/marketplace.json
           python3 -c "import json; json.load(open('.agents/plugins/marketplace.json'))"
+          python3 - <<'PY'
+          import json
+          marketplace = json.load(open('.agents/plugins/marketplace.json'))
+          plugin = marketplace['plugins'][0]
+          assert plugin['name'] == 'purchasely'
+          assert plugin['source']['path'] == './purchasely'
+          PY
           test -f .cursor-plugin/marketplace.json
           python3 -c "import json; json.load(open('.cursor-plugin/marketplace.json'))"
 

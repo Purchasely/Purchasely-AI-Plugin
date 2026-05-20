@@ -11,7 +11,7 @@ A cross-harness plugin that bundles:
 - **4 slash commands** — `/purchasely:integrate`, `/purchasely:review`, `/purchasely:debug`, `/purchasely:question`
 - **3 auto-invoked skills** — `integrate`, `review`, `debug`
 - **1 expert agent** — `sdk-expert`
-- **Cross-vendor manifests** — `.claude-plugin/`, `.codex-plugin/`, `.cursor-plugin/`, `.agents/plugins/`, `AGENTS.md`, `GEMINI.md`, `gemini-extension.json`, `configs/`
+- **Cross-vendor manifests** — `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/`, `purchasely/.codex-plugin/`, `AGENTS.md`, `GEMINI.md`, `gemini-extension.json`, `configs/`
 
 Works with **Claude Code**, **Codex CLI**, **Codex App**, **Cursor**, **Gemini CLI**, **OpenCode**, **GitHub Copilot CLI**, **Mistral `vibe`**, **Windsurf**, **JetBrains AI**, and **VS Code + Continue**.
 
@@ -34,7 +34,7 @@ Pick the block matching your harness. Each one is copy-paste-able as is.
 codex plugin marketplace add Purchasely/Purchasely-AI-Plugin
 ```
 
-Start Codex, run `/plugins`, search for `purchasely`, and install it. Codex reads `.agents/plugins/marketplace.json` and the `.codex-plugin/plugin.json` manifest from this repository.
+Start Codex, run `/plugins`, search for `purchasely`, and install it. Codex reads `.agents/plugins/marketplace.json` and `purchasely/.codex-plugin/plugin.json` from this repository.
 
 ### Codex App
 
@@ -207,8 +207,6 @@ Purchasely-AI-Plugin/
 ├── .claude-plugin/
 │   ├── plugin.json              # Claude Code plugin manifest
 │   └── marketplace.json         # Marketplace definition
-├── .codex-plugin/
-│   └── plugin.json              # OpenAI Codex plugin manifest
 ├── .cursor-plugin/
 │   ├── plugin.json              # Cursor plugin manifest
 │   └── marketplace.json         # Cursor marketplace definition
@@ -228,6 +226,13 @@ Purchasely-AI-Plugin/
 │   ├── review.md
 │   ├── debug.md
 │   └── question.md
+├── purchasely/
+│   ├── .codex-plugin/
+│   │   └── plugin.json          # OpenAI Codex plugin manifest
+│   ├── skills -> ../skills
+│   ├── references -> ../references
+│   ├── commands -> ../commands
+│   └── agents -> ../agents
 ├── references/                  # SDK documentation (used by skills)
 │   ├── concepts/                # 🌐 Universal SDK concepts (all 5 platforms)
 │   ├── testing/                 # Sandbox setup (Apple, Google)

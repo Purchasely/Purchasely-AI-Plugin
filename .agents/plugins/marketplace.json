@@ -8,7 +8,7 @@
       "name": "purchasely",
       "source": {
         "source": "local",
-        "path": "./"
+        "path": "./purchasely"
       },
       "policy": {
         "installation": "AVAILABLE",
