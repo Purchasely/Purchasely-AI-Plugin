@@ -148,6 +148,7 @@ For each item below, search the code, analyze the context, and report one of:
 - [ ] **CLOSE action handled** — The close action must dismiss the paywall and call `processAction(true)`. FAIL if missing (users cannot close the paywall).
 - [ ] **processAction() ALWAYS called** — Every code path through the interceptor MUST call `processAction()` / `proceed()`. If any branch (early return, error catch, switch default) skips it, the paywall UI will freeze permanently. This is the #1 most common Purchasely bug. FAIL if any code path can skip it.
 - [ ] **No double calls to processAction()** — Calling `processAction()` twice causes undefined behavior. WARNING if there's a risk of double invocation.
+- [ ] **No attempt to override post-purchase flow from the interceptor** — If the app holds the interceptor open, skips `proceed`, or calls `Purchasely.close()` manually to "stay on the paywall" / "show a custom thank-you screen" after a purchase, that's the wrong layer. The Composer button supports a **second action** (`purchase + open_screen` / `purchase + open_placement` / `purchase + deeplink`) and the default is *close in Full mode, stay open in Observer mode*. WARNING — recommend wiring the second action in the Console (or BYOS if the next screen is custom). See `../../references/concepts/paywall-actions.md` § Chaining multiple actions.
 
 ### 3.4 Deeplinks
 
@@ -211,6 +212,20 @@ SKIP if the app does not surface promotional offers, developer-determined offers
 - [ ] **Eligibility audiences defined** — Apple promotional offers and Google developer-determined offers are **your** responsibility to gate. WARNING if a promo paywall has no audience restriction (Apple: subscribers in the same group; Google: usually `ignore-offer` tag + opt-in). See `../../references/concepts/promotional-offers.md`.
 - [ ] **Full mode auto-handles** — in Full mode, no app code is needed. WARNING if app code calls `purchaseWithPromotionalOffer` manually while in Full mode (duplicates the purchase).
 - [ ] **Observer/custom paywall uses `subscriptionOffer` parameters** — `subscriptionId`, `basePlanId`, `offerId`, `offerToken` (Google) or signed offer (Apple). FAIL if a Promo offer purchase is attempted with regular `purchase(...)` instead of the offer-aware API.
+
+### 3.12 Bring Your Own Screen — BYOS (if a Custom Screen delegate / provider is registered, or a Flow contains a Custom Screen step)
+
+SKIP if no BYOS code path is detected (no `setCustomScreenViewControllerDelegate` / `setCustomScreenViewDelegate` / `setCustomScreenProvider` registration, no `executeConnection` / `execute(connection:)` call, and the Console does not declare any `Bring Your Own Screen` layout). To detect: search for `CustomScreen`, `PLYCustomScreen`, `executeConnection`, `PLYConnection` in the code. Otherwise:
+
+- [ ] **Platform supports BYOS** — BYOS is iOS (Swift/SwiftUI) and Android (Kotlin) only. **FAIL** if BYOS is being attempted on React Native, Flutter, or Cordova (not shipped yet — escalate to support before promising it).
+- [ ] **SDK ≥ 5.6.0** — required for the Custom Screen delegate/provider APIs and `executeConnection`. FAIL if pinned below.
+- [ ] **`display()` is used to render the Flow** — BYOS only triggers when the SDK owns the navigation. FAIL if the app fetches the presentation then renders Composer screens manually (the BYOS callback is never invoked in that path). See `../../references/concepts/byos.md`.
+- [ ] **Delegate/provider returns a view for every declared Custom Screen ID** — The Console's Screen ID(s) must each have a matching branch. FAIL if any Screen ID falls through to `nil` / `EmptyView` unintentionally — the SDK silently closes that step and the Flow breaks.
+- [ ] **`executeConnection` / `execute(connection)` is called on every exit path** — Every user-driven exit from the Custom Screen (success, cancel, error) must call the SDK with the matching `PLYConnection`. FAIL if any path leaves the screen on its own (e.g. `dismiss()`, `popBackStack()`) without notifying the SDK — the Flow stays stuck or the SDK loses analytics context.
+- [ ] **Connection IDs match the Console** — The string IDs (`login_successful`, `signup`, `cancel`…) must match exactly what the Console operator configured. WARNING if hardcoded IDs drift from the Console — recommend a shared constants file.
+- [ ] **`Purchasely.synchronize()` after in-screen purchases** — If the Custom Screen runs its own purchase flow (legacy paywall A/B variant, etc.), the app must call `synchronize()` on success. FAIL if missing — A/B / A/A conversion attribution will be wrong.
+- [ ] **No manual navigation around the Purchasely controller** — Flag any sign that the team is presenting their own VC over the Purchasely paywall, calling `Purchasely.close()` then pushing a screen, or skipping `display()` to render a custom screen instead. WARNING — replace with BYOS (the supported handover model).
+- [ ] **Interaction analytics instrumented in-app** — The SDK emits `PRESENTATION_DISPLAYED` for the Custom Screen but does not track interactions inside it. WARNING if the team relies on Purchasely tracking for in-screen events — they need to wire their own analytics inside the Custom Screen.
 
 ### 3.11 Analytics & Events Forwarding (universal — low blocker, high payoff)
 
