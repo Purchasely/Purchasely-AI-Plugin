@@ -1017,6 +1017,8 @@ Once Steps 1-8 are in place and verified, walk the user through the **optional b
 | **Analytics integration** — forward Purchasely UI events to Firebase / Amplitude / AppsFlyer (client-side) and subscription lifecycle events via 3rd-party integrations / webhooks (server-side, recommended). | Any team with an analytics stack — recommend a single analytics wrapper / manager to centralise the routing | `../../references/concepts/analytics-integration.md` |
 | **Subscription gating + restore** — gate premium content via `userSubscriptions`, restore purchases from Settings | Any app with premium features | `../../references/concepts/subscription-checks.md` |
 | **Audience attributes + GDPR consent** — target users with `setUserAttribute`, gate event flow on consent | Apps with marketing audiences or EU users | `../../references/concepts/user-attributes-targeting.md` |
+| **Bring Your Own Screen (BYOS)** — embed a native screen (login, custom form, legacy paywall A/B variant) inside a Purchasely Flow with its own connections / `executeConnection(...)` chaining. **iOS + Android only, SDK ≥ 5.6.0.** | Teams that need a native login step in a Flow, or want to A/B their existing paywall against a Composer version | `../../references/concepts/byos.md` |
+| **Chain multiple actions on a single button** — configure `purchase + open_screen` / `purchase + open_placement` / `purchase + deeplink` in the Screen Composer. Without a second action, the default is *close in Full mode, stay open in Observer mode*. | Any team wiring post-purchase upsells, thank-you screens, or onboarding completion | `../../references/concepts/paywall-actions.md` § Chaining multiple actions |
 
 Pick the ones the user's roadmap actually needs — don't push all six on day one.
 

@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `references/concepts/byos.md` — Bring Your Own Screen reference: when to use it (native login step in a Flow, A/B against an existing paywall, reordering onboarding), Console configuration (Screen ID + connections), iOS implementation (`PLYCustomScreenViewControllerDelegate` / SwiftUI `PLYCustomScreenViewDelegate`), Android implementation (`PLYCustomScreenProvider` + `PLYCustomScreen.View` / `.Fragment`), `executeConnection(...)` / `execute(connection)` contract for resuming a Flow or running a standalone action, `Purchasely.synchronize()` requirement for in-screen purchases, analytics behaviour, and a list of anti-patterns BYOS replaces (custom VC over Purchasely, manual close-then-push, skipping `display()`). iOS + Android only, SDK ≥ 5.6.0.
+- `references/concepts/paywall-actions.md` § **Chaining multiple actions on a single button** — documents how a Composer button can carry several actions (purchase + open_screen / open_placement / deeplink / close, login + purchase, etc.) executed sequentially, the default behaviour when no second action is configured (close in Full mode, stay open in Observer mode), how the interceptor sees each action separately, and the fact that `proceed(false)` short-circuits the chain.
+- `sdk-expert` agent: new response rule for BYOS / "show my own screen inside a paywall or Flow" / "native login step inside a Flow" — forces loading `references/concepts/byos.md`, gates the answer on SDK ≥ 5.6.0 + iOS/Android platform, and steers users away from anti-patterns (presenting a custom VC over the Purchasely controller, `Purchasely.close()` then push, skipping `display()`).
+- `review` skill: new section **3.12 BYOS** — conditional checklist (platform support, SDK version, `display()` usage, delegate/provider completeness, `executeConnection` on every exit, connection ID consistency, `synchronize()` after in-screen purchases, no manual navigation around the SDK controller, in-screen analytics instrumentation).
+- `review` skill § 3.3: new checkpoint flagging interceptors that try to override the post-purchase flow (holding the interceptor open, skipping `proceed`, manual `Purchasely.close()`) — recommends configuring a second Composer action instead, or BYOS for a custom next step.
+- `integrate` skill § Step 9 (Beyond the Basics): two new entries — BYOS and chained Composer actions — so they surface during onboarding when the user's roadmap matches.
+
 ## [1.0.1] — 2026-05-20
 
 ### Changed

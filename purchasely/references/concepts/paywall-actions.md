@@ -127,14 +127,38 @@ Purchasely.setPaywallActionInterceptor(result => {
 | `restore` | `proceed(true)` — SDK restores. | Run your own restore, then `proceed(success)`. |
 | `login` | App handles. SDK then re-fetches with the new user. | Same. |
 
+## Chaining multiple actions on a single button
+
+A button in the Screen Composer can carry **more than one action**. The actions execute **sequentially** once the first one completes successfully. This is configured in the Console (Screen Composer → button → Actions), **not in the SDK code**.
+
+Typical chains:
+
+| First action | Second action | Result |
+|--------------|---------------|--------|
+| `purchase` | *(none)* | Default: closes the presentation in **Full mode**, does nothing in **Observer mode** (the paywall stays open — your app decides what's next). |
+| `purchase` | `open_screen` (next Flow step) | After successful purchase, the SDK advances the Flow to the next Screen. |
+| `purchase` | `open_placement` | After successful purchase, the SDK fetches & displays the configured placement (e.g. an upsell, a thank-you screen). |
+| `purchase` | `navigate` (deeplink) | After successful purchase, the SDK fires the deeplink. The app handles it via the interceptor (`navigate` action) or the deeplink listener. |
+| `purchase` | `close` | Forces the dismiss even if the default would be to stay open (Observer). |
+| `login` | `purchase` | After login completes (your `proceed(true)`), the SDK runs the purchase. |
+
+Key points:
+
+- **Default after `purchase` is intentional.** In Full mode the SDK closes the paywall on success so the user lands back in the app. In Observer mode the SDK has no opinion — it doesn't know what the app's purchase flow returned — so it leaves the paywall in place. If you want a different behaviour, **add a second action in the Composer**, don't try to coerce it from the interceptor.
+- **The interceptor sees only the action being executed at this moment.** For a `purchase + open_placement` chain, you receive `purchase` first (call `proceed(true)`); the SDK then triggers the second action on its own and you receive it as a separate interceptor call (e.g. `open_presentation`).
+- **`proceed(false)` short-circuits the chain.** If your purchase branch ends with `proceed(false)` (cancelled / failed / Observer-mode declined), the second action is **not** executed.
+- **Configuration is a Console concern.** Mobile engineers cannot add a "second action" from the SDK — ask the team running the Screen Composer to wire it in the button's Actions list.
+
 ## Anti-patterns
 
 - ❌ Calling `proceed` / `processAction` inside an async block whose error path doesn't call it.
 - ❌ Returning from the interceptor without calling `proceed` (e.g. `if (cond) return;`).
 - ❌ Calling `proceed` twice (e.g. once in the happy path, once in `finally`).
 - ❌ Doing heavy synchronous work in the interceptor — the paywall is waiting on you.
+- ❌ Trying to "stay on the paywall after purchase" by holding the interceptor open or skipping `proceed` — instead, configure the button with no second action (Observer mode) or add an explicit `open_screen` / `open_placement` step.
 
 ## See also
 
 - [observer-mode-post-purchase.md](observer-mode-post-purchase.md) — exact `proceed → dismiss` sequence after Observer-mode purchases
 - [presentation-types.md](presentation-types.md) — what to do when `fetchPresentation` returns `DEACTIVATED` or `CLIENT`
+- [byos.md](byos.md) — Bring Your Own Screen: native screens inside a Flow, with their own `executeConnection(...)` chaining model

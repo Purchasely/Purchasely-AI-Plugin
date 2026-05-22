@@ -11,8 +11,9 @@ When a topic also has a deeper platform-specific take (e.g. SwiftUI lifecycle, J
 | File | Topic |
 |------|-------|
 | [running-modes.md](running-modes.md) | Full vs Observer modes, log levels |
-| [paywall-actions.md](paywall-actions.md) | `PLYPresentationAction` enum + interceptor `proceed/processAction` rules |
+| [paywall-actions.md](paywall-actions.md) | `PLYPresentationAction` enum + interceptor `proceed/processAction` rules + chaining multiple actions on a single button (purchase + open_screen / open_placement / deeplink) |
 | [presentation-types.md](presentation-types.md) | `PLYPresentationType` enum (NORMAL / FALLBACK / DEACTIVATED / CLIENT) guard |
+| [byos.md](byos.md) | Bring Your Own Screen — embed native screens (login, custom forms, legacy paywall) inside a Flow; iOS + Android only, SDK ≥ 5.6.0 |
 | [presentation-cache.md](presentation-cache.md) | App-side caching + preload pattern (avoid `FlowsManager.flowSteps` accumulation) |
 | [observer-mode-post-purchase.md](observer-mode-post-purchase.md) | `proceed → dismiss` ordering, native vs bridge close APIs, chaining follow-up placements |
 | [user-attributes-targeting.md](user-attributes-targeting.md) | Setting user attributes for audience targeting + GDPR consent |
@@ -39,4 +40,6 @@ When a topic also has a deeper platform-specific take (e.g. SwiftUI lifecycle, J
 | Wiring analytics / tracking | `analytics-integration.md`, `user-identity.md` |
 | Improving paywall perceived performance | `presentation-cache.md` (preload pattern) |
 | Debugging stuck paywalls / blank presentations | `presentation-types.md`, `presentation-cache.md`, `paywall-actions.md` |
+| Embedding a native login / custom form / legacy paywall inside a Flow | `byos.md` (iOS + Android, SDK ≥ 5.6.0) |
+| Configuring multi-step buttons (purchase + next step, purchase + placement) | `paywall-actions.md` § Chaining multiple actions |
 | Reviewing an existing integration | all of the above |
