@@ -28,6 +28,73 @@ The "wrapper" pattern (a single dedicated class that owns every call into the Pu
 
 When in doubt, lean on the language: "recommended", "optional pattern", "consider", "best practice for testability and SDK isolation". Avoid: "rule", "must", "always", "required".
 
+## Publishing / refreshing on agentskill.sh
+
+The three skills are published on [agentskill.sh](https://agentskill.sh) as `@purchasely/purchasely-integrate`, `@purchasely/purchasely-review`, `@purchasely/purchasely-debug`.
+
+**Force a re-scan** (after a push, a skill rename, or a description change) — agentskill.sh runs a daily background sync, but you can trigger it on demand by POSTing the GitHub repo URL to the public submit endpoint:
+
+```bash
+ctx_execute(language: "javascript", code: `
+  const r = await fetch("https://agentskill.sh/api/skills/submit", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ url: "https://github.com/Purchasely/Purchasely-AI-Plugin" }),
+  });
+  console.log(JSON.stringify(await r.json(), null, 2));
+`)
+```
+
+The call is idempotent: first import returns `status: imported`, subsequent calls return `status: updated`. Response shape:
+
+```json
+{
+  "success": true,
+  "data": {
+    "owner": "Purchasely",
+    "repo": "Purchasely-AI-Plugin",
+    "skills": [
+      { "slug": "purchasely/purchasely-debug",     "status": "updated", "securityScore": 95 },
+      { "slug": "purchasely/purchasely-integrate", "status": "updated", "securityScore": 100 },
+      { "slug": "purchasely/purchasely-review",    "status": "updated", "securityScore": 100 }
+    ],
+    "summary": { "found": 3, "imported": 0, "updated": 3, "failed": 0 }
+  }
+}
+```
+
+The endpoint only accepts the key `url` — not `githubUrl`, `repo`, or `owner+repo`. Anything else returns 400 *"A URL is required"*.
+
+**Don't rerun this for every commit.** Only call it when:
+- A skill is added, renamed, or removed (directory rename or new `SKILL.md`).
+- A `name:` or `description:` field changes in a `SKILL.md` frontmatter.
+- The body of a `SKILL.md` has a substantial update you want surfaced before the next daily sync (≤ 24h).
+
+For push-time sync without manual calls, set up a GitHub webhook → `https://agentskill.sh/api/webhooks/github`, content type `application/json`, events `push` only (Settings → Webhooks → Add webhook on the GitHub repo).
+
+**Public pages** — verify after a re-scan:
+- https://agentskill.sh/@purchasely/purchasely-integrate
+- https://agentskill.sh/@purchasely/purchasely-review
+- https://agentskill.sh/@purchasely/purchasely-debug
+
+## Publishing / refreshing on skills.sh
+
+The same three skills are also installable through the [`skills` CLI](https://www.skills.sh/docs):
+
+```bash
+npx skills add Purchasely/Purchasely-AI-Plugin
+```
+
+skills.sh has **no submission step** — the leaderboard is populated automatically from anonymous install telemetry collected by the CLI. The badge `https://skills.sh/b/Purchasely/Purchasely-AI-Plugin` increments on real installs only.
+
+To **validate the repo layout** locally before pushing (catches frontmatter / directory-name mismatches the CLI would reject):
+
+```bash
+npx --yes skills add . --list
+```
+
+Should report `Found 3 skills` with names `purchasely-debug`, `purchasely-integrate`, `purchasely-review`. The CLI auto-discovers `skills/` and the `.claude-plugin/` manifests — no extra config needed.
+
 # context-mode — MANDATORY routing rules
 
 You have context-mode MCP tools available. These rules are NOT optional — they protect your context window from flooding. A single unrouted command can dump 56 KB into context and waste the entire session.
