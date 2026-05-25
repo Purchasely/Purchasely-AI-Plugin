@@ -24,7 +24,7 @@ The "wrapper" pattern (a single dedicated class that owns every call into the Pu
 3. **Outside those recommendation sections, refer to Purchasely SDK APIs directly** (`Purchasely.fetchPresentation(...)`, `Purchasely.setUserAttribute(...)`, `Purchasely.synchronize(...)`, `PLYPresentation`, etc.). Do not write `purchaselyWrapper.X(...)` or `wrapper.X(...)` in code samples or prose.
 4. **Checklists must split** "universal" items (apply regardless of architecture) from "recommended when adopting the wrapper pattern" items. Adoption-conditional items must never appear in the universal section.
 5. **The same rule applies to the optional reactive Observer-mode flow and the in-memory presentation cache** — recommendations only, never required.
-6. **Code reviewers (the `review` skill) must skip wrapper-related checks when the project does not use a wrapper class** and must not suggest adding one unless the user explicitly asks for an architecture review.
+6. **Code reviewers (the `purchasely-review` skill) must skip wrapper-related checks when the project does not use a wrapper class** and must not suggest adding one unless the user explicitly asks for an architecture review.
 
 When in doubt, lean on the language: "recommended", "optional pattern", "consider", "best practice for testability and SDK isolation". Avoid: "rule", "must", "always", "required".
 

@@ -2,9 +2,9 @@
 
 Use the canonical Purchasely skills instead of duplicating SDK guidance in this file. Load the matching skill whenever the user asks for that workflow.
 
-- Integration from scratch or step-by-step: @./skills/integrate/SKILL.md
-- Review an existing integration: @./skills/review/SKILL.md
-- Debug a runtime issue: @./skills/debug/SKILL.md
+- Integration from scratch or step-by-step: @./skills/purchasely-integrate/SKILL.md
+- Review an existing integration: @./skills/purchasely-review/SKILL.md
+- Debug a runtime issue: @./skills/purchasely-debug/SKILL.md
 
 ## References
 

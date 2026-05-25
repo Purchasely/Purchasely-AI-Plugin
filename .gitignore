@@ -20,6 +20,7 @@ yarn-error.log*
 
 # Node (in case dev tooling is added later)
 node_modules/
+node-compile-cache/
 
 # Test/coverage artifacts (in case ever added)
 coverage/

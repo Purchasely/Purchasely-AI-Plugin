@@ -4,9 +4,9 @@ This project is using the **Purchasely AI Plugin**. You have access to three tas
 
 ## Skills (auto-invoked when relevant)
 
-- **`integrate`** — step-by-step SDK integration: install, `Purchasely.start(...)`, paywall display via `fetchPresentation(...)`, action interceptor, user login/logout, Restore, Manage Subscription, plus campaigns / promo offers / analytics.
-- **`review`** — 24-point checklist that audits an existing integration for missing `processAction(true)` branches, deprecated APIs, identity ordering, `PrivacyInfo.xcprivacy`, Google Play Billing v8, log-level gating, and more.
-- **`debug`** — diagnostic flow for blank paywalls, frozen UI, purchase failures, and deeplinks. Includes SDK debug logging (Step 0), `PLYError` decoding (Step 6), and the screen-issue-report escalation template (Step 5).
+- **`purchasely-integrate`** — step-by-step SDK integration: install, `Purchasely.start(...)`, paywall display via `fetchPresentation(...)`, action interceptor, user login/logout, Restore, Manage Subscription, plus campaigns / promo offers / analytics.
+- **`purchasely-review`** — 24-point checklist that audits an existing integration for missing `processAction(true)` branches, deprecated APIs, identity ordering, `PrivacyInfo.xcprivacy`, Google Play Billing v8, log-level gating, and more.
+- **`purchasely-debug`** — diagnostic flow for blank paywalls, frozen UI, purchase failures, and deeplinks. Includes SDK debug logging (Step 0), `PLYError` decoding (Step 6), and the screen-issue-report escalation template (Step 5).
 
 ## Slash command
 

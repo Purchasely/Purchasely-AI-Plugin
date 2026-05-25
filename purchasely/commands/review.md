@@ -7,4 +7,4 @@ argument-hint: "[area: initialization|paywalls|interceptor|deeplinks|user-manage
 
 The user invoked this command with: $ARGUMENTS
 
-Read `skills/review/SKILL.md` from this plugin, then follow that skill exactly. Pass the arguments above as the skill's `$ARGUMENTS`.
+Read `skills/purchasely-review/SKILL.md` from this plugin, then follow that skill exactly. Pass the arguments above as the skill's `$ARGUMENTS`.

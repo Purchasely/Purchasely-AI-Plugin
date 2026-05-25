@@ -6,7 +6,7 @@ Thanks for helping make Purchasely easier to integrate. This guide covers how to
 
 - **Bug reports** — open an issue with a reproducible scenario (which AI tool, which command, what happened)
 - **Documentation fixes** — correct or improve any file under `purchasely/references/`
-- **New troubleshooting recipes** — add diagnostic trees to `purchasely/references/troubleshooting/common-issues.md` or extend `purchasely/skills/debug/SKILL.md`
+- **New troubleshooting recipes** — add diagnostic trees to `purchasely/references/troubleshooting/common-issues.md` or extend `purchasely/skills/purchasely-debug/SKILL.md`
 - **New AI tool support** — add or update a plugin manifest/bootstrap that points to the canonical `purchasely/skills/`
 - **SDK API updates** — keep `purchasely/references/<platform>/api-reference.md` in sync with the latest public SDK
 

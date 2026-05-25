@@ -1,5 +1,5 @@
 ---
-name: review
+name: purchasely-review
 description: "Use when reviewing an existing Purchasely SDK integration — checks initialization, paywall display, action interceptor, deeplinks, user management, and production readiness across iOS, Android, React Native, Flutter, and Cordova."
 ---
 

@@ -117,7 +117,7 @@ This document is the canonical version source. When a new SDK ships:
 1. Update the version table at the top.
 2. Update the pinned snippets.
 3. Update `_Last updated_` date.
-4. The `integrate` skill reads from here; no further sync needed for that skill.
+4. The `purchasely-integrate` skill reads from here; no further sync needed for that skill.
 
 ## See also
 

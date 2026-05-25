@@ -1,5 +1,5 @@
 ---
-name: debug
+name: purchasely-debug
 description: "Use when debugging Purchasely SDK issues — diagnoses common problems like blank paywalls, frozen UI, missing callbacks, purchase failures, and initialization errors across all platforms."
 ---
 

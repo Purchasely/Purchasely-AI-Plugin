@@ -2,6 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-Plugin-D97757)](https://docs.anthropic.com/en/docs/claude-code/plugins)
+[![skills.sh](https://skills.sh/b/Purchasely/Purchasely-AI-Plugin)](https://skills.sh/Purchasely/Purchasely-AI-Plugin)
 [![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20Android%20%7C%20React%20Native%20%7C%20Flutter%20%7C%20Cordova-lightgrey)](#supported-platforms)
 
 > AI-powered assistant for integrating, reviewing, and debugging the [Purchasely](https://www.purchasely.com) SDK across **iOS**, **Android**, **React Native**, **Flutter**, and **Cordova**.
@@ -9,7 +10,7 @@
 A cross-harness plugin that bundles:
 
 - **4 slash commands** — `/purchasely:integrate`, `/purchasely:review`, `/purchasely:debug`, `/purchasely:question`
-- **3 auto-invoked skills** — `integrate`, `review`, `debug`
+- **3 auto-invoked skills** — `purchasely-integrate`, `purchasely-review`, `purchasely-debug`
 - **1 expert agent** — `sdk-expert`
 - **Cross-vendor manifests** — `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/`, `purchasely/.claude-plugin/`, `purchasely/.codex-plugin/`, `purchasely/.cursor-plugin/`, `AGENTS.md`, `GEMINI.md`, `gemini-extension.json`
 
@@ -20,6 +21,32 @@ Works with **Claude Code**, **Codex CLI**, **Codex App**, **Cursor**, **Gemini C
 ## Quickstart
 
 Pick the block matching your harness. Each one is copy-paste-able as is.
+
+### Skills CLI (skills.sh) — works with every supported agent
+
+The [`skills` CLI](https://www.skills.sh/docs) installs the three Purchasely skills (`purchasely-integrate`, `purchasely-review`, `purchasely-debug`) into any AGENTS.md-compatible harness, Claude Code, Cursor, Codex, OpenCode, and 50+ others — pick where they go interactively, no marketplace setup required:
+
+```bash
+npx skills add Purchasely/Purchasely-AI-Plugin
+```
+
+Common variants:
+
+```bash
+# List the skills shipped by this repo without installing
+npx skills add Purchasely/Purchasely-AI-Plugin --list
+
+# Install one skill only (e.g. just the debug playbook)
+npx skills add Purchasely/Purchasely-AI-Plugin --skill purchasely-debug
+
+# Non-interactive — install everything to Claude Code, globally
+npx skills add Purchasely/Purchasely-AI-Plugin -g -a claude-code -y
+
+# Update later
+npx skills update
+```
+
+The CLI discovers skills at [`skills/`](./skills) (a compatibility link to [`purchasely/skills/`](./purchasely/skills)) and respects the manifests in [`.claude-plugin/`](./.claude-plugin). Skill names match their directory names — `purchasely-integrate`, `purchasely-review`, `purchasely-debug`.
 
 ### Claude Code
 
@@ -171,9 +198,9 @@ Purchasely-AI-Plugin/
 │   ├── .cursor-plugin/
 │   │   └── plugin.json          # Cursor plugin manifest
 │   ├── skills/                  # AI-invoked skills (automatic)
-│   │   ├── integrate/SKILL.md
-│   │   ├── review/SKILL.md
-│   │   └── debug/SKILL.md
+│   │   ├── purchasely-integrate/SKILL.md
+│   │   ├── purchasely-review/SKILL.md
+│   │   └── purchasely-debug/SKILL.md
 │   ├── agents/
 │   │   └── sdk-expert.md        # Purchasely SDK expert agent
 │   ├── commands/                # User-invoked slash commands
@@ -205,9 +232,9 @@ Purchasely-AI-Plugin/
 
 | Trigger | Surface | Description |
 |---------|---------|-------------|
-| `/purchasely:integrate` | Slash command + matching `integrate` skill | The command launches the skill; the skill is also auto-invoked when Claude detects an SDK integration task |
-| `/purchasely:review` | Slash command + matching `review` skill | Same as above |
-| `/purchasely:debug` | Slash command + matching `debug` skill | Same as above |
+| `/purchasely:integrate` | Slash command + matching `purchasely-integrate` skill | The command launches the skill; the skill is also auto-invoked when Claude detects an SDK integration task |
+| `/purchasely:review` | Slash command + matching `purchasely-review` skill | Same as above |
+| `/purchasely:debug` | Slash command + matching `purchasely-debug` skill | Same as above |
 | `/purchasely:question` | **Slash command → agent** | Free-form SDK Q&A — the command explicitly delegates to the `purchasely:sdk-expert` agent via the `Task` tool. No matching auto-invoked skill (use the command explicitly) |
 
 ## Supported Platforms
@@ -230,6 +257,7 @@ Purchasely-AI-Plugin/
 
 This plugin is also published on:
 
+- 🧠 **[skills.sh](https://skills.sh/Purchasely/Purchasely-AI-Plugin)** — open agent skills leaderboard powered by the `skills` CLI (`npx skills add Purchasely/Purchasely-AI-Plugin`)
 - 🤖 **[agentskill.sh](https://agentskill.sh)** — community marketplace for AI agent skills (search `purchasely`)
 - 📦 **Claude Code marketplace** — `/plugin marketplace add Purchasely/Purchasely-AI-Plugin`
 
@@ -252,7 +280,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 When a new SDK version is released:
 
 1. **Update `purchasely/references/sdk-versions.md`** — single source of truth for pinned versions.
-2. Update version references in `purchasely/skills/integrate/SKILL.md` and each platform's `purchasely/references/<platform>/`.
+2. Update version references in `purchasely/skills/purchasely-integrate/SKILL.md` and each platform's `purchasely/references/<platform>/`.
 3. Update `purchasely/references/` with new/changed APIs.
 4. Bump `version` in `.claude-plugin/plugin.json`, `purchasely/.claude-plugin/plugin.json`, `purchasely/.codex-plugin/plugin.json`, and `package.json`.
 5. Add an entry to [CHANGELOG.md](CHANGELOG.md).

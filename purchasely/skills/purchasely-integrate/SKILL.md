@@ -1,5 +1,5 @@
 ---
-name: integrate
+name: purchasely-integrate
 description: "Use when integrating the Purchasely SDK into a mobile app — guides through installation, initialization, paywall display, purchase handling, and action interceptor setup for iOS, Android, React Native, Flutter, and Cordova."
 ---
 

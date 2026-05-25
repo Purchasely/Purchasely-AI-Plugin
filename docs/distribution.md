@@ -99,7 +99,7 @@ copilot plugin install purchasely@Purchasely-AI-Plugin
 
 ## Anthropic Skill Marketplace
 
-**Status:** ⏳ under investigation — verify whether a Skill-only listing (separate from the Plugin marketplace above) is offered, and whether it makes sense to publish the three skills (`integrate`, `review`, `debug`) individually.
+**Status:** ⏳ under investigation — verify whether a Skill-only listing (separate from the Plugin marketplace above) is offered, and whether it makes sense to publish the three skills (`purchasely-integrate`, `purchasely-review`, `purchasely-debug`) individually.
 
 **Target command:** TBD.
 
