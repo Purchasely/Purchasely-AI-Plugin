@@ -258,7 +258,10 @@ Purchasely-AI-Plugin/
 This plugin is also published on:
 
 - 🧠 **[skills.sh](https://skills.sh/Purchasely/Purchasely-AI-Plugin)** — open agent skills leaderboard powered by the `skills` CLI (`npx skills add Purchasely/Purchasely-AI-Plugin`)
-- 🤖 **[agentskill.sh](https://agentskill.sh)** — community marketplace for AI agent skills (search `purchasely`)
+- 🤖 **agentskill.sh** — three individual skill pages, installable from any agent running the `/learn` command:
+  - [`@purchasely/purchasely-integrate`](https://agentskill.sh/@purchasely/purchasely-integrate)
+  - [`@purchasely/purchasely-review`](https://agentskill.sh/@purchasely/purchasely-review)
+  - [`@purchasely/purchasely-debug`](https://agentskill.sh/@purchasely/purchasely-debug)
 - 📦 **Claude Code marketplace** — `/plugin marketplace add Purchasely/Purchasely-AI-Plugin`
 
 See [`docs/distribution.md`](docs/distribution.md) for the public roadmap of every official marketplace we're targeting (Anthropic, OpenAI Codex, Factory Droid, GitHub Copilot CLI, …) and how to help land each one.
