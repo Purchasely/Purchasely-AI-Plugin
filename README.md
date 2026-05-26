@@ -42,11 +42,34 @@ npx skills add Purchasely/Purchasely-AI-Plugin --skill purchasely-debug
 # Non-interactive — install everything to Claude Code, globally
 npx skills add Purchasely/Purchasely-AI-Plugin -g -a claude-code -y
 
-# Update later
+# Update later (updates are not automatic)
 npx skills update
 ```
 
 The CLI discovers skills at [`skills/`](./skills) (a compatibility link to [`purchasely/skills/`](./purchasely/skills)) and respects the manifests in [`.claude-plugin/`](./.claude-plugin). Skill names match their directory names — `purchasely-integrate`, `purchasely-review`, `purchasely-debug`.
+
+#### Updating Skills CLI installations
+
+Skills installed through `npx skills add Purchasely/Purchasely-AI-Plugin` are not auto-updated by the agent or by `npx` itself. They stay at the version installed in the target agent until the developer runs an update command:
+
+```bash
+# Interactive update for the current scope
+npx skills update
+
+# Update global skills only
+npx skills update -g
+
+# Update project-local skills only
+npx skills update -p
+
+# Update only the Purchasely skills by name
+npx skills update purchasely-integrate purchasely-review purchasely-debug
+
+# Non-interactive global update
+npx skills update -g -y
+```
+
+To know when an update is available, watch this repository's [GitHub releases](https://github.com/Purchasely/Purchasely-AI-Plugin/releases) or [`CHANGELOG.md`](./CHANGELOG.md). We intentionally do not make the Purchasely skills check GitHub on every invocation: many agent environments run offline or with restricted network access, and automatic version checks would add latency and noise to normal SDK integration tasks. If you need an explicit check, run `npx skills update`.
 
 ### Claude Code
 
