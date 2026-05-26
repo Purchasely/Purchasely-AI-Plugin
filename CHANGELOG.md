@@ -4,10 +4,6 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
-### Changed
-
-- Document that Skills CLI installations are not updated automatically, and clarify the `npx skills update` commands plus the rationale for not checking GitHub from every skill invocation.
-
 ## [1.1.0] — 2026-05-25
 
 ### Changed
