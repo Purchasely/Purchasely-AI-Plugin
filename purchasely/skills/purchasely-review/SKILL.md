@@ -31,6 +31,7 @@ The bundled references are intentionally curated, not a full copy of the public 
 - `../../references/concepts/subscription-management.md` — native Manage Subscription entry point (App Store / Play)
 - `../../references/concepts/promotional-offers.md` — offers eligibility responsibility + implementation
 - `../../references/concepts/campaigns.md` — `readyToOpenDeeplink` + SDK ≥ 5.1.0
+- `../../references/concepts/lottie-animations.md` — Lottie bridge/dependency checks for Screens with animations
 - `../../references/concepts/analytics-integration.md` — events forwarding + analytics wrapper recommendation
 - `../../references/sdk-versions.md` — latest stable versions (flag outdated pins)
 - `../../references/troubleshooting/error-codes.md` — `PLYError` reference (errors silently ignored is a FAIL)
@@ -213,7 +214,7 @@ SKIP if the app does not surface promotional offers, developer-determined offers
 - [ ] **Full mode auto-handles** — in Full mode, no app code is needed. WARNING if app code calls `purchaseWithPromotionalOffer` manually while in Full mode (duplicates the purchase).
 - [ ] **Observer/custom paywall uses `subscriptionOffer` parameters** — `subscriptionId`, `basePlanId`, `offerId`, `offerToken` (Google) or signed offer (Apple). FAIL if a Promo offer purchase is attempted with regular `purchase(...)` instead of the offer-aware API.
 
-### 3.12 Bring Your Own Screen — BYOS (if a Custom Screen delegate / provider is registered, or a Flow contains a Custom Screen step)
+### 3.11 Bring Your Own Screen — BYOS (if a Custom Screen delegate / provider is registered, or a Flow contains a Custom Screen step)
 
 SKIP if no BYOS code path is detected (no `setCustomScreenViewControllerDelegate` / `setCustomScreenViewDelegate` / `setCustomScreenProvider` registration, no `executeConnection` / `execute(connection:)` call, and the Console does not declare any `Bring Your Own Screen` layout). To detect: search for `CustomScreen`, `PLYCustomScreen`, `executeConnection`, `PLYConnection` in the code. Otherwise:
 
@@ -227,7 +228,16 @@ SKIP if no BYOS code path is detected (no `setCustomScreenViewControllerDelegate
 - [ ] **No manual navigation around the Purchasely controller** — Flag any sign that the team is presenting their own VC over the Purchasely paywall, calling `Purchasely.close()` then pushing a screen, or skipping `display()` to render a custom screen instead. WARNING — replace with BYOS (the supported handover model).
 - [ ] **Interaction analytics instrumented in-app** — The SDK emits `PRESENTATION_DISPLAYED` for the Custom Screen but does not track interactions inside it. WARNING if the team relies on Purchasely tracking for in-screen events — they need to wire their own analytics inside the Custom Screen.
 
-### 3.11 Analytics & Events Forwarding (universal — low blocker, high payoff)
+### 3.12 Lottie Animations (if the Screen uses Lottie, or the user reports blank / static animations)
+
+SKIP if no Purchasely Screen uses Lottie and the user did not mention animation rendering. Otherwise, load `../../references/concepts/lottie-animations.md` and check:
+
+- [ ] **Native Lottie dependency present** — iOS host has Airbnb `lottie-ios` / module `Lottie`; Android host has `com.airbnb.android:lottie`. Cross-platform apps still need these in the native host projects. WARNING if missing.
+- [ ] **Bridge/interface implemented** — iOS has `@objc(PLYLottieBridge)` with the expected methods; Android has a `PLYLottieInterface` implementation. FAIL if a Lottie Screen is expected to render but the bridge is absent.
+- [ ] **Android factory registered before display** — `Purchasely.lottieView = { context -> ... }` is set during app initialization before paywalls are shown. FAIL if missing or registered too late.
+- [ ] **Failure logging / file health checked** — Android uses `setFailureListener`; the Lottie JSON is under 2 MB and validated in LottieFiles if rendering still fails. WARNING if errors are swallowed.
+
+### 3.13 Analytics & Events Forwarding (universal — low blocker, high payoff)
 
 - [ ] **One analytics wrapper / manager / controller** — if the project forwards Purchasely events (`PLYEventDelegate` / `EventListener` / `addEventListener`) into Firebase / Amplitude / AppsFlyer, the recommended pattern is a single class that routes events to N vendor SDKs. WARNING if events are forwarded directly from multiple call sites or scattered across screens. SKIP if no client-side event forwarding is in place (server-side 3rd-party integrations may be sufficient — see `../../references/concepts/analytics-integration.md`).
 - [ ] **User ID reconciliation** — if vendor analytics IDs flow into Purchasely, either as `Purchasely.userLogin(sameId)` or via a `setUserAttribute("xxx_user_id", ...)` convention, the scheme must be consistent. WARNING if mixed (some events identified, others anonymous).

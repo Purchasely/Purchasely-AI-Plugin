@@ -26,6 +26,7 @@ The bundled references are intentionally curated, not a full copy of the public 
 - `../../references/concepts/subscription-management.md` — Opening the native Manage Subscription page (App Store / Play Store)
 - `../../references/concepts/promotional-offers.md` — Offer types, Apple promotional offers, Google developer-determined offers, offer codes
 - `../../references/concepts/campaigns.md` — No-code automations (trigger/placement-based), `readyToOpenDeeplink`, use cases
+- `../../references/concepts/lottie-animations.md` — Lottie animations in Screens (iOS / Android weak dependency bridge; cross-platform host projects)
 - `../../references/concepts/analytics-integration.md` — Forwarding UI events to Firebase / Amplitude / AppsFlyer + recommended analytics wrapper pattern
 
 **Platform-specific deep dives** (load the one(s) matching the project's platform — they hold the authoritative install snippets, init signatures, and platform-only patterns):
@@ -1018,6 +1019,7 @@ Once Steps 1-8 are in place and verified, walk the user through the **optional b
 | **Subscription gating + restore** — gate premium content via `userSubscriptions`, restore purchases from Settings | Any app with premium features | `../../references/concepts/subscription-checks.md` |
 | **Audience attributes + GDPR consent** — target users with `setUserAttribute`, gate event flow on consent | Apps with marketing audiences or EU users | `../../references/concepts/user-attributes-targeting.md` |
 | **Bring Your Own Screen (BYOS)** — embed a native screen (login, custom form, legacy paywall A/B variant) inside a Purchasely Flow with its own connections / `executeConnection(...)` chaining. **iOS + Android only, SDK ≥ 5.6.0.** | Teams that need a native login step in a Flow, or want to A/B their existing paywall against a Composer version | `../../references/concepts/byos.md` |
+| **Lottie animations** — render Composer Lottie blocks by adding Airbnb Lottie plus the Purchasely bridge/interface in native host projects. | Any Screen uses Lottie JSON animations, including React Native / Flutter / Cordova apps through their iOS/Android hosts | `../../references/concepts/lottie-animations.md` |
 | **Chain multiple actions on a single button** — configure `purchase + open_screen` / `purchase + open_placement` / `purchase + deeplink` in the Screen Composer. Without a second action, the default is *close in Full mode, stay open in Observer mode*. | Any team wiring post-purchase upsells, thank-you screens, or onboarding completion | `../../references/concepts/paywall-actions.md` § Chaining multiple actions |
 
 Pick the ones the user's roadmap actually needs — don't push all six on day one.
