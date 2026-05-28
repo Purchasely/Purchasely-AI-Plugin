@@ -293,3 +293,9 @@ If the user agrees:
 4. Do NOT fix "suggestions" unless explicitly asked
 
 If the user declines, end the review with the report.
+
+## Completion Build Gate
+
+Before returning a final review status, build the user's app with the project's canonical command (prefer the existing CI/build script). If the build fails, fix the error when it is within the Purchasely integration/review scope, rerun the build, and run relevant tests again until the app builds successfully. If the failure is clearly unrelated to Purchasely and outside the user's requested scope, report it as a blocking build failure instead of claiming the review is complete.
+
+When auto-fixes were applied, this gate is mandatory: do not stop after checklist re-validation. Include the exact build/test commands and outcomes in the final response.

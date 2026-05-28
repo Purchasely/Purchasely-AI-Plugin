@@ -27,6 +27,22 @@ function lineNumberForIndex(content, index) {
   return content.slice(0, index).split(/\r?\n/).length;
 }
 
+const requiredBuildGateSkillFiles = [
+  'purchasely/skills/purchasely-debug/SKILL.md',
+  'purchasely/skills/purchasely-integrate/SKILL.md',
+  'purchasely/skills/purchasely-review/SKILL.md',
+];
+
+for (const rel of requiredBuildGateSkillFiles) {
+  const content = fs.readFileSync(path.join(root, rel), 'utf8');
+  if (!content.includes('## Completion Build Gate')) {
+    failures.push(`${rel} is missing the completion build gate`);
+  }
+  if (!/If the build fails[\s\S]{0,600}(fix|repair)[\s\S]{0,600}(rerun|re-run|run .*again)/i.test(content)) {
+    failures.push(`${rel} does not require fixing failed builds and rerunning verification`);
+  }
+}
+
 for (const file of walk(root)) {
   const rel = path.relative(root, file);
   if (rel === 'scripts/guard-known-bad-snippets.mjs') continue;

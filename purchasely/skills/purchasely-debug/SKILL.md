@@ -210,6 +210,12 @@ The template's structure mirrors what Support needs to triage on the first round
 
 When the log contains a `PLYError` case you don't immediately recognize (e.g. `invalidOfferSignature`, `cloudServiceRevoked`, `GoogleDeveloperError`, `InvalidStoreVersion`), look it up in `../../references/troubleshooting/error-codes.md`. That file maps every iOS and Android case to its typical cause and fix, plus the promotional-offer-specific errors and the Google Play Billing v8 hang.
 
+## Completion Build Gate
+
+Before declaring a Purchasely issue fixed, build the user's app with the project's canonical command (prefer the existing CI/build script). If the build fails, fix the error, rerun the build, and run relevant tests again until the app builds successfully. Do not report the bug as resolved from a patch, log check, or manual reasoning alone; include the exact build/test commands and outcomes in the final response.
+
+If the task was diagnosis-only and no code was changed, still run the local app build when available; report any failing build as a blocker rather than claiming the integration is healthy.
+
 ## Guidelines
 
 - Always verify your diagnosis by reading the actual code, not by assuming.
