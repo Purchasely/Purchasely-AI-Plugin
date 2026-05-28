@@ -80,18 +80,18 @@ Run the appropriate installation commands and modify project files as needed.
 | Platform | Latest stable version |
 |----------|-----------------------|
 | iOS (native) | **5.7.5** |
-| Android (native) | **5.7.4** |
+| Android (native) | **6.0.0** |
 | React Native | **5.7.3** |
 | Flutter | **5.7.3** |
 | Cordova | **5.7.3** |
 
-Always pin to the **exact** version above, never floating (`5.+`, `^5.0.0`). Floating versions break reproducibility and silently pull regressions.
+Always pin to the **exact** version above, never floating (`5.+`, `6.+`, `^5.0.0`, `^6.0.0`). Floating versions break reproducibility and silently pull regressions.
 
 **Before installing, ask the user these questions (adapt per platform):**
 
 For **Android, React Native, Flutter, Cordova** — ask:
 1. **Which store(s) do you target?** Google Play is the most common. Huawei AppGallery and Amazon Appstore are also supported (Android native only). The store dependency is REQUIRED and separate from the core SDK.
-2. **Do you need video support in paywalls?** If yes, an optional video player dependency is needed (not available on Cordova).
+2. **Do you need video support in Screens?** If yes, an optional video player dependency is needed (not available on Cordova).
 
 For **iOS** — no extra questions needed (App Store is the only store, video is included).
 
@@ -131,31 +131,34 @@ carthage update
 
 ### Android
 
-Requirements: minSdk 23, compileSdk 34, Kotlin 2.+, Gradle 8.+, JDK 11
+Requirements: minSdk 23, compileSdk 35, Kotlin 2.2.x, Gradle 9.x, JDK 11
 
 The Purchasely SDK is published on **Maven Central** — no custom repository needed. Just make sure `mavenCentral()` is present in your `settings.gradle.kts` (it is by default in modern projects).
 
-**Add dependencies** in `app/build.gradle.kts` (pin to exact `5.7.4` — see `../../references/sdk-versions.md`):
+**Add dependencies** in `app/build.gradle.kts` (pin to exact `6.0.0` — see `../../references/sdk-versions.md`):
 ```kotlin
 dependencies {
     // Core SDK — Required
-    implementation("io.purchasely:core:5.7.4")
+    implementation("io.purchasely:core:6.0.0")
 
     // Google Play Store — Required if publishing on Google Play
-    implementation("io.purchasely:google-play:5.7.4")
+    implementation("io.purchasely:google-play:6.0.0")
 
-    // Video Player — Optional, for video support in paywalls
-    implementation("io.purchasely:player:5.7.4")
+    // Video Player — Optional, for video support in Screens
+    implementation("io.purchasely:player:6.0.0")
+
+    // Compose helper — Optional, for embedded Presentations in Compose
+    implementation("io.purchasely:presentation-compose:6.0.0")
 }
 ```
 
 **Alternative stores** (instead of or in addition to Google Play):
 ```kotlin
 // Huawei AppGallery (also requires Huawei AGConnect plugin and repo)
-implementation("io.purchasely:huawei-services:5.7.4")
+implementation("io.purchasely:huawei-services:6.0.0")
 
 // Amazon Appstore
-implementation("io.purchasely:amazon:5.7.4")
+implementation("io.purchasely:amazon:6.0.0")
 ```
 
 For **Huawei**, also add to the project-level build.gradle:
@@ -325,7 +328,7 @@ allprojects {
 Add SDK initialization code to the app's entry point. The API key must come from the **Purchasely Console > App Settings**. Tell the user to replace `YOUR_API_KEY` with their actual key.
 
 Key configuration options to explain to the user:
-- **Running mode**: `Full` (default — Purchasely handles the purchase flow end-to-end) or `Observer` / `PaywallObserver` (the app handles purchases, Purchasely only observes)
+- **Running mode**: `Full` (Purchasely handles the purchase flow end-to-end) or `Observer` (the app handles purchases, Purchasely only observes). Android v6 defaults to `Observer`; set `Full` explicitly when needed.
 - **StoreKit version** (iOS only): StoreKit 2 is recommended for new apps
 - **Log level**: Use `DEBUG` during development, switch to `ERROR` for production
 - **Android stores**: `GoogleStore` (default), `HuaweiStore`, `AmazonStore` — include only the stores relevant to the app
@@ -346,22 +349,28 @@ Purchasely.start(withAPIKey: "YOUR_API_KEY",
 }
 ```
 
-### Android (Kotlin)
+### Android (Kotlin, SDK v6)
 
 ```kotlin
+import io.purchasely.ext.PLYRunningMode
 import io.purchasely.ext.Purchasely
 import io.purchasely.ext.LogLevel
 import io.purchasely.google.GoogleStore
 
 // In Application.onCreate()
-Purchasely.Builder(applicationContext)
-    .apiKey("YOUR_API_KEY")
-    .logLevel(LogLevel.DEBUG)
-    .stores(listOf(GoogleStore()))  // Add HuaweiStore() or AmazonStore() if needed
-    .build()
-    .start { success, error ->
-        Log.d("PLY", "Started: $success")
+Purchasely {
+    context(applicationContext)
+    apiKey("YOUR_API_KEY")
+    logLevel(LogLevel.DEBUG)
+    stores(listOf(GoogleStore()))  // Add HuaweiStore() or AmazonStore() if needed
+    runningMode(PLYRunningMode.Full)
+    allowDeeplink(true)
+    allowCampaigns(true)
+    onInitialized { error ->
+        if (error == null) Log.d("PLY", "Started")
+        else Log.e("PLY", "Start error", error)
     }
+}
 ```
 
 Only include the stores matching the dependencies added in Step 1. For example, if using Huawei: `listOf(GoogleStore(), HuaweiStore())`.
@@ -412,11 +421,11 @@ Purchasely.start(
 
 ---
 
-## Step 3: Display a Paywall
+## Step 3: Display a Presentation / Screen
 
-Purchasely uses a **placement-based** approach. Placements are configured in the Purchasely Console and identified by a `placementId` (e.g., `"onboarding"`, `"settings"`, `"home_banner"`). Each placement can be associated with different paywalls, audiences, and A/B tests — all managed remotely.
+Purchasely uses a **placement-based** approach. Placements are configured in the Purchasely Console and identified by a `placementId` (e.g., `"onboarding"`, `"settings"`, `"home_banner"`). Each placement can be associated with different Screens, audiences, and A/B tests — all managed remotely.
 
-Use the `fetchPresentation()` + display pattern. Do **NOT** use the deprecated `presentationView` or `presentationController` methods.
+For native Android v6, use the `PLYPresentation { ... }.preload()` builder. Do **NOT** use the deprecated `presentationView` API.
 
 > 💡 **Cross-platform SDKs (Flutter / React Native / Cordova): prefer `fetchPresentation()` + `presentPresentation(presentation)` over `presentPresentationForPlacement(placementId)`.** The pre-fetch path is what the [official docs recommend](https://docs.purchasely.com/docs/general-in-app-experiences-display#how-to-display-an-in-app-experience-associated-to-a-placement) and it's the only one that handles **Flows** correctly on plugin versions ≤ 5.7.x: it branches on `isFlow` / `flowId != null` natively and calls `presentation.display()`, which owns the close affordance and step transitions. The shorthand `presentPresentationForPlacement` is still exposed and remains fine for **simple, non-Flow paywalls** when you don't need to inspect the `PLYPresentationType` (e.g. quick prototypes, a placement guaranteed to never host a Flow), but if a Flow is ever assigned to that placement from the Console the user will get a stuck modal with no way out. When in doubt, use the pre-fetch path.
 
@@ -454,29 +463,28 @@ case .client:
 }
 ```
 
-### Android (Kotlin)
+### Android (Kotlin, SDK v6)
 
 ```kotlin
-Purchasely.fetchPresentation("PLACEMENT_ID") { presentation, error ->
-    if (error != null) {
-        Log.e("PLY", "Error fetching presentation", error)
-        return@fetchPresentation
-    }
+val presentation = PLYPresentation {
+    placementId("PLACEMENT_ID")
+    // Optional direct Console Screen lookup. Android keeps this name public.
+    // screenId("SCREEN_ID")
+    onPresented { loaded, error -> }
+    onCloseRequested { }
+}.preload()
 
-    when (presentation?.type) {
-        PLYPresentationType.NORMAL,
-        PLYPresentationType.FALLBACK -> {
-            // display() handles Flows, transitions, and full-screen presentation automatically
-            presentation.display(this)
+when (presentation.type) {
+    PLYPresentationType.NORMAL,
+    PLYPresentationType.FALLBACK -> {
+        presentation.display(activity) { outcome ->
+            // Final dismissal result.
         }
-        PLYPresentationType.DEACTIVATED -> {
-            // Do nothing
-        }
-        PLYPresentationType.CLIENT -> {
-            val presentationId = presentation.presentationId
-            // Show your own custom paywall
-        }
-        else -> {}
+    }
+    PLYPresentationType.DEACTIVATED -> Unit
+    PLYPresentationType.CLIENT -> {
+        val screenId = presentation.screenId
+        showYourOwnScreen(screenId)
     }
 }
 ```
@@ -547,7 +555,7 @@ Purchasely.fetchPresentation(
 );
 ```
 
-**Action:** Find the appropriate screen/view/component where the paywall should be displayed (e.g., a "Premium" button, settings screen, or onboarding flow) and add the paywall display code. Ask the user which placement ID to use, or use `"onboarding"` as a sensible default.
+**Action:** Find the appropriate screen/view/component where the Presentation should be displayed (e.g., a premium button, settings screen, or onboarding flow) and add the display code. Ask the user which placement ID to use, or use `"onboarding"` as a sensible default.
 
 ### Advanced: Inline / Embedded Paywall (iOS & Android)
 
@@ -574,30 +582,34 @@ paywallVC.didMove(toParent: self)
 #### Android — option A: embed as a View
 
 ```kotlin
-// buildView() returns a View — add it into an existing ViewGroup
-val paywallView = presentation.buildView(this) { result ->
-    // Handle result (purchase, restore, cancel...)
+val presentationView = presentation.buildView(this) { outcome ->
+    // Handle embedded Presentation result.
 }
-containerViewGroup.addView(paywallView)
+containerViewGroup.addView(presentationView)
 ```
 
 #### Android — option B: embed as a Fragment
 
 ```kotlin
-// getFragment() returns a Fragment — use with FragmentManager
-val fragment = presentation.getFragment(
-    callback = object : PLYPresentationResultHandler {
-        override fun invoke(result: PLYProductViewResult, plan: PLYPlan?) {
-            // Handle result (optional — omit the callback parameter if not needed)
-        }
-    }
-)
+val fragment = presentation.getFragment { outcome ->
+    // Handle embedded Presentation result.
+}
 supportFragmentManager.beginTransaction()
     .replace(R.id.your_container, fragment)
     .commitAllowingStateLoss()
 ```
 
-> Note: Both options bypass Flow navigation — use only for truly inline use cases where you manage the UI hierarchy yourself.
+#### Android — option C: embed in Compose
+
+```kotlin
+PLYPresentationView(
+    presentation = presentation,
+    modifier = Modifier.fillMaxWidth(),
+    callback = { outcome -> }
+)
+```
+
+> Note: Use embedded APIs only for inline use cases where the app owns the UI hierarchy.
 
 ---
 
@@ -639,32 +651,25 @@ Purchasely.setPaywallActionsInterceptor { [weak self] action, parameters, presen
 }
 ```
 
-### Android (Kotlin)
+### Android (Kotlin, SDK v6)
 
 ```kotlin
-Purchasely.setPaywallActionsInterceptor { info, action, parameters, processAction ->
-    when (action) {
-        PLYPresentationAction.LOGIN -> {
-            // Present your login screen
-            // After login:
-            Purchasely.userLogin("USER_ID")
-            processAction(true) // MUST call processAction
-        }
-        PLYPresentationAction.NAVIGATE -> {
-            parameters.url?.let { url ->
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-            }
-            processAction(true) // MUST call processAction
-        }
-        PLYPresentationAction.CLOSE -> {
-            processAction(true) // MUST call processAction
-        }
-        else -> {
-            processAction(true) // MUST call processAction for all unhandled actions
-        }
-    }
+Purchasely.interceptAction<PLYPresentationAction.Login> { _, _ ->
+    showLoginScreen()
+    PLYInterceptResult.SUCCESS
+}
+
+Purchasely.interceptAction<PLYPresentationAction.Navigate> { _, navigate ->
+    startActivity(Intent(Intent.ACTION_VIEW, navigate.url))
+    PLYInterceptResult.SUCCESS
+}
+
+Purchasely.interceptAction<PLYPresentationAction.Purchase> { _, _ ->
+    PLYInterceptResult.NOT_HANDLED // let Purchasely handle it in Full mode
 }
 ```
+
+Android v6 returns `PLYInterceptResult.SUCCESS`, `FAILED`, or `NOT_HANDLED`; there is no `processAction` callback in the new native Android interceptor.
 
 ### React Native (TypeScript)
 

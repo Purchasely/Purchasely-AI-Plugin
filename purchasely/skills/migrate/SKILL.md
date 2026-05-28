@@ -26,7 +26,7 @@ Reference files:
 1. Detect Android project files: `settings.gradle(.kts)`, `build.gradle(.kts)`, version catalogs, `gradle-wrapper.properties`, and app modules. Detect the **primary call-site language** of `Purchasely.start(...)` — Kotlin or Java — because that drives the initialization rewrite (Kotlin DSL vs fluent Builder).
 2. Read `references/android/migration-v6.md`.
 3. Find current Purchasely usages with ripgrep:
-   - `Purchasely`, `PLYPresentation`, `PLYPresentationAction`, `setPaywallActionsInterceptor`, `fetchPresentation`, `presentationView`, `readyToOpenDeeplink`, `isDeeplinkHandled`, `PLYPresentationProperties`, `PLYProductViewResult`, `PaywallObserver`.
+   - `Purchasely`, `PLYPresentation`, `PLYPresentationAction`, `setPaywallActionsInterceptor`, `fetchPresentation`, `presentationView`, `readyToOpenDeeplink`, `isDeeplinkHandled`, `PLYPresentationProperties`, `PLYProductViewResult`, `PaywallObserver`, `presentationId`, `screenId`.
 4. Update Gradle first:
    - Pin Purchasely Android artifacts to `6.0.0`.
    - Bump Google Play Billing direct dependencies to `8.3.0` (Purchasely `google-play:6.0.0` resolves to PBL v8). If the app calls `queryProductDetailsAsync`, update the lambda to read `queryResult.productDetailsList`.
@@ -36,9 +36,11 @@ Reference files:
 5. Compile immediately. Treat compiler errors as the migration worklist.
 6. Apply API migrations in small passes and compile after each pass.
 7. **Rewrite initialization to the Kotlin DSL by default.** Replace `Purchasely.Builder(context).apiKey(...)…build().start { ... }` with the `Purchasely { context(...); apiKey(...); …; onInitialized { error -> ... } }` DSL entrypoint. The `onInitialized` callback fires once with a nullable `PLYError`. **Only keep the fluent `Purchasely.Builder(...).build().start { error -> ... }` form when the project is a Java project (no Kotlin source set) or when the call site is in a `.java` file** — the DSL is Kotlin-only.
-8. **Observer mode**: if the app used `processAction(Boolean)` to gate the SDK on the host purchase flow, port that to a `pendingResult: ((PLYInterceptResult) -> Unit)?` field + a `suspendCancellableCoroutine` bridge inside the new `suspend` interceptor (see `references/android/migration-v6.md` → "Observer-mode bridge"). Resolve `pendingResult` from the existing transaction-result handler (`SUCCESS` / `NOT_HANDLED` / `FAILED`), and clear it in `close()`/`restart()` before `removeAllActionInterceptors()` to avoid leaking suspended coroutines.
-9. Update tests to the v6 API and run unit tests.
-10. Run the final Android assemble command before reporting completion.
+8. **Presentation API**: replace `fetchPresentation(...)` with `PLYPresentation { ... }.preload()` or the prepared `display(...)` helper. Use `placementId(...)`, `screenId(...)`, `contentId(...)`, `flowId(...)`, `onPresented`, `onCloseRequested`, and `onDismissed` as needed. Android keeps `screenId`; do not rename Android code to `presentationId`.
+9. **Embedded UI**: replace `presentationView(...)` with `presentation.buildView(...)`, `presentation.getFragment(...)`, or the optional `io.purchasely:presentation-compose` `PLYPresentationView` wrapper for Compose.
+10. **Observer mode**: if the app used `processAction(Boolean)` to gate the SDK on the host purchase flow, port that to a `pendingResult: ((PLYInterceptResult) -> Unit)?` field + a `suspendCancellableCoroutine` bridge inside the new `suspend` interceptor (see `references/android/migration-v6.md` → "Observer-mode bridge"). Resolve `pendingResult` from the existing transaction-result handler (`SUCCESS` / `NOT_HANDLED` / `FAILED`), and clear it in `close()`/`restart()` before `removeAllActionInterceptors()` to avoid leaking suspended coroutines.
+11. Update tests to the v6 API and run unit tests.
+12. Run the final Android assemble command before reporting completion.
 
 ## Mandatory Workflow — iOS
 

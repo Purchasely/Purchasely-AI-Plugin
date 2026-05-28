@@ -1,340 +1,250 @@
 # Android API Reference
 
+This reference describes the native Android SDK v6 API. Use **Presentation** for SDK runtime objects, **Screen** for Console-authored content, and `screenId` for direct Screen lookup.
+
 ## Initialization
 
-### `Purchasely.Builder`
+### Kotlin DSL
 
-Fluent builder for SDK configuration.
+```kotlin
+Purchasely {
+    context(application)
+    apiKey("YOUR_API_KEY")
+    stores(listOf(GoogleStore()))
+    runningMode(PLYRunningMode.Full)
+    logLevel(LogLevel.DEBUG)
+    allowDeeplink(true)
+    allowCampaigns(true)
+    onInitialized { error ->
+        if (error == null) {
+            // SDK ready
+        }
+    }
+}
+```
+
+### Fluent Builder
 
 ```kotlin
 Purchasely.Builder(applicationContext)
-    .apiKey("YOUR_API_KEY")                        // required
-    .logLevel(LogLevel.DEBUG)                      // optional, default: ERROR
-    .stores(listOf(GoogleStore(), HuaweiStore()))   // required, at least one store
-    .userId("user_123")                            // optional
-    .runningMode(PLYRunningMode.Full)              // optional, default: Full
-    .readyToOpenDeeplink(true)                     // optional, default: false
+    .apiKey("YOUR_API_KEY")
+    .stores(listOf(GoogleStore()))
+    .runningMode(PLYRunningMode.Full)
+    .allowDeeplink(true)
+    .allowCampaigns(true)
     .build()
-    .start { success, error -> }
+    .start { error -> }
 ```
 
-**Builder methods:**
+| Method | Description |
+|--------|-------------|
+| `context(context)` | Required in Kotlin DSL. |
+| `apiKey(key)` | Required. |
+| `stores(stores)` | Billing store implementations. |
+| `runningMode(mode)` | `PLYRunningMode.Full` or `PLYRunningMode.Observer`; default is `Observer`. |
+| `allowDeeplink(allowed)` | Enables deeplink-driven display when the app UI is ready. |
+| `allowCampaigns(allowed)` | Enables or defers campaign display. |
+| `onInitialized { error -> }` | Kotlin DSL initialization callback. |
+| `start { error -> }` | Builder initialization callback. |
 
-| Method | Type | Description |
-|--------|------|-------------|
-| `apiKey(key)` | `String` | Your Purchasely API key (required) |
-| `logLevel(level)` | `LogLevel` | Logging verbosity |
-| `stores(stores)` | `List<Store>` | Billing store implementations |
-| `userId(id)` | `String?` | Pre-set user identifier |
-| `runningMode(mode)` | `PLYRunningMode` | `.Full` or `.Observer` |
-| `readyToOpenDeeplink(ready)` | `Boolean` | Whether app is ready for deeplinks |
-
-## Paywall Presentation
-
-### `Purchasely.fetchPresentation(placementId, contentId, callback)`
-
-Fetch a presentation for a placement. Returns a `PLYPresentation` object with metadata and display capabilities.
+## Presentation Builder
 
 ```kotlin
-Purchasely.fetchPresentation(
-    placementId = "ONBOARDING",
-    contentId = null,  // optional content targeting
-    callback = object : PLYPresentationCallback {
-        override fun onPresentationFetched(presentation: PLYPresentation) {
-            when (presentation.type) {
-                PLYPresentationType.NORMAL,
-                PLYPresentationType.FALLBACK -> {
-                    // Safe to display
-                    presentation.display(context)
-                }
-                PLYPresentationType.DEACTIVATED -> {
-                    // Do NOT display
-                }
-                PLYPresentationType.CLIENT -> {
-                    // Use your own UI with Purchasely plan data
-                    val plans = presentation.plans
-                }
-            }
-        }
+import io.purchasely.ext.presentation.PLYPresentation
+import io.purchasely.ext.presentation.preload
 
-        override fun onPresentationClosed() {
-            // Paywall dismissed
-        }
+val prepared = PLYPresentation {
+    placementId("onboarding")
+    screenId("screen_abc123")
+    contentId("article_42")
+    flowId("flow_abc123")
+    backgroundColor(0xFF101820.toInt())
+    progressColor(0xFFFFC857.toInt())
+    displayCloseButton(true)
+    displayBackButton(true)
+    onPresented { presentation, error -> }
+    onCloseRequested { }
+    onDismissed { outcome -> }
+}
 
-        override fun onPurchaseResult(result: PLYPurchaseResult) {
-            // Handle purchase/restore result
-        }
+val presentation = prepared.preload()
+```
+
+`screenId` is the canonical Android public name. Do not use `presentationId` in Android code samples.
+
+### Display
+
+```kotlin
+presentation.display(activity) { outcome ->
+    if (outcome.error != null) return@display
+    when (outcome.purchaseResult) {
+        PLYPurchaseResult.PURCHASED -> refreshAccess()
+        PLYPurchaseResult.RESTORED -> refreshAccess()
+        PLYPurchaseResult.CANCELLED, null -> Unit
+    }
+}
+```
+
+The `display` callback fires on final dismissal.
+
+### Prepared display
+
+```kotlin
+PLYPresentation { placementId("onboarding") }.display(
+    context = activity,
+    presentation = { loaded ->
+        // Loaded and display triggered.
+    },
+    callback = { outcome ->
+        // Final dismissal.
     }
 )
 ```
 
-### `PLYPresentation`
+### Types
 
-Object returned from `fetchPresentation`:
+| Typealias | Meaning |
+|-----------|---------|
+| `PLYPresentationBuilder` | Mutable builder. |
+| `PLYPresentationPrepared` | Built request intent. |
+| `PLYPresentation` | Loaded runtime presentation. |
 
-| Property/Method | Type | Description |
-|----------------|------|-------------|
-| `type` | `PLYPresentationType` | NORMAL, FALLBACK, DEACTIVATED, CLIENT |
-| `plans` | `List<PLYPlan>` | Plans associated with the presentation |
-| `id` | `String` | Presentation identifier |
-| `display(activity/context)` | `void` | Default display path; opens the paywall or Flow in a separate Activity |
-| `buildView(context, properties, callback)` | `PLYPresentationView?` | Build a View for explicit inline/nested embedding |
-| `getFragment(callback)` | `Fragment` | Get a Fragment for explicit custom embedding |
+### `PLYPresentation` fields
 
-Use `display(...)` by default. Use `buildView(...)` / `getFragment(...)` only when the app explicitly needs to own the container, such as a nested Screen inside an article, list, Fragment, Activity, or Compose layout.
+| Field | Type |
+|-------|------|
+| `screenId` | `String?` |
+| `placementId` | `String?` |
+| `contentId` | `String?` |
+| `flowId` | `String?` |
+| `language` | `String?` |
+| `type` | `PLYPresentationType` |
+| `plans` | `List<PLYPresentationPlan>` |
+| `metadata` | `PLYPresentationMetadata?` |
+| `backgroundColor` | `String?` |
+| `height` | `Int` |
+| `displayMode` | `PLYTransition?` |
+| `connections` | `List<PLYConnection>` |
+| `state` | `StateFlow<PLYPresentationState>` |
 
-### `Purchasely.presentationView(placementId, contentId, callback)` -- DEPRECATED
+### `PLYPresentationState`
 
-Returns a view for the paywall. Deprecated in favor of `fetchPresentation`.
+```kotlin
+prepared.state.collect { state ->
+    when (state) {
+        PLYPresentationState.Idle -> Unit
+        PLYPresentationState.Loading -> showLoading()
+        PLYPresentationState.Loaded -> hideLoading()
+        PLYPresentationState.Displayed -> Unit
+        is PLYPresentationState.Error -> showError(state.error)
+    }
+}
+```
+
+## Embedded Presentations
+
+### View
+
+```kotlin
+val view = presentation.buildView(context) { outcome -> }
+container.addView(view)
+```
+
+### Fragment
+
+```kotlin
+val fragment = presentation.getFragment { outcome -> }
+```
+
+### Compose
+
+```kotlin
+implementation("io.purchasely:presentation-compose:6.0.0")
+```
+
+```kotlin
+import io.purchasely.ext.presentation.compose.PLYPresentationView
+
+PLYPresentationView(
+    presentation = presentation,
+    modifier = Modifier.fillMaxWidth(),
+    callback = { outcome -> }
+)
+```
 
 ## Action Interceptor
 
-### `Purchasely.setPaywallActionsInterceptor`
-
-Set a global interceptor for all paywall actions.
-
 ```kotlin
-Purchasely.setPaywallActionsInterceptor { info, action, parameters, processAction ->
-    when (action) {
-        PLYPresentationAction.LOGIN -> {
-            // Present login flow
-            showLoginScreen { success ->
-                if (success) {
-                    Purchasely.userLogin("user_id") { }
-                }
-                processAction(success)
-            }
-        }
-        PLYPresentationAction.PURCHASE -> processAction(true)
-        PLYPresentationAction.RESTORE -> processAction(true)
-        PLYPresentationAction.CLOSE -> processAction(true)
-        PLYPresentationAction.NAVIGATE -> {
-            val url = parameters?.url
-            // Handle navigation
-            processAction(false)
-        }
-        else -> processAction(true)
+import io.purchasely.ext.PLYInterceptResult
+import io.purchasely.ext.interceptAction
+import io.purchasely.ext.presentation.PLYPresentationAction
+
+Purchasely.interceptAction<PLYPresentationAction.Login> { _, _ ->
+    showLogin()
+    PLYInterceptResult.SUCCESS
+}
+
+Purchasely.interceptAction<PLYPresentationAction.Purchase> { info, action ->
+    if (observerMode) {
+        launchBilling(info?.activity, action.plan.store_product_id, action.subscriptionOffer?.offerToken)
+        PLYInterceptResult.SUCCESS
+    } else {
+        PLYInterceptResult.NOT_HANDLED
     }
 }
 ```
 
-**Important:** You must call `processAction()` in every code path. Failing to do so will freeze the paywall UI.
+| Result | Meaning |
+|--------|---------|
+| `SUCCESS` | App handled the action. |
+| `FAILED` | App tried and failed. |
+| `NOT_HANDLED` | SDK should continue. |
 
-## Deeplinks
+`PLYPresentationAction` is a sealed class with typed payloads: `Purchase`, `Restore`, `Login`, `Navigate`, `Close`, `CloseAll`, `OpenPresentation`, `OpenPlacement`, `PromoCode`, and `WebCheckout`.
 
-### `Purchasely.handleDeeplink(uri, activity)`
-
-Handle incoming deeplinks. Replaces the deprecated `isDeeplinkHandled`.
-
-```kotlin
-override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    intent?.data?.let { uri ->
-        Purchasely.handleDeeplink(uri, this)
-    }
-}
-```
-
-### `Purchasely.readyToOpenDeeplink`
-
-Property to indicate when the app is ready to display deeplinked content.
+## Deeplinks and Campaigns
 
 ```kotlin
-// Set when your main activity is ready
-Purchasely.readyToOpenDeeplink(true)
+Purchasely.allowDeeplink = true
+Purchasely.allowCampaigns = true
+Purchasely.handleDeeplink(uri, activity)
 ```
 
 ## User Management
 
-### `Purchasely.userLogin(userId, callback)`
-
-Identify the user after authentication.
-
 ```kotlin
-Purchasely.userLogin("user_123") { shouldRefresh ->
-    // Return true to refresh the current paywall
-    true
-}
-```
-
-### `Purchasely.userLogout()`
-
-Clear the current user identity.
-
-```kotlin
+Purchasely.userLogin("user_123") { shouldRefresh -> shouldRefresh }
 Purchasely.userLogout()
 ```
 
 ## User Attributes
 
-### `Purchasely.setUserAttribute(key, value)`
-
-Set user attributes for audience targeting.
-
 ```kotlin
-// Built-in attributes
-Purchasely.setUserAttribute("first_name", "John")
-Purchasely.setUserAttribute("last_name", "Doe")
-Purchasely.setUserAttribute("age", 30)
-
-// Custom attributes for targeting
-Purchasely.setUserAttribute("loyalty_tier", "gold")
-Purchasely.setUserAttribute("articles_read", 42)
+Purchasely.setUserAttribute("favorite_spirit", "gin")
+val success = Purchasely.incrementUserAttribute("cocktails_viewed").await()
 ```
 
 ## Subscriptions
 
-## Programmatic Purchases
-
-Use this for app-side purchase buttons in Full mode. Fetch a `PLYPlan` first; there is no `purchase(planId = ...)` overload.
-
 ```kotlin
-Purchasely.plan(
-    "premium_yearly",
-    onSuccess = { plan ->
-        Purchasely.purchase(
-            activity = activity,
-            plan = plan,
-            offer = null,
-            contentId = null,
-            onSuccess = {
-                // Refresh premium state
-            },
-            onError = { error ->
-                // Surface purchase error
-            }
-        )
-    },
-    onError = { error ->
-        // Surface plan lookup error
-    }
-)
-```
-
-### `Purchasely.userSubscriptions(invalidateCache, listener)`
-
-Fetch the user's active subscriptions. The first parameter is a **`Boolean`** that controls cache invalidation: `true` forces a fresh fetch, `false` uses the SDK cache.
-
-```kotlin
-Purchasely.userSubscriptions(
-    false, // invalidateCache: false = use cache, true = force refresh
-    object : SubscriptionsListener {
-        override fun onSuccess(subscriptions: List<PLYSubscriptionData>) {
-            subscriptions.forEach { subscription ->
-                Log.d("PLY", "Plan: ${subscription.plan.vendorId}")
-                Log.d("PLY", "Store: ${subscription.subscriptionSource}")
-                // subscriptionStatus is nullable; isExpired() is a function
-                if (subscription.subscriptionStatus?.isExpired() == false) {
-                    // active subscription
-                }
-            }
-        }
-        override fun onFailure(error: Throwable) {
-            Log.e("PLY", "Error fetching subscriptions", error)
-        }
-    }
-)
-```
-
-> `PLYPlan` does not have a `hasEntitlement()` method. To gate features by entitlement, inspect the `vendorId` (or compare against your known plan IDs) on the returned subscriptions.
-
-> Use `subscription.plan.store_product_id` (not `productId`) to read the underlying Google Play product ID.
-
-To force cache invalidation, pass `true` as the first argument:
-
-```kotlin
-Purchasely.userSubscriptions(
-    true,
-    object : SubscriptionsListener {
-        override fun onSuccess(subscriptions: List<PLYSubscriptionData>) {
-            subscriptions.forEach { Log.d("PLY", it.plan?.vendorId ?: "") }
-        }
-        override fun onFailure(error: PLYError) {
-            Log.e("PLY", "Error fetching subscriptions", error)
-        }
-    }
-)
+Purchasely.userSubscriptions(false, object : SubscriptionsListener {
+    override fun onSuccess(subscriptions: List<PLYSubscriptionData>) {}
+    override fun onFailure(error: Throwable) {}
+})
 ```
 
 ## Close Screens
 
-### `Purchasely.closeAllScreens()` *(SDK 5.7.4+)*
-
-Force-dismiss any paywall currently on screen (including Flow paywalls with multiple steps). Use this instead of `closeDisplayedPresentation()` when you need to reliably tear down a paywall — for example after an Observer-mode purchase or when chaining a follow-up placement.
-
-Unlike iOS, there is no actor/threading constraint — call directly from any thread.
-
-**Ordering rule:** in the action interceptor, `processAction(false)` MUST be called BEFORE `closeAllScreens()` — the SDK needs to know not to proceed before the paywall tears down.
-
 ```kotlin
-processAction(false)            // tell interceptor we handled it
-Purchasely.closeAllScreens()    // dismiss
+Purchasely.closeAllScreens()
+presentation.close()
+presentation.back()
 ```
 
 ## Synchronize
-
-### `Purchasely.synchronize()`
-
-Force a synchronization of the user's purchases with Purchasely servers. Parameterless — fire-and-forget (no callback).
 
 ```kotlin
 Purchasely.synchronize()
 ```
 
-> Unlike iOS (which exposes `success:`/`failure:` closures), Android's `synchronize()` returns nothing. You cannot await its completion. If you need to chain a placement that targets users based on subscription state, accept the brief risk of stale state — Android's cache refresh is usually fast enough in practice.
-
-## Events
-
-### `Purchasely.setEventListener(listener)`
-
-Set a listener to receive SDK events.
-
-```kotlin
-Purchasely.setEventListener { event ->
-    Log.d("PLY", "Event: ${event.name}")
-    // Forward to your analytics provider
-}
-```
-
-## PLYPresentationAction
-
-| Action | Description |
-|--------|-------------|
-| `PURCHASE` | User tapped a purchase button |
-| `RESTORE` | User tapped the restore button |
-| `LOGIN` | User tapped the login button |
-| `CLOSE` | User tapped the close button |
-| `NAVIGATE` | User tapped a custom navigation link |
-| `OPEN_PRESENTATION` | User tapped a link to another presentation |
-| `PROMO_CODE` | User tapped the promo code button |
-
-## PLYPresentationType
-
-| Type | Description |
-|------|-------------|
-| `NORMAL` | Standard presentation, ready to display |
-| `FALLBACK` | Fallback presentation (network issue, original not found) |
-| `DEACTIVATED` | Presentation has been deactivated in the dashboard -- do not display |
-| `CLIENT` | Client-side presentation (use your own paywall with Purchasely data) |
-
-## Additional APIs
-
-### `allowCampaigns`
-
-Control whether the SDK displays campaigns (win-back, retention, etc.):
-
-```kotlin
-Purchasely.allowCampaigns = true  // enable campaign display
-Purchasely.allowCampaigns = false // disable campaign display
-```
-
-### Custom Logging
-
-Custom loggers receive ALL messages. Use the `logcatEnabled` flag to control Logcat output:
-
-```kotlin
-Purchasely.Builder(applicationContext)
-    .logLevel(LogLevel.DEBUG)
-    .logcatEnabled(false) // disable Logcat, use custom logger only
-    .build()
-```
+Android `synchronize()` is fire-and-forget.
