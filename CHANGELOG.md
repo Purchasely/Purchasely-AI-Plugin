@@ -8,6 +8,10 @@ All notable changes to this project are documented here. The format is based on 
 
 - `references/concepts/lottie-animations.md` — covers Purchasely Screen Lottie setup with the iOS `PLYLottieBridge`, Android `PLYLottieInterface` / `Purchasely.lottieView`, cross-platform host-project notes, and troubleshooting for missing bridges, file size, and Console template availability.
 
+### Changed
+
+- `purchasely-integrate`, `purchasely-review`, and `purchasely-debug` now require a final app build; build failures must be fixed and rechecked before reporting success.
+
 ## [1.1.0] — 2026-05-25
 
 ### Changed

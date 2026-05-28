@@ -54,6 +54,12 @@ The bundled references are intentionally curated, not a full copy of the public 
 
 Before writing integration code, invoke the `Task` tool with `subagent_type: "purchasely:sdk-expert"` and ask it to validate the intended implementation. Pass the detected platform, running mode, target store(s), SDK version, placement/display approach, purchase handling plan, privacy/consent requirements if any, and any uncertainty from the local project. Incorporate the expert's corrections before editing files.
 
+## Completion Build Gate
+
+Before reporting the integration complete, build the user's app with the project's canonical command (prefer the existing CI/build script). If the build fails, fix the error, rerun the build, and run relevant tests again until the app builds successfully. Do not claim completion from code review or lint alone; include the exact build/test commands and outcomes in the final response.
+
+Platform hints: Android `./gradlew assembleDebug`; iOS use `xcodebuild` with the workspace when one exists; React Native / Flutter / Cordova should build the affected native target(s), not just install packages.
+
 ## Arguments
 
 `$ARGUMENTS` may contain an optional platform override (e.g., `ios`, `android`, `react-native`, `flutter`, `cordova`). If provided, skip platform detection and use the specified platform.
@@ -822,13 +828,14 @@ App Store and Play Store both require an in-app entry point to **manage the subs
 
 After completing the integration, verify it works:
 
-1. **Build and run the app** — ensure there are no compilation errors from the SDK import
-2. **Check the logs** — look for `"Purchasely SDK initialized"` or similar success message in the debug console
-3. **Display a test paywall** — trigger the paywall display and confirm the presentation loads from the Purchasely Console
-4. **Verify the action interceptor** — tap buttons on the paywall and confirm your interceptor logs fire
-5. **Check the Purchasely Console** — go to Live > Events to see if the SDK is sending events from the device
+1. **Run the Completion Build Gate above** — prove there are no compilation errors from the SDK import before moving on
+2. **Run the app when a device/simulator is available** — confirm it launches after the build
+3. **Check the logs** — look for `"Purchasely SDK initialized"` or similar success message in the debug console
+4. **Display a test paywall** — trigger the paywall display and confirm the presentation loads from the Purchasely Console
+5. **Verify the action interceptor** — tap buttons on the paywall and confirm your interceptor logs fire
+6. **Check the Purchasely Console** — go to Live > Events to see if the SDK is sending events from the device
 
-**Action:** Build and run the app. Read the console output to confirm successful initialization. If there are errors, debug and fix them before reporting success to the user.
+**Action:** Build the app, fix any build errors, rerun the build and relevant tests, then run the app when possible. Read the console output to confirm successful initialization before reporting success to the user.
 
 ---
 
