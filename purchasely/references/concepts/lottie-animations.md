@@ -37,8 +37,8 @@ class PLYLottieBridge: NSObject {
 
     @objc class func bridge(with animationURL: URL) -> PLYLottieBridge? {
         let result = PLYLottieBridge()
-        result.animationView = LottieAnimationView(url: animationURL, closure: { _ in
-            result.animationView?.play()
+        result.animationView = LottieAnimationView(url: animationURL, closure: { [weak result] _ in
+            result?.animationView?.play()
         }, animationCache: nil)
         result.animationView?.loopMode = .loop
         return result
@@ -118,7 +118,7 @@ class AnimationView(context: Context) : LottieAnimationView(context), PLYLottieI
     }
 
     override fun stop() {
-        pauseAnimation()
+        cancelAnimation()
     }
 }
 ```
