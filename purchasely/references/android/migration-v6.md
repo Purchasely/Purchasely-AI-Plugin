@@ -10,53 +10,38 @@ Pin every native Android Purchasely artifact to `6.0.0`:
 implementation("io.purchasely:core:6.0.0")
 implementation("io.purchasely:google-play:6.0.0")
 implementation("io.purchasely:player:6.0.0") // optional video support
+implementation("io.purchasely:presentation-compose:6.0.0") // optional Compose embedding
 ```
 
-If `6.0.0` is only installed on the developer machine, add `mavenLocal()` in `dependencyResolutionManagement.repositories` before `google()` and `mavenCentral()`:
+If `6.0.0` is only installed on the developer machine, add `mavenLocal()` in `dependencyResolutionManagement.repositories` before `google()` and `mavenCentral()`.
 
-```kotlin
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        mavenLocal()
-        google()
-        mavenCentral()
-    }
-}
-```
+SDK v6 uses the modern Android toolchain: Gradle 9.x, AGP 9.x, Kotlin 2.2.x, JDK 11, minSdk 23, compileSdk 35.
 
-SDK v6 uses the modern Android toolchain. In the Shaker migration, AGP `9.2.1` required Gradle `9.4.1`. With AGP 9, remove the explicit `org.jetbrains.kotlin.android` plugin; AGP provides Android Kotlin support directly. Keep specialized Kotlin plugins such as Compose or Serialization when the app uses them.
-
-Leaving `org.jetbrains.kotlin.android` applied alongside AGP 9 fails the build with `Cannot add extension with name 'kotlin', as there is an extension already registered with that name`. Remove the alias from both the root `build.gradle.kts` (`apply false`) and every module's `plugins { ... }` block, **and drop the alias entry from `libs.versions.toml`** if you use a version catalog.
-
-When the explicit Kotlin plugin is removed, also drop the `android { kotlinOptions { jvmTarget = "..." } }` block — `kotlinOptions` is contributed by `kotlin-android` and is no longer resolvable. The JVM target inferred from `compileOptions.sourceCompatibility` is enough; override with `kotlin { jvmToolchain(11) }` only when you really need to force a different toolchain.
+With AGP 9, remove the explicit `org.jetbrains.kotlin.android` plugin; AGP provides Android Kotlin support directly. Keep specialized Kotlin plugins such as Compose or Serialization when the app uses them. Also remove `android { kotlinOptions { ... } }` once `kotlin-android` is gone.
 
 Google Play Billing resolves to v8.3.0 through Purchasely Google Play. If the app directly uses BillingClient, update direct Billing dependencies to `com.android.billingclient:billing:8.3.0` and migrate `queryProductDetailsAsync` to read `queryResult.productDetailsList`.
 
 ## Initialization
 
-**Preferred for Kotlin projects — the new DSL entrypoint.** `Purchasely { ... }` configures **and** starts the SDK in a single call. There is no `.build()` or `.start(...)`. The init callback is registered inside the block with `onInitialized { error -> ... }`.
+Preferred for Kotlin projects:
 
 ```kotlin
 Purchasely {
-    context(applicationContext)
+    context(application)
     apiKey(apiKey)
     stores(listOf(GoogleStore()))
     runningMode(PLYRunningMode.Full)
     allowDeeplink(true)
+    allowCampaigns(true)
     onInitialized { error ->
         if (error == null) {
             // configured
-        } else {
-            // handle error.message
         }
     }
 }
 ```
 
-`context(...)` and `apiKey(...)` are mandatory inside the block. The DSL is Kotlin-only.
-
-**Java projects (or Kotlin call sites that must stay on the fluent Builder).** Keep the fluent `Purchasely.Builder(...).build().start { ... }` form. `start` now receives a single `PLYError?` parameter (the v5 `(Boolean, PLYError?)` signature is removed):
+Java projects, or Kotlin call sites that must stay fluent:
 
 ```kotlin
 Purchasely.Builder(applicationContext)
@@ -64,23 +49,18 @@ Purchasely.Builder(applicationContext)
     .stores(listOf(GoogleStore()))
     .runningMode(PLYRunningMode.Full)
     .allowDeeplink(true)
+    .allowCampaigns(true)
     .build()
-    .start { error ->
-        if (error == null) {
-            // configured
-        } else {
-            // handle error.message
-        }
-    }
+    .start { error -> }
 ```
 
-Changes that apply to **both** init paths:
+Changes that apply to both init paths:
 - `PLYRunningMode.PaywallObserver` -> `PLYRunningMode.Observer`.
-- Default running mode is now `Observer`; set `PLYRunningMode.Full` explicitly when Purchasely must validate purchases and auto-close paywalls after purchase/restore.
+- Default running mode is now `Observer`; set `PLYRunningMode.Full` explicitly when Purchasely must validate purchases.
 - `readyToOpenDeeplink(...)` -> `allowDeeplink(...)`.
 - `Purchasely.readyToOpenDeeplink` -> `Purchasely.allowDeeplink`.
 - `Purchasely.isDeeplinkHandled(uri, activity)` -> `Purchasely.handleDeeplink(uri, activity)`.
-- Campaign display is now controlled separately with `allowCampaigns`.
+- Campaign display is controlled separately with `allowCampaigns`.
 
 ## Presentation API
 
@@ -89,6 +69,7 @@ Presentation types moved from `io.purchasely.ext` to `io.purchasely.ext.presenta
 ```kotlin
 import io.purchasely.ext.presentation.PLYPresentation
 import io.purchasely.ext.presentation.PLYPresentationAction
+import io.purchasely.ext.presentation.PLYPresentationState
 import io.purchasely.ext.presentation.PLYPresentationType
 import io.purchasely.ext.presentation.PLYPurchaseResult
 import io.purchasely.ext.presentation.preload
@@ -99,29 +80,85 @@ Replace `Purchasely.fetchPresentation(...)` and `PLYPresentationProperties` with
 ```kotlin
 val presentation = PLYPresentation {
     placementId("onboarding")
+    screenId("screen_abc123")
     contentId("article_42")
+    flowId("flow_abc123")
+    backgroundColor(0xFF101820.toInt())
+    progressColor(0xFFFFC857.toInt())
+    displayCloseButton(true)
+    displayBackButton(true)
+    onPresented { loaded, error -> }
+    onCloseRequested { }
+    onDismissed { outcome -> }
 }.preload()
 
 when (presentation.type) {
     PLYPresentationType.DEACTIVATED -> Unit
-    PLYPresentationType.CLIENT -> showClientPaywall(presentation)
+    PLYPresentationType.CLIENT -> showClientScreen(presentation)
     else -> presentation.display(activity) { outcome ->
         when (outcome.purchaseResult) {
-            PLYPurchaseResult.PURCHASED -> handlePurchase(outcome.plan)
-            PLYPurchaseResult.RESTORED -> handleRestore(outcome.plan)
+            PLYPurchaseResult.PURCHASED -> refreshAccess()
+            PLYPurchaseResult.RESTORED -> refreshAccess()
             PLYPurchaseResult.CANCELLED, null -> Unit
         }
     }
 }
 ```
 
-Other presentation changes:
+Other Presentation changes:
 - `PLYPresentation.id` -> `screenId`.
+- `screenId` is the canonical Android public name; do not rename Android code to `presentationId`.
 - `onClose` -> `onCloseRequested`.
 - `display` callbacks now receive `PLYPresentationOutcome`.
 - `PLYProductViewResult` is replaced by `PLYPurchaseResult` inside `outcome.purchaseResult`.
 - `buildView(context, callback)` also receives `PLYPresentationOutcome`.
 - `presentationView(...)` is removed. Use `PLYPresentation { ... }.preload { loaded, error -> loaded?.buildView(context) }`.
+
+### Prepared display helper
+
+```kotlin
+PLYPresentation { placementId("onboarding") }.display(
+    context = activity,
+    presentation = { loaded ->
+        // Loaded and display triggered.
+    },
+    callback = { outcome ->
+        // Final dismissal.
+    }
+)
+```
+
+`display(context) { outcome }` fires on final dismissal.
+
+### Observable state
+
+Every Builder/Prepared/Loaded Presentation exposes `state: StateFlow<PLYPresentationState>`:
+
+```kotlin
+prepared.state.collect { state ->
+    when (state) {
+        PLYPresentationState.Idle -> Unit
+        PLYPresentationState.Loading -> showLoading()
+        PLYPresentationState.Loaded -> hideLoading()
+        PLYPresentationState.Displayed -> Unit
+        is PLYPresentationState.Error -> showError(state.error)
+    }
+}
+```
+
+### Embedded Compose
+
+```kotlin
+import io.purchasely.ext.presentation.compose.PLYPresentationView
+
+PLYPresentationView(
+    presentation = presentation,
+    modifier = Modifier.fillMaxWidth(),
+    callback = { outcome -> }
+)
+```
+
+Without the optional Compose artifact, use `AndroidView { presentation.buildView(it) }` manually.
 
 ## Action Interceptor
 
@@ -139,14 +176,8 @@ Purchasely.interceptAction<PLYPresentationAction.Login> { _, _ ->
 
 Purchasely.interceptAction<PLYPresentationAction.Purchase> { info, action ->
     if (observerMode) {
-        val productId = action.plan?.store_product_id
-        val offerToken = action.subscriptionOffer?.offerToken
-        if (info.activity != null && productId != null && offerToken != null) {
-            launchBilling(info.activity, productId, offerToken)
-            PLYInterceptResult.SUCCESS
-        } else {
-            PLYInterceptResult.FAILED
-        }
+        launchBilling(info?.activity, action.plan.store_product_id, action.subscriptionOffer?.offerToken)
+        PLYInterceptResult.SUCCESS
     } else {
         PLYInterceptResult.NOT_HANDLED
     }
@@ -170,9 +201,7 @@ Result mapping:
 
 Call `Purchasely.removeAllActionInterceptors()` when tearing down or restarting the SDK.
 
-### Observer-mode bridge: callback → suspend
-
-In v5 Observer mode, the host app received `processAction: (Boolean) -> Unit` and called it once the native StoreKit/Billing flow finished. In v6, the interceptor lambda is a **`suspend`** function returning `PLYInterceptResult`. Implement a small bridge so the interceptor suspends until the host purchase flow reports back:
+## Observer-mode bridge: callback -> suspend
 
 ```kotlin
 private var pendingResult: ((PLYInterceptResult) -> Unit)? = null
@@ -181,36 +210,32 @@ Purchasely.interceptAction<PLYPresentationAction.Purchase> { info, purchase ->
     if (!observerMode) return@interceptAction PLYInterceptResult.NOT_HANDLED
     awaitPendingResult { resolve ->
         pendingResult = resolve
-        scope.launch { purchaseRequests.emit(PurchaseRequest(info?.activity, purchase.plan.store_product_id, purchase.subscriptionOffer?.offerToken)) }
+        scope.launch {
+            purchaseRequests.emit(
+                PurchaseRequest(info?.activity, purchase.plan.store_product_id, purchase.subscriptionOffer?.offerToken)
+            )
+        }
     }
 }
 
 private suspend fun awaitPendingResult(
     register: ((PLYInterceptResult) -> Unit) -> Unit
 ): PLYInterceptResult = suspendCancellableCoroutine { continuation ->
-    pendingResult?.invoke(PLYInterceptResult.NOT_HANDLED) // cancel any previous wait
+    pendingResult?.invoke(PLYInterceptResult.NOT_HANDLED)
     val cb: (PLYInterceptResult) -> Unit = { if (continuation.isActive) continuation.resume(it) }
     register(cb)
     continuation.invokeOnCancellation { if (pendingResult === cb) pendingResult = null }
 }
-
-// When the native billing flow returns:
-private fun handleTransactionResult(result: TransactionResult) = when (result) {
-    is TransactionResult.Success   -> { pendingResult?.invoke(PLYInterceptResult.SUCCESS);     pendingResult = null }
-    is TransactionResult.Cancelled -> { pendingResult?.invoke(PLYInterceptResult.NOT_HANDLED); pendingResult = null }
-    is TransactionResult.Error     -> { pendingResult?.invoke(PLYInterceptResult.FAILED);      pendingResult = null }
-    else -> Unit
-}
 ```
 
-In `close()` / `restart()`, invoke any outstanding `pendingResult` with `NOT_HANDLED` before calling `Purchasely.removeAllActionInterceptors()` so suspended coroutines don't leak.
+Resolve `pendingResult` with `SUCCESS`, `NOT_HANDLED`, or `FAILED` when the native billing flow returns. In `close()` / `restart()`, invoke any outstanding `pendingResult` with `NOT_HANDLED` before calling `Purchasely.removeAllActionInterceptors()`.
 
 ## User Attributes
 
 User attribute mutation methods now return `Deferred<Boolean>`:
 
 ```kotlin
-Purchasely.setUserAttribute("favorite_spirit", "gin") // return value may be ignored
+Purchasely.setUserAttribute("favorite_spirit", "gin")
 val success = Purchasely.incrementUserAttribute("cocktails_viewed").await()
 ```
 
@@ -237,7 +262,7 @@ Run after each phase:
 Search must return no v5-only API usages in app source/tests:
 
 ```bash
-rg "PaywallObserver|readyToOpenDeeplink|isDeeplinkHandled|setPaywallActionsInterceptor|PLYPresentationProperties|PLYPresentationActionParameters|PLYPresentationInfo|PLYProductViewResult|fetchPresentation" android/app/src
+rg "readyToOpenDeeplink|isDeeplinkHandled|PLYPresentationProperties|PLYPresentationActionParameters|PLYPresentationInfo|PLYProductViewResult|fetchPresentation|presentationView" android/app/src
 ```
 
-Expected remaining warning from SDK 6.0.0 in some builds: Android resource formatting warnings in localized `ply_in_app_partial_restore_partial_with_errors` strings. These come from the SDK artifact, not app code.
+Legacy identifiers such as `setPaywallActionsInterceptor` and `PaywallObserver` may remain in migration notes only because those are the names being replaced.

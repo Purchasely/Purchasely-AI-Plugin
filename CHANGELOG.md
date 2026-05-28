@@ -7,6 +7,9 @@ All notable changes to this project are documented here. The format is based on 
 ### Added
 
 - `references/concepts/lottie-animations.md` — covers Purchasely Screen Lottie setup with the iOS `PLYLottieBridge`, Android `PLYLottieInterface` / `Purchasely.lottieView`, cross-platform host-project notes, and troubleshooting for missing bridges, file size, and Console template availability.
+- `references/android/api-reference.md` — refreshed native Android SDK v6 API reference covering `PLYPresentation` builder/preload/display, canonical `screenId`, `PLYPresentationState`, `PLYPresentationOutcome`, typed action interceptors, Observer-mode transaction bridge, and optional `presentation-compose` embedding.
+- `references/android/migration-v6.md` — expanded Android v5→v6 migration guide with Presentation builder options, `screenId`, prepared display timing, `StateFlow` lifecycle, embedded Compose helper, and verification searches.
+- `references/sdk-versions.md` — updated native Android to `6.0.0` while leaving iOS and cross-platform SDK pins unchanged.
 
 ### Changed
 

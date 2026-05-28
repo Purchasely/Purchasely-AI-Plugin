@@ -4,12 +4,12 @@
 
 ## Current latest stable versions
 
-_Last updated: 2026-05-18._
+_Last updated: 2026-05-28._
 
 | Platform | Latest version | Notes |
 |----------|----------------|-------|
 | **iOS** (native) | **5.7.5** | `closeAllScreens()` available since this version. `@MainActor`-isolated. |
-| **Android** (native) | **5.7.4** | `closeAllScreens()` available since this version. No threading constraint. |
+| **Android** (native) | **6.0.0** | Presentation builder API, `screenId`, typed action interceptors, `PLYPresentationOutcome`, and optional `presentation-compose`. |
 | **React Native** | **5.7.3** | Cross-platform plugin. All three `react-native-purchasely*` packages MUST be the same version. |
 | **Flutter** | **5.7.3** | Cross-platform plugin. All three `purchasely_*` packages MUST be the same version. |
 | **Cordova** | **5.7.3** | Cross-platform plugin. All `@purchasely/cordova-plugin-*` packages MUST be the same version. |
@@ -32,20 +32,21 @@ In Xcode → File → Add Packages → enter `https://github.com/Purchasely/Purc
 ```kotlin
 // app/build.gradle.kts
 dependencies {
-    implementation("io.purchasely:core:5.7.4")
-    implementation("io.purchasely:google-play:5.7.4")          // if Google Play
-    implementation("io.purchasely:player:5.7.4")               // optional video support
+    implementation("io.purchasely:core:6.0.0")
+    implementation("io.purchasely:google-play:6.0.0")          // if Google Play
+    implementation("io.purchasely:player:6.0.0")               // optional video support
+    implementation("io.purchasely:presentation-compose:6.0.0") // optional Compose embedding
     // alt stores
-    implementation("io.purchasely:huawei-services:5.7.4")      // Huawei AppGallery
-    implementation("io.purchasely:amazon:5.7.4")               // Amazon Appstore
+    implementation("io.purchasely:huawei-services:6.0.0")      // Huawei AppGallery
+    implementation("io.purchasely:amazon:6.0.0")               // Amazon Appstore
 }
 ```
 
 ### Android — Gradle (Groovy)
 
 ```groovy
-implementation "io.purchasely:core:5.7.4"
-implementation "io.purchasely:google-play:5.7.4"
+implementation "io.purchasely:core:6.0.0"
+implementation "io.purchasely:google-play:6.0.0"
 ```
 
 ### React Native — package.json
@@ -99,14 +100,14 @@ This means a cross-platform 5.7.3 plugin gets the **5.7.x native SDKs** transiti
 1. **All three plugin packages on the same major.minor.patch.** Mixing `react-native-purchasely 5.7.3` with `@purchasely/react-native-purchasely-google 5.6.0` causes runtime crashes.
 2. **Use exact versions (`5.7.5`), not floating versions (`5.+`, `^5.0.0`).** Floating versions silently pull breaking changes on `pod install` / `flutter pub get` / `npm install`.
 3. **iOS deployment target: 11.0+.** Older targets break the Pod install.
-4. **Android `minSdk` 23 for native, 21 for cross-platform plugins.**
+4. **Android `minSdk` 23 for native, 21 for cross-platform plugins.** Native Android v6 also targets the AGP 9 / Kotlin 2.2 toolchain.
 5. **Run a fresh install after pinning** — `pod install --repo-update` (iOS), `./gradlew --refresh-dependencies` (Android), `flutter clean && flutter pub get` (Flutter), `rm -rf node_modules && npm i` (RN / Cordova).
 
 ## When to upgrade
 
 Always recommend upgrading to the versions above when:
 
-- The project pins an older version that lacks reliable paywall dismissal (iOS < 5.7.5, Android < 5.7.4, cross-platform < 5.7.3 native bridge).
+- The native Android project pins a pre-v6 version but the user wants the v6 Presentation builder API.
 - The project uses floating versions (`5.+`, `^5.0.0`) — pin to exact stable for reproducible builds.
 - The user is debugging issues that match a known fixed-in-5.7.x bug — see the platform changelog.
 
