@@ -34,7 +34,14 @@ const requiredBuildGateSkillFiles = [
 ];
 
 for (const rel of requiredBuildGateSkillFiles) {
-  const content = fs.readFileSync(path.join(root, rel), 'utf8');
+  let content;
+  try {
+    content = fs.readFileSync(path.join(root, rel), 'utf8');
+  } catch {
+    failures.push(`${rel} could not be read (file missing or unreadable)`);
+    continue;
+  }
+
   if (!content.includes('## Completion Build Gate')) {
     failures.push(`${rel} is missing the completion build gate`);
   }
