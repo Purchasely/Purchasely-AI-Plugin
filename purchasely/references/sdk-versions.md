@@ -11,7 +11,7 @@ _Last updated: 2026-05-28._
 | **iOS** (native) | **5.7.5** | `closeAllScreens()` available since this version. `@MainActor`-isolated. |
 | **Android** (native) | **6.0.0** | Presentation builder API, `screenId`, typed action interceptors, `PLYPresentationOutcome`, and optional `presentation-compose`. |
 | **React Native** | **5.7.3** | Cross-platform plugin. All three `react-native-purchasely*` packages MUST be the same version. |
-| **Flutter** | **5.7.3** | Cross-platform plugin. All three `purchasely_*` packages MUST be the same version. |
+| **Flutter** | **6.0.0-beta.0** | Targets the Purchasely 6.0 native SDKs (`io.purchasely:core 6.0.0` / iOS `Purchasely 6.0.0`). Builder API (`PurchaselyBuilder`, `PresentationBuilder` → `PresentationOutcome`, `Purchasely.interceptAction`). All three `purchasely_*` packages MUST be the same version. |
 | **Cordova** | **5.7.3** | Cross-platform plugin. All `@purchasely/cordova-plugin-*` packages MUST be the same version. |
 
 ## How to pin
@@ -65,9 +65,9 @@ implementation "io.purchasely:google-play:6.0.0"
 
 ```yaml
 dependencies:
-  purchasely_flutter: 5.7.3
-  purchasely_google: 5.7.3
-  purchasely_android_player: 5.7.3
+  purchasely_flutter: 6.0.0-beta.0
+  purchasely_google: 6.0.0-beta.0
+  purchasely_android_player: 6.0.0-beta.0
 ```
 
 ### Cordova — package.json
@@ -88,12 +88,14 @@ When you install `react-native-purchasely@5.7.3` (or the Flutter / Cordova equiv
 | Cross-platform plugin | Pulls iOS native | Pulls Android native |
 |-----------------------|------------------|----------------------|
 | `react-native-purchasely 5.7.3` | iOS SDK 5.7.x | Android SDK 5.7.x |
-| `purchasely_flutter 5.7.3` | iOS SDK 5.7.x | Android SDK 5.7.x |
+| `purchasely_flutter 6.0.0-beta.0` | iOS SDK 6.0.0 | Android SDK 6.0.0 (`io.purchasely:core`) |
 | `@purchasely/cordova-plugin-purchasely 5.7.3` | iOS SDK 5.7.x | Android SDK 5.7.x |
 
 This means a cross-platform 5.7.3 plugin gets the **5.7.x native SDKs** transitively. You do not need to bump the native pods/gradle dependencies yourself; the plugin's pinning is correct. However, the public JS / Dart bridge may expose a different method name than the native SDK — for example current React Native / Flutter / Cordova bridges expose `closePresentation()`, not `closeAllScreens()`.
 
 > If a user is on a cross-platform plugin version older than 5.7.3, recent native behavior may not be bridged. Upgrade the plugin first, then verify the public bridge method name in that platform's integration reference.
+
+> **Flutter is on the 6.0 API.** `purchasely_flutter 6.0.0-beta.0` pulls the Purchasely 6.0 native SDKs and exposes the builder API (`PurchaselyBuilder`, `PresentationBuilder` → `PresentationOutcome`, `Purchasely.interceptAction`). On Flutter the imperative dismiss is now `presentation.close()` on the loaded `Presentation` (not the `closePresentation()` bridge method shown above for RN / Cordova). See [`flutter/migration-v6.md`](flutter/migration-v6.md) and [`flutter/integration.md`](flutter/integration.md). These 6.0 native versions may not be published on CocoaPods / Maven Central yet; local builds resolve them via `mavenLocal()` (Android) and a development pod (iOS).
 
 ## Universal rules
 
