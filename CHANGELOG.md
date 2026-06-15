@@ -4,12 +4,6 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
-### Fixed
-
-- Corrected the Observer-mode post-purchase dismissal guidance (`concepts/observer-mode-post-purchase.md`, `android/common-patterns.md`, `architecture-patterns.md`, and the integrate/review/debug skills): in **Observer** mode the SDK does **not** auto-close after a purchase/restore — the implicit `close_all` is appended only in **Full** mode (verified in the iOS/Android SDK source: Android `runningMode == PLYRunningMode.Full`, iOS `appendCloseIfNeeded` `validatesTransactions` guard). Apps must call `Purchasely.closeAllScreens()` after resolving the interceptor (from the async billing-result handler, not inside the interceptor closure), unless a `close` action is configured on the button in the Console. Also hardened the Observer-mode bridge with an orphan-guard + `invokeOnCancellation`.
-- `references/concepts/campaigns.md` iOS Swift snippet: corrected `allowCampaigns` from property-assignment syntax (`= false/true`) to the documented method-call form (`allowCampaigns(false/true)`), consistent with the iOS v6 API reference.
-- `skills/migrate/SKILL.md` Android step 3: removed `screenId` from the v5-symbol detection list — `screenId` is the v6 target name (step 9 renames `PLYPresentation.id` → `screenId`), not a v5 symbol to replace.
-
 ## [2.0.0-rc1] — 2026-06-15
 
 First release candidate of the **v6 line**. The plugin now targets the **Purchasely SDK v6.0.0-rc1** on **native iOS (Swift / Objective-C)** and **native Android (Kotlin / Java)**. Flutter, React Native and Cordova guidance stays on v5 in this RC and will move to v6 for the final `2.0.0`.
@@ -33,6 +27,9 @@ First release candidate of the **v6 line**. The plugin now targets the **Purchas
 
 - Removed the non-existent `io.purchasely:presentation-compose` artifact and `PLYPresentationView` composable from the Android docs — `buildView(...)` returns an Android `View`; for Jetpack Compose, wrap it in an `AndroidView`.
 - Removed `flowId(...)` / `productId(...)` / `planId(...)` from the Android `PLYPresentation { }` builder examples — they are not exposed in v6; display a Flow via its `app_scheme://ply/flows/FLOW_ID` deeplink.
+- Corrected the Observer-mode post-purchase dismissal guidance (`concepts/observer-mode-post-purchase.md`, `android/common-patterns.md`, `architecture-patterns.md`, and the integrate/review/debug skills): in **Observer** mode the SDK does **not** auto-close after a purchase/restore — the implicit `close_all` is appended only in **Full** mode (verified in the iOS/Android SDK source: Android `runningMode == PLYRunningMode.Full`, iOS `appendCloseIfNeeded` `validatesTransactions` guard). Apps must call `Purchasely.closeAllScreens()` after resolving the interceptor (from the async billing-result handler, not inside the interceptor closure), unless a `close` action is configured on the button in the Console. Also hardened the Observer-mode bridge with an orphan-guard + `invokeOnCancellation`.
+- `references/concepts/campaigns.md` iOS Swift snippet: corrected `allowCampaigns` from property-assignment syntax (`= false/true`) to the documented method-call form (`allowCampaigns(false/true)`), consistent with the iOS v6 API reference.
+- `skills/migrate/SKILL.md` Android step 3: removed `screenId` from the v5-symbol detection list — `screenId` is the v6 target name (step 9 renames `PLYPresentation.id` → `screenId`), not a v5 symbol to replace.
 
 ## [1.1.0] — 2026-05-25
 
