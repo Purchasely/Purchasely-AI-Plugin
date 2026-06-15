@@ -1,5 +1,7 @@
 # Flutter — Migrating to the Purchasely 6.0 API
 
+> ⚠️ **Preview — the Flutter v6 API ships in the final 2.0.0 release.** The currently published Flutter SDK is **5.7.3 (v5 API)**; for production today use the v5 API and `purchasely_flutter: 5.7.3`. The v5 Dart surface is `Purchasely.start(...)`, `fetchPresentation` / `presentPresentation[ForPlacement]`, `setPaywallActionInterceptorCallback` + `onProcessAction`, and `closePresentation()`. The builder-based API documented below (`PurchaselyBuilder`, `PresentationBuilder`, `Purchasely.interceptAction`) is **not published yet** — keep it for reference for when the final release lands.
+
 > **In-repo migration guide.** This is the Flutter-specific old→new mapping for the
 > Purchasely 6.0 plugin. The companion integration reference is
 > [`integration.md`](./integration.md); cross-platform concepts live in

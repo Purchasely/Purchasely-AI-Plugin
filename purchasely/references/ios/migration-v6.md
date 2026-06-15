@@ -1,8 +1,8 @@
-# iOS SDK v5.x → v6.0.0 Migration
+# iOS SDK v5.x → v6.0.0-rc1 Migration
 
 This guide is iOS-only (Swift / SwiftUI / UIKit). Android, React Native, Flutter, and Cordova have their own migration notes — do not apply this one to them.
 
-Version 6.0.0 introduces a fluent initialization builder, a granular per-action interceptor API, clearer naming, and a consolidated paywall display surface built around `PLYPresentationBuilder`. `PLYPresentation` becomes a protocol (most call sites compile unchanged). For the full v6 API surface see [`api-reference.md`](api-reference.md); for the legacy symbols this guide replaces see [`v5-api-reference.md`](v5-api-reference.md).
+Version 6.0.0-rc1 introduces a fluent initialization builder, a granular per-action interceptor API, clearer naming, and a consolidated paywall display surface built around `PLYPresentationBuilder`. `PLYPresentation` becomes a protocol (most call sites compile unchanged). For the full v6 API surface see [`api-reference.md`](api-reference.md); for the legacy symbols this guide replaces see [`v5-api-reference.md`](v5-api-reference.md).
 
 ## Summary of breaking changes
 
@@ -23,12 +23,12 @@ Version 6.0.0 introduces a fluent initialization builder, a granular per-action 
 
 ## Dependency
 
-Bump the Purchasely iOS package to `6.0.0`.
+Bump the Purchasely iOS package to `6.0.0-rc1`.
 
 **Swift Package Manager** — in `Package.swift` or the Xcode package list:
 
 ```swift
-.package(url: "https://github.com/Purchasely/Purchasely-iOS", from: "6.0.0")
+.package(url: "https://github.com/Purchasely/Purchasely-iOS", from: "6.0.0-rc1")
 ```
 
 **CocoaPods** — in the `Podfile`:

@@ -1,6 +1,6 @@
 # iOS API Reference
 
-> Documents the **v6.0.0** public surface (Swift + Objective-C). Migrating from v5? See [`migration-v6.md`](migration-v6.md) and the legacy [`v5-api-reference.md`](v5-api-reference.md). Universal concepts (running modes, log levels, presentation types) also live in [`../concepts/`](../concepts/README.md).
+> Documents the **v6.0.0-rc1** public surface (Swift + Objective-C). Migrating from v5? See [`migration-v6.md`](migration-v6.md) and the legacy [`v5-api-reference.md`](v5-api-reference.md). Universal concepts (running modes, log levels, presentation types) also live in [`../concepts/`](../concepts/README.md).
 
 ## Initialization — fluent builder
 

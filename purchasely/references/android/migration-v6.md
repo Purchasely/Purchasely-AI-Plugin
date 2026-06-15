@@ -1,4 +1,4 @@
-# Android SDK v5.x -> v6.0.0 Migration
+# Android SDK v5.x -> v6.0.0-rc1 Migration
 
 This guide is Android-only. Do not apply it to iOS, React Native, Flutter, or Cordova until their v6 migrations are ready.
 
@@ -6,22 +6,22 @@ To recognize legacy v5 code in a project before rewriting it, see [v5-api-refere
 
 ## Build And Dependency Changes
 
-Pin every native Android Purchasely artifact to `6.0.0`:
+Pin every native Android Purchasely artifact to `6.0.0-rc1`:
 
 ```kotlin
-implementation("io.purchasely:core:6.0.0")
-implementation("io.purchasely:google-play:6.0.0")      // Google Play
-implementation("io.purchasely:player:6.0.0")           // optional video support
+implementation("io.purchasely:core:6.0.0-rc1")
+implementation("io.purchasely:google-play:6.0.0-rc1")      // Google Play
+implementation("io.purchasely:player:6.0.0-rc1")           // optional video support
 // alternative stores (only if used):
-implementation("io.purchasely:huawei-services:6.0.0")  // Huawei AppGallery
-implementation("io.purchasely:amazon:6.0.0")           // Amazon Appstore
+implementation("io.purchasely:huawei-services:6.0.0-rc1")  // Huawei AppGallery
+implementation("io.purchasely:amazon:6.0.0-rc1")           // Amazon Appstore
 ```
 
 There is **no** `presentation-compose` artifact. For Compose embedding, wrap the Android `View` from `buildView(...)` in an `AndroidView`.
 
-If `6.0.0` is only installed on the developer machine, add `mavenLocal()` in `dependencyResolutionManagement.repositories` before `google()` and `mavenCentral()`.
+If `6.0.0-rc1` is only installed on the developer machine, add `mavenLocal()` in `dependencyResolutionManagement.repositories` before `google()` and `mavenCentral()`.
 
-SDK v6 uses the modern Android toolchain: Gradle 9.3.0+, AGP 9.x, Kotlin 2.2.x (K2 compiler), JDK 11, minSdk 23, compileSdk 35.
+SDK v6 uses the modern Android toolchain: Gradle 9.3.0+, AGP 9.x, Kotlin 2.2.x (K2 compiler), JDK 11, minSdk 23, compileSdk 36.
 
 The reified entry points `interceptAction<T> { … }` / `removeActionInterceptor<T>()` are `inline` functions targeting JVM 11. Compile your Kotlin module with `jvmTarget = 11`, or use the `Class`-based overload.
 
@@ -438,8 +438,8 @@ All `intro*` / `introductory*` methods and `INTRO_*` / `TRIAL_*` tags were remov
 
 Mechanical, in order:
 
-1. **Dependencies** pinned to `6.0.0`; no `presentation-compose` artifact; alt-store artifacts use `huawei-services` / `amazon`.
-2. **Toolchain**: Gradle 9.3.0+, AGP 9.x, Kotlin 2.2.x, JDK 11, `minSdk 23`, `compileSdk 35`; `org.jetbrains.kotlin.android` plugin and `kotlinOptions {}` removed under AGP 9; Kotlin module on `jvmTarget = 11` (or interceptors use the `Class`-based overload).
+1. **Dependencies** pinned to `6.0.0-rc1`; no `presentation-compose` artifact; alt-store artifacts use `huawei-services` / `amazon`.
+2. **Toolchain**: Gradle 9.3.0+, AGP 9.x, Kotlin 2.2.x, JDK 11, `minSdk 23`, `compileSdk 36`; `org.jetbrains.kotlin.android` plugin and `kotlinOptions {}` removed under AGP 9; Kotlin module on `jvmTarget = 11` (or interceptors use the `Class`-based overload).
 3. **Init**: `runningMode(PLYRunningMode.Full)` set if the app needs purchase validation / auto-close; `PaywallObserver` -> `Observer`; init callback is `start { error -> }`.
 4. **Imports** moved to `io.purchasely.ext.presentation.*`.
 5. **Builder** has no `flowId(...)` / `productId(...)` / `planId(...)`; Flows shown via `app_scheme://ply/flows/FLOW_ID`.

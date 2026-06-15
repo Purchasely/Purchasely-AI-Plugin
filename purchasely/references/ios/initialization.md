@@ -1,6 +1,6 @@
 # iOS SDK Initialization
 
-> Documents the **v6.0.0** fluent initialization builder. Migrating from v5? See [`migration-v6.md`](migration-v6.md). Universal concepts (running modes, log levels, etc.) also live in [`../concepts/`](../concepts/README.md).
+> Documents the **v6.0.0-rc1** fluent initialization builder. Migrating from v5? See [`migration-v6.md`](migration-v6.md). Universal concepts (running modes, log levels, etc.) also live in [`../concepts/`](../concepts/README.md).
 
 ## Installation
 
@@ -30,7 +30,7 @@ Or add to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Purchasely/Purchasely-iOS", from: "6.0.0")
+    .package(url: "https://github.com/Purchasely/Purchasely-iOS", from: "6.0.0-rc1")
 ]
 ```
 

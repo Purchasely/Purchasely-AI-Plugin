@@ -11,7 +11,7 @@ This is the single most impactful change of SDK v6 and it is **silent** — the 
 | SDK version | Default running mode |
 |-------------|----------------------|
 | v5.x (and current React Native / Cordova plugins) | **Full** |
-| **v6.0.0+ (native iOS & Android)** | **Observer** ⚠️ |
+| **v6.0.0-rc1+ (native iOS & Android)** | **Observer** ⚠️ |
 
 > 🚧 In v6, if your app relies on Purchasely to process purchases and validate receipts, you **must set the running mode to Full explicitly**. If you forget, the SDK still compiles and runs but **stops validating transactions**. In Observer mode, presentations also **no longer auto-close** after a purchase/restore (v5 Full auto-appended a `close_all`).
 

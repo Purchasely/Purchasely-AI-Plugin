@@ -8,10 +8,10 @@ _Last updated: 2026-06-15._
 
 | Platform | Latest version | Notes |
 |----------|----------------|-------|
-| **iOS** (native) | **6.0.0** | Fluent init builder, per-action `interceptAction` + `PLYInterceptResult`, `PLYPresentationBuilder`, `swiftUIView`, `closeAllScreens()`, `PLYPresentationOutcome` (with `closeReason`). **Default running mode is now `.observer`** — set `.runningMode(.full)` for purchase handling. |
-| **Android** (native) | **6.0.0** | Presentation builder API, `screenId`, typed action interceptors, `PLYPresentationOutcome`. **Default running mode is now `Observer`** — set `PLYRunningMode.Full` for purchase handling. No `presentation-compose` artifact (use `AndroidView { buildView }` for Compose). |
+| **iOS** (native) | **6.0.0-rc1** | Fluent init builder, per-action `interceptAction` + `PLYInterceptResult`, `PLYPresentationBuilder`, `swiftUIView`, `closeAllScreens()`, `PLYPresentationOutcome` (with `closeReason`). **Default running mode is now `.observer`** — set `.runningMode(.full)` for purchase handling. |
+| **Android** (native) | **6.0.0-rc1** | Presentation builder API, `screenId`, typed action interceptors, `PLYPresentationOutcome`. **Default running mode is now `Observer`** — set `PLYRunningMode.Full` for purchase handling. No `presentation-compose` artifact (use `AndroidView { buildView }` for Compose). |
 | **React Native** | **5.7.3** | Cross-platform plugin. All three `react-native-purchasely*` packages MUST be the same version. |
-| **Flutter** | **6.0.0-beta.0** | Targets the Purchasely 6.0 native SDKs (`io.purchasely:core 6.0.0` / iOS `Purchasely 6.0.0`). Builder API (`PurchaselyBuilder`, `PresentationBuilder` → `PresentationOutcome`, `Purchasely.interceptAction`). All three `purchasely_*` packages MUST be the same version. |
+| **Flutter** | **5.7.3** | Cross-platform plugin on the **v5 API** (like React Native / Cordova): `Purchasely.start(...)`, `fetchPresentation` / `presentPresentation[ForPlacement]`, `setPaywallActionInterceptorCallback` + `onProcessAction`. Pulls the 5.7.x native SDKs. The v6 Flutter API ships in the final 2.0.0 release. All three `purchasely_*` packages MUST be the same version. |
 | **Cordova** | **5.7.3** | Cross-platform plugin. All `@purchasely/cordova-plugin-*` packages MUST be the same version. |
 
 ## How to pin
@@ -25,27 +25,27 @@ pod 'Purchasely', '~> 6.0'
 
 ### iOS — Swift Package Manager
 
-In Xcode → File → Add Packages → enter `https://github.com/Purchasely/Purchasely-iOS` and select **Up to Next Major 6.0.0** (or pin an exact `6.0.0`).
+In Xcode → File → Add Packages → enter `https://github.com/Purchasely/Purchasely-iOS` and select **Up to Next Major 6.0.0-rc1** (or pin an exact `6.0.0-rc1`).
 
 ### Android — Gradle (Kotlin DSL)
 
 ```kotlin
 // app/build.gradle.kts
 dependencies {
-    implementation("io.purchasely:core:6.0.0")
-    implementation("io.purchasely:google-play:6.0.0")          // if Google Play
-    implementation("io.purchasely:player:6.0.0")               // optional video support
+    implementation("io.purchasely:core:6.0.0-rc1")
+    implementation("io.purchasely:google-play:6.0.0-rc1")          // if Google Play
+    implementation("io.purchasely:player:6.0.0-rc1")               // optional video support
     // alt stores
-    implementation("io.purchasely:huawei-services:6.0.0")      // Huawei AppGallery
-    implementation("io.purchasely:amazon:6.0.0")               // Amazon Appstore
+    implementation("io.purchasely:huawei-services:6.0.0-rc1")      // Huawei AppGallery
+    implementation("io.purchasely:amazon:6.0.0-rc1")               // Amazon Appstore
 }
 ```
 
 ### Android — Gradle (Groovy)
 
 ```groovy
-implementation "io.purchasely:core:6.0.0"
-implementation "io.purchasely:google-play:6.0.0"
+implementation "io.purchasely:core:6.0.0-rc1"
+implementation "io.purchasely:google-play:6.0.0-rc1"
 ```
 
 ### React Native — package.json
@@ -64,9 +64,9 @@ implementation "io.purchasely:google-play:6.0.0"
 
 ```yaml
 dependencies:
-  purchasely_flutter: 6.0.0-beta.0
-  purchasely_google: 6.0.0-beta.0
-  purchasely_android_player: 6.0.0-beta.0
+  purchasely_flutter: 5.7.3
+  purchasely_google: 5.7.3
+  purchasely_android_player: 5.7.3
 ```
 
 ### Cordova — package.json
@@ -87,14 +87,14 @@ When you install `react-native-purchasely@5.7.3` (or the Flutter / Cordova equiv
 | Cross-platform plugin | Pulls iOS native | Pulls Android native |
 |-----------------------|------------------|----------------------|
 | `react-native-purchasely 5.7.3` | iOS SDK 5.7.x | Android SDK 5.7.x |
-| `purchasely_flutter 6.0.0-beta.0` | iOS SDK 6.0.0 | Android SDK 6.0.0 (`io.purchasely:core`) |
+| `purchasely_flutter 5.7.3` | iOS SDK 5.7.x | Android SDK 5.7.x |
 | `@purchasely/cordova-plugin-purchasely 5.7.3` | iOS SDK 5.7.x | Android SDK 5.7.x |
 
 This means a cross-platform 5.7.3 plugin gets the **5.7.x native SDKs** transitively. You do not need to bump the native pods/gradle dependencies yourself; the plugin's pinning is correct. However, the public JS / Dart bridge may expose a different method name than the native SDK — for example current React Native / Flutter / Cordova bridges expose `closePresentation()`, not `closeAllScreens()`.
 
 > If a user is on a cross-platform plugin version older than 5.7.3, recent native behavior may not be bridged. Upgrade the plugin first, then verify the public bridge method name in that platform's integration reference.
 
-> **Flutter is on the 6.0 API.** `purchasely_flutter 6.0.0-beta.0` pulls the Purchasely 6.0 native SDKs and exposes the builder API (`PurchaselyBuilder`, `PresentationBuilder` → `PresentationOutcome`, `Purchasely.interceptAction`). On Flutter the imperative dismiss is now `presentation.close()` on the loaded `Presentation` (not the `closePresentation()` bridge method shown above for RN / Cordova). See [`flutter/migration-v6.md`](flutter/migration-v6.md) and [`flutter/integration.md`](flutter/integration.md). The native 6.0.0 SDKs are published (CocoaPods `~> 6.0`, Maven Central `io.purchasely:core:6.0.0`); the `purchasely_flutter` wrapper itself is still a beta.
+> **Flutter is on the v5 API** (same generation as React Native / Cordova). `purchasely_flutter 5.7.3` pulls the **5.7.x native SDKs** and exposes the v5 Dart surface: `Purchasely.start(...)`, `fetchPresentation` / `presentPresentation[ForPlacement]`, `setPaywallActionInterceptorCallback` + `onProcessAction`, and the `closePresentation()` / `hidePresentation()` bridge methods (not the native v6 `closeAllScreens()`). The v6 Flutter API (builder + per-action interceptor) ships in the final 2.0.0 release — see [`flutter/migration-v6.md`](flutter/migration-v6.md) and [`flutter/integration.md`](flutter/integration.md), which document that upcoming API as a preview. For production today, use the v5 API and `purchasely_flutter: 5.7.3`.
 
 ## Universal rules
 

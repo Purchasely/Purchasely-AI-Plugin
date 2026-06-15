@@ -65,7 +65,7 @@ Almost no integration ticket can be diagnosed without the SDK log stream. Before
 | iOS (Swift, v6) | `.logLevel(.debug)` on the init builder chain (`Purchasely.apiKey(...).logLevel(.debug)...`) — or set `Purchasely.logLevel = .debug` at runtime |
 | Android (Kotlin, v6) | `logLevel(LogLevel.DEBUG)` in the `Purchasely { ... }` DSL or on `Purchasely.Builder` (custom loggers now receive all messages regardless of level; `logcatEnabled` is a separate flag) |
 | React Native | `logLevel: Purchasely.LogLevel.DEBUG` in `Purchasely.start({...})` |
-| Flutter | `.logLevel(LogLevel.debug)` on `PurchaselyBuilder` |
+| Flutter | `logLevel: PLYLogLevel.debug` in `Purchasely.start({...})` — or `Purchasely.setLogLevel(PLYLogLevel.debug)` at runtime |
 | Cordova | `Purchasely.LogLevel.DEBUG` as the 4th argument to `Purchasely.start(...)` |
 
 > **Production note** — debug logs must be gated behind a build flag (`#if DEBUG`, `BuildConfig.DEBUG`, `__DEV__`, etc.). Shipping `.debug` in a release build leaks placement IDs, audience matches, and presentation IDs into device logs.

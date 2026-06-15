@@ -1,5 +1,7 @@
 # Flutter Integration
 
+> ⚠️ **Preview — the Flutter v6 API ships in the final 2.0.0 release.** The currently published Flutter SDK is **5.7.3 (v5 API)**; for production today use the v5 API and `purchasely_flutter: 5.7.3`. The v5 Dart surface is `Purchasely.start(...)`, `fetchPresentation` / `presentPresentation[ForPlacement]`, `setPaywallActionInterceptorCallback` + `onProcessAction`, and `closePresentation()` — see the [`purchasely-integrate` skill](../../skills/purchasely-integrate/SKILL.md) Flutter sections and the [v5 docs](https://docs.purchasely.com). The builder-based API documented below (`PurchaselyBuilder`, `PresentationBuilder`, `Purchasely.interceptAction`) is **not published yet** — keep it for reference for when the final release lands.
+
 > **Purchasely 6.0 API.** This file covers the Flutter plugin adapted to the
 > Purchasely 6.0 native SDKs. The paywall surface (start, display / preload /
 > close, action interceptor) moved to a fluent builder API; everything else on the
@@ -22,14 +24,24 @@
 > - [`../concepts/user-attributes-targeting.md`](../concepts/user-attributes-targeting.md) — audience targeting + GDPR consent
 > - [`../concepts/privacy-settings.md`](../concepts/privacy-settings.md) — `revokeDataProcessingConsent` and privacy purposes
 > - [`../concepts/subscription-checks.md`](../concepts/subscription-checks.md) — gating premium content, restore purchases
-> - [`../sdk-versions.md`](../sdk-versions.md) — latest versions (pin to **6.0.0-beta.0** for Flutter)
+> - [`../sdk-versions.md`](../sdk-versions.md) — latest versions (pin to **5.7.3** for Flutter today; the v6 packages ship in the final 2.0.0 release)
 
 ## Installation
 
-Requirements: iOS 11.0+, Android minSdk 21, compileSdk 33. Pin all packages to **6.0.0-beta.0** (see [`../sdk-versions.md`](../sdk-versions.md)).
+Requirements: iOS 11.0+, Android minSdk 21, compileSdk 33.
+
+**For production today, pin all packages to `5.7.3`** (the published v5 release — see [`../sdk-versions.md`](../sdk-versions.md)):
+```yaml
+dependencies:
+  purchasely_flutter: 5.7.3
+  purchasely_google: 5.7.3
+  purchasely_android_player: 5.7.3
+```
+
+The snippet below is the **preview** install for the upcoming v6 packages — they are **not published yet** and ship with the final 2.0.0 release.
 
 ```bash
-# Core SDK
+# Core SDK (preview — not yet published)
 flutter pub add purchasely_flutter:6.0.0-beta.0
 
 # Google Play — required if targeting Google Play Store
@@ -47,7 +59,7 @@ dependencies:
   purchasely_android_player: 6.0.0-beta.0
 ```
 
-> **Native dependency.** This release targets the Purchasely 6.0 native SDKs (iOS `Purchasely 6.0.0`, Android `io.purchasely:core 6.0.0`). These versions may not be published on CocoaPods / Maven Central yet; local builds resolve them via `mavenLocal()` (Android) and a development pod (iOS).
+> **Native dependency.** The published v5 plugin (`5.7.3`) pulls the **5.7.x** native SDKs. The preview v6 packages above will target the Purchasely 6.0 native SDKs (iOS `Purchasely 6.0.0`, Android `io.purchasely:core 6.0.0`) when they ship.
 
 ### iOS Setup
 

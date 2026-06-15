@@ -6,12 +6,12 @@ Native Android SDK v6 initializes with the Kotlin DSL (`Purchasely { … }`, rec
 
 ```kotlin
 dependencies {
-    implementation("io.purchasely:core:6.0.0")
-    implementation("io.purchasely:google-play:6.0.0")        // Google Play
-    implementation("io.purchasely:player:6.0.0")             // optional video support
+    implementation("io.purchasely:core:6.0.0-rc1")
+    implementation("io.purchasely:google-play:6.0.0-rc1")        // Google Play
+    implementation("io.purchasely:player:6.0.0-rc1")             // optional video support
     // alternative stores:
-    implementation("io.purchasely:huawei-services:6.0.0")    // Huawei AppGallery
-    implementation("io.purchasely:amazon:6.0.0")             // Amazon Appstore
+    implementation("io.purchasely:huawei-services:6.0.0-rc1")    // Huawei AppGallery
+    implementation("io.purchasely:amazon:6.0.0-rc1")             // Amazon Appstore
 }
 ```
 
@@ -26,7 +26,7 @@ There is **no** `presentation-compose` artifact. For Compose embedding, wrap the
 | Kotlin | 2.2.x (K2 compiler) |
 | JDK | 11 |
 | `minSdk` | 23 |
-| `compileSdk` | 35 |
+| `compileSdk` | 36 |
 
 The reified entry points `interceptAction<T> { … }` / `removeActionInterceptor<T>()` are `inline` functions targeting JVM 11. Compile your Kotlin module with `jvmTarget = 11`, or use the `Class`-based overload. With AGP 9, remove the explicit `org.jetbrains.kotlin.android` plugin and the `android { kotlinOptions { … } }` block (AGP provides Android Kotlin support directly).
 

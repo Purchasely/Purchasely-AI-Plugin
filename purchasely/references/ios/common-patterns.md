@@ -1,6 +1,6 @@
 # iOS Common Integration Patterns
 
-> **Platform-specific elaborations for v6.0.0.** This file covers iOS idioms (SwiftUI, UIKit, Swift 6 concurrency, external billing / StoreKit 2 bridging). Concepts that apply to **every** Purchasely SDK (Observer-mode post-purchase flow, presentation type guard, presentation cache, audience-targeting attributes, GDPR consent, subscription checks) live in `../concepts/`:
+> **Platform-specific elaborations for v6.0.0-rc1.** This file covers iOS idioms (SwiftUI, UIKit, Swift 6 concurrency, external billing / StoreKit 2 bridging). Concepts that apply to **every** Purchasely SDK (Observer-mode post-purchase flow, presentation type guard, presentation cache, audience-targeting attributes, GDPR consent, subscription checks) live in `../concepts/`:
 >
 > - [`../concepts/running-modes.md`](../concepts/running-modes.md), [`../concepts/paywall-actions.md`](../concepts/paywall-actions.md), [`../concepts/presentation-types.md`](../concepts/presentation-types.md), [`../concepts/presentation-cache.md`](../concepts/presentation-cache.md), [`../concepts/observer-mode-post-purchase.md`](../concepts/observer-mode-post-purchase.md), [`../concepts/user-attributes-targeting.md`](../concepts/user-attributes-targeting.md), [`../concepts/subscription-checks.md`](../concepts/subscription-checks.md). Migrating from v5? See [`migration-v6.md`](migration-v6.md).
 
