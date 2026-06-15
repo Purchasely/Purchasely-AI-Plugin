@@ -2,7 +2,7 @@
 
 Applies to: **iOS, Android, React Native, Flutter, Cordova**.
 
-Every call to `Purchasely.fetchPresentation(...)` resolves with a `PLYPresentation` whose `type` field tells you what the dashboard returned. **You must check the type before displaying** — calling `display(...)` on a `DEACTIVATED` presentation is undefined behaviour and a `CLIENT` presentation isn't a real paywall at all.
+Every fetched/preloaded `PLYPresentation` carries a `type` field telling you what the dashboard returned. **You must check the type before displaying** — calling `display(...)` on a `DEACTIVATED` presentation is undefined behaviour and a `CLIENT` presentation isn't a real paywall at all. Native iOS/Android v6 obtain the presentation with `PLYPresentationBuilder` / the `PLYPresentation { }` DSL + `preload`; the cross-platform bridges still call `Purchasely.fetchPresentation(...)`.
 
 ## The four types
 
@@ -30,37 +30,39 @@ Every call to `Purchasely.fetchPresentation(...)` resolves with a `PLYPresentati
 ### iOS (Swift)
 
 ```swift
-Purchasely.fetchPresentation(for: "PREMIUM_PAYWALL") { presentation, error in
-    guard let presentation = presentation else { return }
-    switch presentation.type {
-    case .normal, .fallback:
-        presentation.display()
-    case .deactivated:
-        // Dashboard disabled this presentation — skip
-        return
-    case .client:
-        // Build your own UI from presentation.plans
-        showCustomPaywall(plans: presentation.plans)
-    @unknown default:
-        break
-    }
-} completion: { result, plan in
-    // purchase outcome
+let presentation = try await PLYPresentationBuilder
+    .forPlacementId("PREMIUM_PAYWALL")
+    .onDismissed { outcome in /* purchase outcome via outcome.purchaseResult */ }
+    .build()
+    .preload()
+
+guard let presentation = presentation else { return }
+switch presentation.type {
+case .normal, .fallback:
+    presentation.display(from: self)
+case .deactivated:
+    // Dashboard disabled this presentation — skip
+    return
+case .client:
+    // Build your own UI from presentation.plans
+    showCustomPaywall(plans: presentation.plans)
+@unknown default:
+    break
 }
 ```
 
-If the app explicitly needs to own the container (embedded `UIViewController`, custom `UIWindow`, nested inline Screen in an article/list, or push inside an existing navigation stack), use `presentation.controller` instead of `display()`. For regular modal/full-screen Flow display, prefer `display()` so the SDK owns Flow close controls and step transitions.
+If the app explicitly needs to own the container (embedded `UIViewController`, custom `UIWindow`, nested inline Screen in an article/list, or push inside an existing navigation stack), use `presentation.controller` (UIKit) or `presentation.swiftUIView` (SwiftUI) instead of `display(from:)`. For regular modal/full-screen Flow display, prefer `display(from:)` so the SDK owns Flow close controls and step transitions.
 
 ### Android (Kotlin)
 
 ```kotlin
-Purchasely.fetchPresentation("PREMIUM_PAYWALL") { presentation, error ->
-    if (presentation == null) return@fetchPresentation
-    when (presentation.type) {
+PLYPresentation { placementId("PREMIUM_PAYWALL") }.preload { loaded, error ->
+    if (loaded == null) return@preload
+    when (loaded.type) {
         PLYPresentationType.NORMAL,
-        PLYPresentationType.FALLBACK -> presentation.display(activity)
+        PLYPresentationType.FALLBACK -> loaded.display(activity)
         PLYPresentationType.DEACTIVATED -> { /* skip */ }
-        PLYPresentationType.CLIENT -> showCustomPaywall(presentation.plans)
+        PLYPresentationType.CLIENT -> showCustomPaywall(loaded.plans)
     }
 }
 ```
@@ -157,8 +159,8 @@ Use `display()` / bridge `presentPresentation(...)` by default. Switch to contai
 
 | Platform | Default display | Embedded / nested API |
 |----------|-----------------|-----------------------|
-| iOS | `presentation.display(from:)` | `presentation.controller` / `Purchasely.presentationController(...)` |
-| Android | `presentation.display(activity)` | `presentation.buildView(...)` or `presentation.getFragment(...)` |
+| iOS | `presentation.display(from:)` | `presentation.controller` (UIKit) / `presentation.swiftUIView` (SwiftUI) |
+| Android | `loaded.display(activity)` | `loaded.buildView(context) { outcome -> }` or `loaded.getFragment { outcome -> }` |
 | React Native | `Purchasely.presentPresentation({ presentation })` | native view / inline component integration |
 | Flutter | `Purchasely.presentPresentation(presentation)` | `PurchaselyNativeView` |
 | Cordova | `Purchasely.presentPresentation(presentation, isFullscreen, backgroundColor, success, error)` | no general-purpose inline bridge in the public JS API |

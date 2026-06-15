@@ -6,45 +6,44 @@ When the SDK runs in [Observer mode](running-modes.md), your app owns the billin
 
 The ordering and the exact API names matter. Get them wrong and you'll see frozen paywalls, double purchase attempts, or stale audience targeting on follow-up screens.
 
+> **v6 behaviour change.** In Observer mode, presentations **no longer auto-close** after a purchase or restore (v5's implicit Full default appended a `close_all`). Your app must dismiss explicitly — step 3 below — or wire a `close` action in the Composer.
+
 ## The recommended sequence
 
 After a successful Observer-mode purchase, **in this order**:
 
-1. **`Purchasely.synchronize()`** — tells Purchasely to re-pull receipt state from the store servers. Fire-and-forget on most platforms; on iOS you may `await` it (see below) if you plan to chain a follow-up placement that targets subscribers.
-2. **`proceed(false)` / `processAction(false)`** — tell the SDK's action interceptor that **you** handled the purchase. The `false` value means "do not run the SDK's own purchase flow on top of mine."
+1. **`Purchasely.synchronize()`** — tells Purchasely to re-pull receipt state from the store servers. In v6 both native SDKs accept optional callbacks (iOS `success:/failure:`, Android `onSuccess = { plan -> } / onError = { error -> }`); the cache is refreshed before `onSuccess`/`success` fires.
+2. **Resolve the interceptor** — tell the SDK's action interceptor that **you** handled the purchase. Native iOS/Android v6: return `PLYInterceptResult.success` / `PLYInterceptResult.SUCCESS`. Cross-platform bridges: `proceed(false)` / `processAction(false)`. This means "do not run the SDK's own purchase flow on top of mine."
 3. **Dismiss the paywall** — native SDKs use `Purchasely.closeAllScreens()`; current React Native / Flutter / Cordova bridges expose `closePresentation()`.
 
-> **The order `proceed/processAction → dismiss` is non-negotiable.** The interceptor must learn the action was handled **before** the paywall tears down. Reversing them produces frozen UIs and double-action bugs.
+> **The order resolve-interceptor → dismiss is non-negotiable.** The interceptor must learn the action was handled **before** the paywall tears down. Reversing them produces frozen UIs and double-action bugs. On native v6 the interceptor closure resolves its `PLYInterceptResult` first (synchronously on iOS, or by returning from the suspend interceptor on Android), then you close.
 
-## SDK version requirements
+## Dismissal API per platform
 
-`closeAllScreens()` is the native dismissal method that tears down multi-step Flow paywalls correctly. Current cross-platform bridge APIs expose `closePresentation()` instead; do not generate RN/Flutter/Cordova code that calls `closeAllScreens()` unless the project has added its own native bridge.
+`closeAllScreens()` is the native v6 dismissal method that tears down multi-step Flow paywalls correctly (it replaces v5's `closeDisplayedPresentation()`). Current cross-platform bridge APIs expose `closePresentation()` instead; do not generate RN/Flutter/Cordova code that calls `closeAllScreens()` unless the project has added its own native bridge.
 
-| Platform | Minimum SDK |
-|----------|-------------|
-| iOS | **5.7.5+** — `@MainActor`-isolated. From a non-isolated context, wrap in `Task { @MainActor in Purchasely.closeAllScreens() }`. |
-| Android | **5.7.4+** — no threading constraint. |
+| Platform | Dismissal API |
+|----------|---------------|
+| iOS | `Purchasely.closeAllScreens()` — `@MainActor`-isolated. From a non-isolated context, wrap in `Task { @MainActor in Purchasely.closeAllScreens() }`. |
+| Android | `Purchasely.closeAllScreens()` — no threading constraint. |
 | React Native | Use `Purchasely.closePresentation()` in the public JS bridge. |
 | Flutter | Use `Purchasely.closePresentation()` in the public Dart bridge. |
 | Cordova | Use `Purchasely.closePresentation()` in the public JS bridge. |
 
-If you cannot upgrade native SDKs, fall back to the older dismissal API available in that SDK, but be aware older APIs may not correctly dismiss Flow paywalls.
-
 ## Code per platform
 
-### iOS (Swift) — `await synchronize` only if chaining a follow-up
+### iOS (Swift) — async interceptor returns the result directly
+
+In v6 the `.purchase` interceptor is an async closure that **returns** a `PLYInterceptResult`. Run your billing flow, `synchronize`, return `.success`, then close.
 
 ```swift
-@MainActor
-private func handlePurchaseSuccess(proceed: @escaping (Bool) -> Void) async {
-    do {
-        try await synchronizeReceipt()    // await only if a follow-up placement targets subscribers
-        proceed(false)
-        Purchasely.closeAllScreens()
-    } catch {
-        proceed(false)
-        Purchasely.closeAllScreens()
-    }
+Purchasely.interceptAction(.purchase) { info, params in
+    let purchased = await MyBilling.purchase(params?.plan)
+    guard purchased else { return .failed }
+
+    try? await synchronizeReceipt()   // await only if a follow-up placement targets subscribers
+    Task { @MainActor in Purchasely.closeAllScreens() }   // v6: no auto-close in Observer mode
+    return .success                   // app handled it — SDK must not run its own purchase
 }
 
 private func synchronizeReceipt() async throws {
@@ -57,13 +56,29 @@ private func synchronizeReceipt() async throws {
 }
 ```
 
-### Android (Kotlin)
+### Android (Kotlin) — suspend interceptor bridges your billing flow
+
+In v6 the interceptor is a suspend closure that **returns** a `PLYInterceptResult`. Bridge your callback-based billing client with `suspendCancellableCoroutine`, then call `synchronize(...)` and return `SUCCESS`.
 
 ```kotlin
-private fun onPurchaseSuccess(processAction: (Boolean) -> Unit) {
-    Purchasely.synchronize()       // fire-and-forget (no callback on Android)
-    processAction(false)
-    Purchasely.closeAllScreens()
+Purchasely.interceptAction<PLYPresentationAction.Purchase> { info, purchase ->
+    val result = suspendCancellableCoroutine { cont ->
+        myBilling.purchase(purchase.plan) { billing ->
+            when (billing) {
+                BillingResult.SUCCESS -> {
+                    Purchasely.synchronize(
+                        onSuccess = { plan -> /* refresh UI; plan is the validated PLYPlan or null */ },
+                        onError = { error -> /* surface failure */ }
+                    )
+                    cont.resume(PLYInterceptResult.SUCCESS)
+                }
+                BillingResult.CANCELLED -> cont.resume(PLYInterceptResult.NOT_HANDLED)
+                else -> cont.resume(PLYInterceptResult.FAILED)
+            }
+        }
+    }
+    Purchasely.closeAllScreens()   // v6: no auto-close in Observer mode
+    result
 }
 ```
 
@@ -99,14 +114,14 @@ function onPurchaseSuccess() {
 
 ## Optional: chaining a follow-up placement
 
-Some apps display a follow-up paywall after a successful purchase — a thank-you screen, a premium feature tour, a one-tap upsell, etc. **This is not part of the SDK contract**: it's just another `fetchPresentation` call with whatever placement ID you've configured on the Console (e.g. `"post_purchase"`, `"thank_you"`, `"premium_welcome"` — name it whatever you want, just match it in the dashboard).
+Some apps display a follow-up paywall after a successful purchase — a thank-you screen, a premium feature tour, a one-tap upsell, etc. **This is not part of the SDK contract**: it's just another presentation fetch with whatever placement ID you've configured on the Console (e.g. `"post_purchase"`, `"thank_you"`, `"premium_welcome"` — name it whatever you want, just match it in the dashboard). Native iOS/Android v6 build it with `PLYPresentationBuilder` / the `PLYPresentation { }` DSL; cross-platform bridges still call `fetchPresentation`.
 
 ### The audience-targeting gotcha
 
 If the chained placement's audience targets users based on subscription state, **`synchronize()` must complete before the fetch**. Otherwise the fetch resolves against stale state and may return a `DEACTIVATED` (or wrong-fallback) presentation.
 
 - On iOS, this is why the `synchronizeReceipt()` `await` matters.
-- On Android, `synchronize()` is fire-and-forget so there's no awaitable handle. The cache refresh is usually fast enough in practice, but it's the trade-off.
+- On Android v6, `synchronize(onSuccess = { … }, onError = { … })` refreshes the subscriptions cache before `onSuccess` — kick off the follow-up fetch from `onSuccess` so it resolves against fresh state.
 - On React Native, `synchronize()` is fire-and-forget in the public JS bridge.
 - On Flutter, `await synchronize()` resolves once the native bridge confirms; same trade-off as native.
 - On Cordova, `synchronize()` is fire-and-forget in the public JS bridge.
@@ -114,13 +129,16 @@ If the chained placement's audience targets users based on subscription state, *
 ### Example chain (iOS)
 
 ```swift
-// After closeAllScreens() above:
-Purchasely.fetchPresentation(for: "YOUR_POST_PURCHASE_PLACEMENT_ID") { presentation, error in
-    guard let p = presentation,
-          p.type == .normal || p.type == .fallback,
-          let top = UIApplication.shared.topViewController() else { return }
+// After closeAllScreens() above, build and display the follow-up with PLYPresentationBuilder:
+let presentation = try await PLYPresentationBuilder
+    .forPlacementId("YOUR_POST_PURCHASE_PLACEMENT_ID")
+    .build()
+    .preload()
+if let p = presentation,
+   p.type == .normal || p.type == .fallback,
+   let top = UIApplication.shared.topViewController() {
     p.display(from: top)
-} completion: { _, _ in /* dismissed */ }
+}
 ```
 
 ### Example chain (Flutter)

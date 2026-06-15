@@ -6,7 +6,7 @@ Applies to: **iOS, Android, React Native, Flutter, Cordova**.
 
 ## The problem
 
-`Purchasely.fetchPresentation(...)` hits the network on every call. If you display the same placement repeatedly (`onAppear` / `onViewWillAppear` firing multiple times, sheet/back navigation, recomposition, etc.), each call:
+Fetching a presentation on every display hits the network each time. (Native iOS/Android v6 fetch with `PLYPresentationBuilder` / the `PLYPresentation { }` DSL + `preload`; cross-platform bridges call `Purchasely.fetchPresentation(...)`.) If you display the same placement repeatedly (`onAppear` / `onViewWillAppear` firing multiple times, sheet/back navigation, recomposition, etc.), each fetch:
 
 1. Round-trips to Purchasely servers.
 2. **For flow placements**, accumulates a `flowSteps` entry in the SDK's internal `FlowsManager`.
@@ -28,7 +28,7 @@ The cached presentation can become stale. Invalidate (clear all entries) when an
 
 Invalidation is intentionally coarse-grained (clear-all) because the SDK doesn't expose attribute→audience dependencies.
 
-> Purchasely SDK 6.x is expected to add native placement-level caching — when it ships, remove the app-side cache.
+> On native iOS/Android v6 you can also preload once and display later without a second network call: keep the loaded `PLYPresentation` reference and call `presentation.display(from:)` / `loaded.display(context)` when the user acts. This covers the common preload-early/display-late case without a custom cache; an app-side cache is still useful when you key by `placementId[/contentId]` across many call sites.
 
 ## Skeleton implementations
 
@@ -123,7 +123,10 @@ The pattern is identical on every platform:
 fetchOrCached(placementId):
     cached = cache.get(placementId)
     if cached: return cached
-    fresh = await Purchasely.fetchPresentation(placementId)
+    # native iOS/Android v6: PLYPresentationBuilder.forPlacementId(placementId).build().preload()
+    #                        / PLYPresentation { placementId(...) }.preload()
+    # cross-platform bridges: await Purchasely.fetchPresentation(placementId)
+    fresh = await preload(placementId)
     cache.set(placementId, fresh)
     return fresh
 ```

@@ -98,8 +98,12 @@ Initialize the SDK **always** (paywall display and subscription operations requi
 ### iOS
 
 ```swift
-Purchasely.start(withAPIKey: "YOUR_API_KEY", runningMode: .full,
-                 storekitSettings: .storeKit2, logLevel: .warn) { _, _ in }
+Purchasely
+    .apiKey("YOUR_API_KEY")
+    .runningMode(.full)          // default is .observer in v6 — set .full for purchase handling
+    .storekitSettings(.storeKit2)
+    .logLevel(.warn)
+    .start { _ in }
 
 if hasUserConsent() {
     enableTracking()
