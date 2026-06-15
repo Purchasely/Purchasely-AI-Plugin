@@ -25,7 +25,7 @@ The bundled references are intentionally curated, not a full copy of the public 
 - `../../references/concepts/subscription-checks.md` — Gating premium content via `userSubscriptions`, restore purchases
 - `../../references/concepts/subscription-management.md` — Opening the native Manage Subscription page (App Store / Play Store)
 - `../../references/concepts/promotional-offers.md` — Offer types, Apple promotional offers, Google developer-determined offers, offer codes
-- `../../references/concepts/campaigns.md` — No-code automations (trigger/placement-based), `readyToOpenDeeplink`, use cases
+- `../../references/concepts/campaigns.md` — No-code automations (trigger/placement-based), `readyToOpenDeeplink` (renamed `allowDeeplink` on native v6), use cases
 - `../../references/concepts/lottie-animations.md` — Lottie animations in Screens (iOS / Android weak dependency bridge; cross-platform host projects)
 - `../../references/concepts/analytics-integration.md` — Forwarding UI events to Firebase / Amplitude / AppsFlyer + recommended analytics wrapper pattern
 
@@ -86,7 +86,7 @@ Run the appropriate installation commands and modify project files as needed.
 
 | Platform | Latest stable version |
 |----------|-----------------------|
-| iOS (native) | **5.7.5** |
+| iOS (native) | **6.0.0** |
 | Android (native) | **6.0.0** |
 | React Native | **5.7.3** |
 | Flutter | **6.0.0-beta.0** |
@@ -104,13 +104,13 @@ For **iOS** — no extra questions needed (App Store is the only store, video is
 
 ### iOS
 
-Requirements: iOS 11.0+, Xcode 13.0+, Swift 5.0+
+Requirements: iOS 11.0+, Xcode 13.0+, Swift 5.0+ (Swift 6 strict concurrency supported)
 
 **Option A — CocoaPods** (preferred if a `Podfile` exists):
 
 Add to the app's `Podfile`:
 ```ruby
-pod 'Purchasely', '5.7.5'
+pod 'Purchasely', '~> 6.0'
 ```
 Then run:
 ```bash
@@ -123,18 +123,20 @@ In Xcode: File > Add Packages, then enter the repository URL:
 ```
 https://github.com/Purchasely/Purchasely-iOS
 ```
-Select **Exact Version 5.7.5**.
+Select **Up to Next Major Version 6.0.0** (Package.swift: `.package(url: "https://github.com/Purchasely/Purchasely-iOS", from: "6.0.0")`).
 
 **Option C — Carthage**:
 
 Add to `Cartfile`:
 ```
-binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json" == 5.7.5
+binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json" ~> 6.0
 ```
 Then run:
 ```bash
 carthage update
 ```
+
+> **Swift 6 strict concurrency.** When the host app builds with strict concurrency, add `@preconcurrency import Purchasely` at `@MainActor` call sites; test targets may relax to `SWIFT_STRICT_CONCURRENCY = minimal`.
 
 ### Android
 
@@ -153,9 +155,6 @@ dependencies {
 
     // Video Player — Optional, for video support in Screens
     implementation("io.purchasely:player:6.0.0")
-
-    // Compose helper — Optional, for embedded Presentations in Compose
-    implementation("io.purchasely:presentation-compose:6.0.0")
 }
 ```
 
@@ -339,26 +338,44 @@ allprojects {
 Add SDK initialization code to the app's entry point. The API key must come from the **Purchasely Console > App Settings**. Tell the user to replace `YOUR_API_KEY` with their actual key.
 
 Key configuration options to explain to the user:
-- **Running mode**: `Full` (Purchasely handles the purchase flow end-to-end) or `Observer` (the app handles purchases, Purchasely only observes). Android v6 defaults to `Observer`; set `Full` explicitly when needed.
+- **Running mode**: `Full` (Purchasely handles the purchase flow end-to-end) or `Observer` (the app handles purchases, Purchasely only observes). ⚠️ **In SDK v6 the default running mode changed from Full to Observer on BOTH native iOS and Android.** The change is **silent** — existing code keeps compiling, but the SDK stops validating/processing purchases unless you set Full explicitly. If your app relies on Purchasely to process and validate purchases, you MUST call `.runningMode(.full)` (iOS) / `runningMode(PLYRunningMode.Full)` (Android). In Observer mode, presentations also no longer auto-close after purchase/restore.
 - **StoreKit version** (iOS only): StoreKit 2 is recommended for new apps
 - **Log level**: Use `DEBUG` during development, switch to `ERROR` for production
 - **Android stores**: `GoogleStore` (default), `HuaweiStore`, `AmazonStore` — include only the stores relevant to the app
 
-### iOS (Swift)
+### iOS (Swift, SDK v6)
+
+v6 replaces the single `Purchasely.start(withAPIKey:...)` call with a fluent builder. The recommended form is `async`:
 
 ```swift
 import Purchasely
 
-// In AppDelegate.application(_:didFinishLaunchingWithOptions:) or App.init()
-Purchasely.start(withAPIKey: "YOUR_API_KEY",
-                  appUserId: nil,
-                  runningMode: .full,
-                  paywallActionsInterceptor: nil,
-                  storekitSettings: .storeKit2,
-                  logLevel: .debug) { success, error in
-    print("Purchasely started: \(success)")
+// In an async context reached from App.init() / didFinishLaunchingWithOptions
+do {
+    try await Purchasely
+        .apiKey("YOUR_API_KEY")
+        .runningMode(.full)            // ⚠️ REQUIRED for purchase handling — default is .observer in v6
+        .storekitSettings(.storeKit2)  // StoreKit 2 recommended for new apps
+        .logLevel(.debug)
+        .start()
+    print("Purchasely started")
+} catch {
+    print("Purchasely start error: \(error)")  // e.g. PLYError.configuration if the API key is empty
 }
 ```
+
+Completion-handler form (also Objective-C-compatible), when you cannot `await`:
+
+```swift
+Purchasely
+    .apiKey("YOUR_API_KEY")
+    .runningMode(.full)
+    .start { error in
+        if let error = error { print("Purchasely start error: \(error)") }
+    }
+```
+
+Other chain modifiers: `.appUserId(_)`, `.environment(_)`, `.themeMode(_)`, `.allowDeeplink(_)`, `.allowCampaigns(_)`, `.handleDeeplink(_)` (cold-start deeplink). The old pre-`start` class funcs (`setEnvironment`, `setThemeMode`, `setShowPromotedInAppPurchasePaywall`, …) are deprecated in favor of these modifiers.
 
 ### Android (Kotlin, SDK v6)
 
@@ -438,7 +455,7 @@ Purchasely.start(
 
 Purchasely uses a **placement-based** approach. Placements are configured in the Purchasely Console and identified by a `placementId` (e.g., `"onboarding"`, `"settings"`, `"home_banner"`). Each placement can be associated with different Screens, audiences, and A/B tests — all managed remotely.
 
-For native Android v6, use the `PLYPresentation { ... }.preload()` builder. Do **NOT** use the deprecated `presentationView` API.
+Native iOS and Android are on the v6 builder API. iOS uses `PLYPresentationBuilder` (`.forPlacementId(_)` / `.forScreenId(_)`) → `.build().preload()`. Android uses the `PLYPresentation { ... }.preload()` builder. The legacy `fetchPresentation(...)` / `presentationView(...)` / VC-returning methods are removed in v6 native — do **NOT** use them.
 
 > 💡 **Cross-platform SDKs (React Native / Cordova): prefer `fetchPresentation()` + `presentPresentation(presentation)` over `presentPresentationForPlacement(placementId)`.** The pre-fetch path is what the [official docs recommend](https://docs.purchasely.com/docs/general-in-app-experiences-display#how-to-display-an-in-app-experience-associated-to-a-placement) and it's the only one that handles **Flows** correctly on plugin versions ≤ 5.7.x: it branches on `isFlow` / `flowId != null` natively and calls `presentation.display()`, which owns the close affordance and step transitions. The shorthand `presentPresentationForPlacement` is still exposed and remains fine for **simple, non-Flow paywalls** when you don't need to inspect the `PLYPresentationType` (e.g. quick prototypes, a placement guaranteed to never host a Flow), but if a Flow is ever assigned to that placement from the Console the user will get a stuck modal with no way out. When in doubt, use the pre-fetch path.
 
@@ -450,33 +467,32 @@ The fetch returns a presentation with a `type` property. Handle each type:
 - **DEACTIVATED**: Do NOT display anything — the placement has been deactivated in the Console
 - **CLIENT**: The Console is requesting you show your own custom paywall (use the returned `presentationId` to decide which one)
 
-### iOS (Swift)
+### iOS (Swift, SDK v6)
 
 ```swift
-let presentation = try await Purchasely.fetchPresentation(for: "PLACEMENT_ID")
+// Build + preload, then display. preload() returns the loaded presentation
+// (no extra network call on display).
+let presentation = try await PLYPresentationBuilder
+    .forPlacementId("PLACEMENT_ID")
+    .build()
+    .preload()
 
 switch presentation.type {
 case .normal, .fallback:
-    // display() handles Flows, transitions, and full-screen presentation automatically
-    presentation.display(controller: self) { result, plan in
-        switch result {
-        case .purchased: print("Purchased: \(plan?.vendorId ?? "")")
-        case .restored:  print("Restored")
-        case .cancelled: break
-        @unknown default: break
-        }
-    }
+    // display(from:) handles Flows, transitions, and full-screen presentation automatically.
+    presentation.display(from: self)
 case .deactivated:
     // Placement is deactivated — do nothing or show your own UI
     break
 case .client:
     // Show your own custom paywall
-    let presentationId = presentation.presentationId
     break
 @unknown default:
     break
 }
 ```
+
+Convenience shorthand when you don't need to inspect the type: `try await Purchasely.display(for: "PLACEMENT_ID", transition: nil)` (use `transition: .modal` for a modal). To dismiss programmatically later, call `Purchasely.closeAllScreens()`. The dismissal result is a `PLYPresentationOutcome` (`purchaseResult`, `plan`, `closeReason`); attach `.onDismissed { outcome in }` on the builder before `build()` if you need it.
 
 ### Android (Kotlin, SDK v6)
 
@@ -595,10 +611,10 @@ Purchasely.fetchPresentation(
 
 > **Only use this approach if the user explicitly needs to embed a paywall inside an existing container view** (e.g., an inline screen, a tab, or a custom layout). For standard full-screen and Flow presentations, `display()` above is the correct approach.
 
-#### iOS — embed in a container view
+#### iOS — embed in a UIKit container view
 
 ```swift
-// After fetchPresentation, for .normal or .fallback types only:
+// After build().preload(), for .normal or .fallback types only:
 guard let paywallVC = presentation.controller else { return }
 
 addChild(paywallVC)
@@ -611,6 +627,18 @@ NSLayoutConstraint.activate([
     paywallVC.view.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
 ])
 paywallVC.didMove(toParent: self)
+```
+
+#### iOS — embed in SwiftUI
+
+In v6, read `presentation.swiftUIView` (renamed from the v5 `controller.PresentationView`; the name disambiguates from `UIKit.UIView`). It is `nil` for `.deactivated` presentations.
+
+```swift
+// `presentation` is the loaded PLYPresentation (.normal / .fallback)
+if let view = presentation.swiftUIView {
+    view
+        .frame(maxWidth: .infinity)
+}
 ```
 
 #### Android — option A: embed as a View
@@ -635,11 +663,16 @@ supportFragmentManager.beginTransaction()
 
 #### Android — option C: embed in Compose
 
+There is no Compose-specific artifact or composable in v6. Wrap the Android View returned by `buildView(...)` with `AndroidView`:
+
 ```kotlin
-PLYPresentationView(
-    presentation = presentation,
+AndroidView(
     modifier = Modifier.fillMaxWidth(),
-    callback = { outcome -> }
+    factory = { context ->
+        presentation.buildView(context) { outcome ->
+            // Handle embedded Presentation result.
+        }
+    }
 )
 ```
 
@@ -656,34 +689,42 @@ The **Paywall Actions Interceptor** lets you intercept user actions on the paywa
 - **RESTORE**: Add custom logic around restoration
 - **CLOSE**: Control what happens when the user dismisses the paywall
 
-**CRITICAL**: You MUST always call `processAction` (or `proceed`) at the end of your interceptor logic, or the paywall UI will freeze. Even if you handle the action yourself, call proceed to let the SDK continue its flow.
+**On native iOS and Android (v6)**, the interceptor is **per-action**: register one handler per action and return a `PLYInterceptResult` — `.success` (you handled it, the SDK chains the next action), `.failed` (you tried and failed, remaining actions are skipped), or `.notHandled` (the SDK executes the action itself). There is no `proceed`/`processAction` callback in the v6 native interceptors. (The v5→v6 mapping is `processAction(false)` → `.success` and `processAction(true)` → `.notHandled`.) The cross-platform bridges (React Native / Cordova) still use the single `setPaywallActionInterceptor` + `onProcessAction(...)` shown below.
 
-### iOS (Swift)
+### iOS (Swift, SDK v6)
 
 ```swift
-Purchasely.setPaywallActionsInterceptor { [weak self] action, parameters, presentationInfo, proceed in
-    switch action {
-    case .login:
-        // Present your login screen
-        self?.presentLogin { loggedIn in
-            if loggedIn {
-                Purchasely.userLogin(with: "USER_ID")
-            }
-            proceed(loggedIn) // MUST call proceed
-        }
-    case .navigate:
-        if let urlString = parameters?.url, let url = URL(string: urlString) {
-            // Handle navigation (e.g., open terms of service)
-            UIApplication.shared.open(url)
-        }
-        proceed(true) // MUST call proceed
-    case .close:
-        proceed(true) // MUST call proceed — lets the SDK dismiss the paywall
-    default:
-        proceed(true) // MUST call proceed for all unhandled actions
+// async form
+Purchasely.interceptAction(.login) { info, params in
+    let loggedIn = await self.presentLogin()
+    if loggedIn { Purchasely.userLogin(with: "USER_ID") }
+    return loggedIn ? .success : .notHandled
+}
+
+Purchasely.interceptAction(.navigate) { info, params in
+    if let urlString = params?.url, let url = URL(string: urlString) {
+        await UIApplication.shared.open(url)
+    }
+    return .success
+}
+
+// In Full mode, let Purchasely run the purchase itself:
+Purchasely.interceptAction(.purchase) { info, params in
+    return .notHandled
+}
+```
+
+A completion-based form is also available for Objective-C / non-async call sites:
+
+```swift
+Purchasely.interceptAction(.login) { info, params, completion in
+    self.presentLogin { loggedIn in
+        completion(loggedIn ? .success : .notHandled)
     }
 }
 ```
+
+`info` is a `PLYInterceptorInfo` (renamed from v5 `PLYPresentationInfo`): `info.presentation?.id`, `?.placementId`, `?.audienceId`, `?.abTestId`, `info.contentId`, `info.controller`.
 
 ### Android (Kotlin, SDK v6)
 
@@ -918,20 +959,20 @@ See `../../references/architecture-patterns.md` for detailed architecture diagra
 
 **Only relevant if you initialized in `Observer` / `.observer` / `PAYWALL_OBSERVER` mode.** In Full mode, the SDK handles dismissal automatically.
 
-When the interceptor receives a `PURCHASE` action in Observer mode, you run the native billing flow yourself. After it succeeds, three things MUST happen in order:
+When the interceptor receives a `PURCHASE` action in Observer mode, you run the native billing flow yourself. After it succeeds:
 
-1. **`Purchasely.synchronize()`** — uploads the receipt to Purchasely
-2. **`proceed(false)` / `processAction(false)`** — tell the SDK you handled the purchase (skip its own flow)
-3. **Dismiss the paywall** — native iOS/Android use `Purchasely.closeAllScreens()`; React Native / Cordova public bridges use `Purchasely.closePresentation()`. **Flutter is on the 6.0 API**: handle the purchase in the `purchase` interceptor and return `InterceptResult` instead — see the Flutter note below.
+- **Native iOS/Android (v6):** intercept the `.purchase` action, run your billing flow, call **`Purchasely.synchronize()`** to upload the receipt, then **return `PLYInterceptResult.SUCCESS`** (`.success` on iOS) from the interceptor. In v6 Observer mode the presentation does **not** auto-close, so dismiss it yourself with **`Purchasely.closeAllScreens()`**. (There is no `proceed`/`processAction` callback in the v6 native interceptor; returning `.success` is the v6 equivalent of the old `processAction(false)`.)
+- **React Native / Cordova bridges:** still call `Purchasely.synchronize()` → `Purchasely.onProcessAction(false)` → `Purchasely.closePresentation()`, in that order.
+- **Flutter (6.0 API):** handle the purchase in the `purchase` interceptor and return `InterceptResult` — see the Flutter note below.
 
-**The order matters:** the interceptor must learn the action was handled BEFORE the paywall tears down. Reversing it leaves the paywall in an inconsistent state.
+**The order matters:** the SDK must learn the action was handled BEFORE the paywall tears down. Reversing it leaves the paywall in an inconsistent state.
 
 ### SDK version requirements for dismissal
 
 | Platform | Minimum version |
 |----------|-----------------|
-| iOS (native) | **5.7.5+** — `@MainActor`-isolated. Wrap in `Task { @MainActor in Purchasely.closeAllScreens() }` when called from a non-isolated synchronous context. |
-| Android (native) | **5.7.4+** — no threading constraint. |
+| iOS (native) | **6.0.0** — `closeAllScreens()` is `@MainActor`-isolated. Wrap in `Task { @MainActor in Purchasely.closeAllScreens() }` when called from a non-isolated synchronous context. |
+| Android (native) | **6.0.0** — `closeAllScreens()`, no threading constraint. |
 | React Native | Use `Purchasely.closePresentation()` in the public JS bridge. |
 | Flutter | **6.0 API** — handle the `purchase` action in `Purchasely.interceptAction(PresentationActionKind.purchase, …)` and return `InterceptResult.success` / `.failed`; the SDK dismisses on success. Use `presentation.close()` to dismiss programmatically (no more `onProcessAction` / `closePresentation()`). |
 | Cordova | Use `Purchasely.closePresentation()` in the public JS bridge. |
@@ -940,44 +981,43 @@ Full version list: `../../references/sdk-versions.md`.
 
 > On native iOS/Android, use `closeAllScreens()` (not `closeDisplayedPresentation()`) — it correctly tears down Flow paywalls with multiple steps. On React Native / Cordova, use the public bridge `closePresentation()` unless the app added its own native `closeAllScreens()` bridge. On **Flutter (6.0 API)**, the `purchase` interceptor returning `InterceptResult.success` dismisses the screen; call `presentation.close()` on the loaded `Presentation` to dismiss programmatically.
 
-### iOS Observer-mode post-purchase
+### iOS Observer-mode post-purchase (v6)
+
+In v6 the `.purchase` interceptor returns a `PLYInterceptResult`. Run your billing flow, `synchronize()`, return `.success`, then dismiss explicitly (Observer mode no longer auto-closes):
 
 ```swift
-@MainActor
-private func handlePurchaseSuccess(proceed: @escaping (Bool) -> Void) async {
-    do {
-        try await synchronizeReceipt()      // only await if you chain a follow-up placement
-        proceed(false)                      // tell interceptor we handled it
-        Purchasely.closeAllScreens()        // dismiss
-    } catch {
-        proceed(false)
-        Purchasely.closeAllScreens()        // dismiss anyway
-    }
+Purchasely.interceptAction(.purchase) { info, params in
+    let bought = await self.runMyBillingFlow()
+    guard bought else { return .failed }
+    await self.synchronizeReceipt()       // upload receipt; await if you chain a follow-up placement
+    Purchasely.closeAllScreens()          // dismiss — Observer mode does not auto-close in v6
+    return .success                        // v6 equivalent of the old processAction(false)
 }
 
-private func synchronizeReceipt() async throws {
-    try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+@MainActor
+private func synchronizeReceipt() async {
+    await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
         Purchasely.synchronize(
             success: { cont.resume() },
-            failure: { error in
-                cont.resume(throwing: error ?? NSError(domain: "Purchasely", code: -1))
-            }
+            failure: { _ in cont.resume() }
         )
     }
 }
 ```
 
-### Android Observer-mode post-purchase
+### Android Observer-mode post-purchase (v6)
 
 ```kotlin
-private fun onPurchaseSuccess(processAction: (Boolean) -> Unit) {
-    Purchasely.synchronize()        // fire-and-forget (no callback on Android)
-    processAction(false)            // tell interceptor we handled it
-    Purchasely.closeAllScreens()    // dismiss
+Purchasely.interceptAction<PLYPresentationAction.Purchase> { _, purchase ->
+    val bought = runMyBillingFlow(purchase.plan)
+    if (!bought) return@interceptAction PLYInterceptResult.FAILED
+    Purchasely.synchronize()         // refresh subscriptions cache (onSuccess/onError optional)
+    Purchasely.closeAllScreens()     // dismiss — Observer mode does not auto-close in v6
+    PLYInterceptResult.SUCCESS       // v6 equivalent of the old processAction(false)
 }
 ```
 
-> Android's `synchronize()` is parameterless — you cannot await it. iOS exposes `success:`/`failure:` closures that you can bridge to `async/await` via `withCheckedThrowingContinuation`.
+> On Android, `Purchasely.synchronize(onSuccess = { plan -> }, onError = { error -> })` accepts optional callbacks and refreshes the subscriptions cache before `onSuccess`. To bridge a blocking billing flow inside a suspend interceptor, use `suspendCancellableCoroutine { ... }`.
 
 ### React Native / Flutter / Cordova Observer-mode post-purchase
 
@@ -1022,35 +1062,35 @@ For chained follow-up placements on cross-platform SDKs, see `../../references/c
 
 ### Optional: Chain a Follow-up Placement After Purchase
 
-Some apps display a follow-up paywall after a successful purchase — a thank-you screen, a premium feature tour, a one-tap upsell. This is **not part of the SDK contract**: it's just `fetchPresentation` called again with whatever placement ID you've configured on the Console (pick your own, e.g. `"post_purchase"`, `"thank_you"`, `"premium_welcome"`).
+Some apps display a follow-up paywall after a successful purchase — a thank-you screen, a premium feature tour, a one-tap upsell. This is **not part of the SDK contract**: it's just another presentation built for whatever placement ID you've configured on the Console (pick your own, e.g. `"post_purchase"`, `"thank_you"`, `"premium_welcome"`).
 
-If the chained placement's audience targets subscribers, **`synchronize()` must complete first** — otherwise the fetch resolves against stale state and may return a deactivated/fallback presentation. On iOS, that's why the `synchronizeReceipt()` await above matters; on Android, fire-and-forget `synchronize()` is usually fast enough.
+If the chained placement's audience targets subscribers, **`synchronize()` must complete first** — otherwise the build resolves against stale state and may return a deactivated/fallback presentation. On iOS, that's why the `synchronizeReceipt()` await above matters; on Android, fire-and-forget `synchronize()` is usually fast enough.
 
 ```swift
 // iOS — after closeAllScreens() above
-private func showPostPurchaseScreen() {
-    Purchasely.fetchPresentation(
-        for: "YOUR_POST_PURCHASE_PLACEMENT_ID",
-        fetchCompletion: { presentation, _ in
-            guard let presentation = presentation,
-                  presentation.type == .normal || presentation.type == .fallback,
-                  let topVC = UIApplication.shared.topViewController()
-            else { return }
-            presentation.display(from: topVC)
-        },
-        completion: { _, _ in }
-    )
+@MainActor
+private func showPostPurchaseScreen() async {
+    guard let presentation = try? await PLYPresentationBuilder
+        .forPlacementId("YOUR_POST_PURCHASE_PLACEMENT_ID")
+        .build()
+        .preload(),
+        presentation.type == .normal || presentation.type == .fallback,
+        let topVC = UIApplication.shared.topViewController()
+    else { return }
+    presentation.display(from: topVC)
 }
 ```
 
 ```kotlin
 // Android — after closeAllScreens() above
 private fun showPostPurchaseScreen(activity: Activity) {
-    Purchasely.fetchPresentation("YOUR_POST_PURCHASE_PLACEMENT_ID") { presentation, error ->
-        if (error != null || presentation == null) return@fetchPresentation
-        when (presentation.type) {
+    PLYPresentation {
+        placementId("YOUR_POST_PURCHASE_PLACEMENT_ID")
+    }.preload { loaded, error ->
+        if (error != null || loaded == null) return@preload
+        when (loaded.type) {
             PLYPresentationType.NORMAL,
-            PLYPresentationType.FALLBACK -> presentation.display(activity)
+            PLYPresentationType.FALLBACK -> loaded.display(activity)
             else -> {}
         }
     }
@@ -1072,7 +1112,7 @@ Once Steps 1-8 are in place and verified, walk the user through the **optional b
 | Feature | When to suggest | Reference |
 |---------|-----------------|-----------|
 | **Preload paywalls** — call `fetchPresentation` ahead of the display (e.g. on app launch, on screen mount) and keep the result for instant display. Avoids the FlowsManager step accumulation on every re-fetch. | Any production integration — significant perceived-perf win | `../../references/concepts/presentation-cache.md` |
-| **Campaigns** — schedule paywalls (Black Friday, anniversary), centralise display rules across placements, trigger paywalls on events. Requires SDK ≥ 5.1.0 and `Purchasely.readyToOpenDeeplink(true)`. | Any team running marketing operations | `../../references/concepts/campaigns.md` |
+| **Campaigns** — schedule paywalls (Black Friday, anniversary), centralise display rules across placements, trigger paywalls on events. Requires SDK ≥ 5.1.0 and `allowDeeplink(true)` (native v6 rename of `readyToOpenDeeplink`; default is `true` on native v6, and Android auto-intercepts deeplinks with zero code). | Any team running marketing operations | `../../references/concepts/campaigns.md` |
 | **Promotional offers & promo codes** — retain / win back subscribers with Apple promotional offers, Google developer-determined offers, App Store / Play Store offer codes. Requires SDK ≥ 4.0.0. | Apps with churn, seasonal promos, win-back funnels | `../../references/concepts/promotional-offers.md` |
 | **Analytics integration** — forward Purchasely UI events to Firebase / Amplitude / AppsFlyer (client-side) and subscription lifecycle events via 3rd-party integrations / webhooks (server-side, recommended). | Any team with an analytics stack — recommend a single analytics wrapper / manager to centralise the routing | `../../references/concepts/analytics-integration.md` |
 | **Subscription gating + restore** — gate premium content via `userSubscriptions`, restore purchases from Settings | Any app with premium features | `../../references/concepts/subscription-checks.md` |
@@ -1090,8 +1130,8 @@ Pick the ones the user's roadmap actually needs — don't push all six on day on
 Add app-side log markers around the key Purchasely decision points — they make every future bug 10× faster to diagnose. The SDK already emits `[Purchasely]` lines; add an app-side prefix (e.g. `[YourApp]`) at:
 
 - After `synchronize()` completes (success or failure)
-- Before each platform dismiss call (`closeAllScreens()` on native iOS/Android, `closePresentation()` on React Native / Flutter / Cordova)
-- Inside the `fetchPresentation` completion (placement, type, error)
+- Before each platform dismiss call (`closeAllScreens()` on native iOS/Android v6, `closePresentation()` on React Native / Cordova)
+- When a presentation finishes loading (native v6: in the builder `onPresented` / `.preload` result — placement, type, error; cross-platform: in the `fetchPresentation` completion)
 - When chaining a follow-up placement (and what it resolves to)
 
 Mirror the SDK's analytics events via `PLYEventDelegate` (iOS) / `EventListener` (Android) with the full property bag — that way, a single `grep -E "\[Purchasely\]|\[YourApp\]"` over the failing run reveals exactly what the SDK did and why. See `../../references/troubleshooting/common-issues.md` §0 for the full event taxonomy and annotated traces.

@@ -30,7 +30,7 @@ The bundled references are intentionally curated, not a full copy of the public 
 - `../../references/concepts/subscription-checks.md` — gating + restore purchases
 - `../../references/concepts/subscription-management.md` — native Manage Subscription entry point (App Store / Play)
 - `../../references/concepts/promotional-offers.md` — offers eligibility responsibility + implementation
-- `../../references/concepts/campaigns.md` — `readyToOpenDeeplink` + SDK ≥ 5.1.0
+- `../../references/concepts/campaigns.md` — deeplink display flag (`readyToOpenDeeplink` on v5 / cross-platform; renamed `allowDeeplink`, default `true`, on native v6) + SDK ≥ 5.1.0
 - `../../references/concepts/lottie-animations.md` — Lottie bridge/dependency checks for Screens with animations
 - `../../references/concepts/analytics-integration.md` — events forwarding + analytics wrapper recommendation
 - `../../references/sdk-versions.md` — latest stable versions (flag outdated pins)
@@ -78,25 +78,31 @@ Before returning review findings, invoke the `Task` tool with `subagent_type: "p
 Search the entire codebase using these patterns to build a map of all Purchasely touchpoints:
 
 **Initialization patterns:**
-- `Purchasely.start` / `Purchasely.Builder` / `Purchasely.start(`
+- Native v6: `Purchasely.apiKey(` (iOS fluent builder) / `Purchasely {` DSL or `Purchasely.Builder(` (Android) / `.runningMode(` / `.start(`
+- Cross-platform / v5: `Purchasely.start` / `Purchasely.start(` / `withAPIKey`
 - `PLYAlertMessage` / `PLYUIHandler`
-- `withAPIKey` / `apiKey` / `PLY_API_KEY`
+- `apiKey` / `PLY_API_KEY`
 
 **Paywall patterns:**
-- `fetchPresentation` / `presentationView` / `presentationController`
+- Native v6: `PLYPresentationBuilder` / `PLYPresentation {` / `.forPlacementId` / `.forScreenId` / `.build()` / `.preload(` / `buildView(` / `getFragment(` / `swiftUIView` / `screenId`
+- v5 / removed (flag if present on native): `fetchPresentation` / `presentationView` / `presentationController`
+- Cross-platform: `fetchPresentation` / `presentPresentation`
 - `PLYPresentation` / `PLYPresentationAction`
 - `clientPresentation` / `showPresentation`
 
 **Interceptor patterns:**
-- `setPaywallActionsInterceptor` / `interceptAction`
-- `processAction` / `proceed` / `closePresentation`
+- Native v6: `interceptAction` / `PLYInterceptResult` / `PLYInterceptorInfo`
+- v5 / removed (flag if present on native): `setPaywallActionsInterceptor` / `removeAllActionInterceptors`
+- Cross-platform: `setPaywallActionInterceptor` / `onProcessAction`
+- `processAction` / `proceed` / `closePresentation` / `closeAllScreens`
 - `PLYPresentationAction`
 
 **Programmatic purchase patterns:**
 - `purchaseWithPlanVendorId` / `Purchasely.purchase(` / `planWithIdentifier`
 
 **Deeplink patterns:**
-- `isDeeplinkHandled` / `handleDeeplink` / `readyToOpenDeeplink`
+- Native v6: `handleDeeplink` / `allowDeeplink`
+- v5 / removed (flag if present on native): `isDeeplinkHandled` / `readyToOpenDeeplink`
 - `setDefaultPresentationResultHandler`
 
 **User management patterns:**
@@ -128,13 +134,14 @@ For each item below, search the code, analyze the context, and report one of:
 - [ ] **SDK initialized at app startup** — `Application.onCreate()` (Android), `AppDelegate.application(_:didFinishLaunchingWithOptions:)` (iOS), app root component (React Native), `main()` or `initState()` (Flutter), `deviceready` handler (Cordova). FAIL if called lazily or conditionally.
 - [ ] **API key not hardcoded** — The API key should come from `BuildConfig` (Android), `Info.plist` / xcconfig (iOS), environment variable, or a config file excluded from version control. FAIL if a literal API key string appears in source code.
 - [ ] **LogLevel.DEBUG only in debug builds** — Check that `logLevel: .debug` / `LogLevel.DEBUG` / `LogLevel.verbose` is gated behind a debug flag or build variant. WARNING if always set to debug.
-- [ ] **start() completion handled** — The completion/callback of `Purchasely.start()` must be awaited or handled before calling other SDK methods like `fetchPresentation`. FAIL if SDK methods are called in a fire-and-forget pattern after start.
-- [ ] **Stores configured correctly** — Android must specify at least one store (`Google`, `Huawei`, `Amazon`). iOS does not need store config. Cross-platform SDKs must pass the correct store for the target platform. WARNING if stores are missing on Android.
+- [ ] **Explicit running mode when purchases are validated by Purchasely** (native iOS/Android v6) — ⚠️ v6 changed the default running mode from Full to **Observer** on native, *silently*. If the app expects Purchasely to process/validate purchases but the init does NOT set `.runningMode(.full)` (iOS) / `runningMode(PLYRunningMode.Full)` (Android), purchases are never validated. **FAIL** if Full behavior is relied on but the mode is left at the v6 default. SKIP for genuine Observer integrations and for cross-platform SDKs still on v5.
+- [ ] **start() completion handled** — The completion/callback of init (`.start { error -> }` / `try await ….start()` on native v6; `Purchasely.start(...)` on cross-platform) must be awaited or handled before calling other SDK methods like the presentation builder / `fetchPresentation`. FAIL if SDK methods are called in a fire-and-forget pattern after start.
+- [ ] **Stores configured correctly** — Android must specify at least one store (`Google`, `Huawei`, `Amazon`). iOS does not need store config. Cross-platform SDKs must pass the correct store for the target platform. WARNING if stores are missing on Android. Note (native v6): a **storeless** start is valid for screens/analytics/campaigns; only flag missing stores when the app runs in Full mode and expects purchases (purchase APIs return `PLYError.NoStoreConfigured`).
 
 ### 3.2 Paywall Display
 
-- [ ] **Uses fetchPresentation()** — Must use `fetchPresentation` (or platform equivalent), NOT the deprecated `presentationView` / `presentationController` / `presentationViewControllerFor`. WARNING if deprecated methods are used.
-- [ ] **Prefers `fetchPresentation` + `presentPresentation` over `presentPresentationForPlacement`** (Flutter / React Native / Cordova only) — The pre-fetch path is what the [official docs recommend](https://docs.purchasely.com/docs/general-in-app-experiences-display#how-to-display-an-in-app-experience-associated-to-a-placement); it's the only one that correctly displays **Flows** on plugin ≤ 5.7.x (the shorthand routes Flows through the legacy single-paywall path and the user gets a modal with no close affordance). `presentPresentationForPlacement` remains acceptable for placements guaranteed to host only simple non-Flow paywalls — WARNING otherwise, and FAIL if the same code path also relies on Flow steps.
+- [ ] **Uses the v6 builder/preload API** (native iOS/Android) — Must build + preload + display: iOS `PLYPresentationBuilder.forPlacementId(_).build().preload()` → `display(from:)`; Android `PLYPresentation { placementId(...) }.preload()` → `display(context)`. The v5 `fetchPresentation(...)` / `presentationView(...)` / VC-returning methods are **removed** in v6 native — **FAIL** if any appear in native code. For embedded use: iOS `controller` / `swiftUIView`, Android `buildView(...)` wrapped in `AndroidView` for Compose (there is no `presentation-compose` artifact or `PLYPresentationView` composable). For Console-direct Screens, the builder accepts `screenId(...)` / `.forScreenId(_)`.
+- [ ] **Prefers `fetchPresentation` + `presentPresentation` over `presentPresentationForPlacement`** (Flutter / React Native / Cordova only — still on v5) — The pre-fetch path is what the [official docs recommend](https://docs.purchasely.com/docs/general-in-app-experiences-display#how-to-display-an-in-app-experience-associated-to-a-placement); it's the only one that correctly displays **Flows** on plugin ≤ 5.7.x (the shorthand routes Flows through the legacy single-paywall path and the user gets a modal with no close affordance). `presentPresentationForPlacement` remains acceptable for placements guaranteed to host only simple non-Flow paywalls — WARNING otherwise, and FAIL if the same code path also relies on Flow steps. SKIP on native iOS/Android (use the builder check above).
 - [ ] **Handles PLYPresentationType.DEACTIVATED** — When the presentation type is `.deactivated` / `DEACTIVATED`, the paywall must NOT be displayed. FAIL if this case is not handled.
 - [ ] **Handles PLYPresentationType.FALLBACK** — When the type is `.fallback`, the paywall should still be displayed but the app should log a warning. WARNING if not handled.
 - [ ] **Handles PLYPresentationType.CLIENT** — When the type is `.client`, the app should display its own custom paywall. WARNING if not handled (acceptable if no custom paywall exists).
@@ -142,25 +149,26 @@ For each item below, search the code, analyze the context, and report one of:
 
 ### 3.3 Action Interceptor
 
-- [ ] **Interceptor is registered** — `setPaywallActionsInterceptor` (v5) or equivalent must be called, typically right after SDK initialization. WARNING if missing entirely.
-- [ ] **LOGIN action handled** — When the action is `.login` / `LOGIN`, the app must present its login flow, then call `processAction(true)` on success or `processAction(false)` on cancel. FAIL if login action is ignored.
-- [ ] **PURCHASE action handled** — In **Full mode**, Purchasely handles purchases automatically; the interceptor should call `processAction(true)`. In **Observer mode**, the app must trigger its own purchase flow. FAIL if the mode and handling are mismatched.
+- [ ] **Interceptor is registered** — Native v6 uses **per-action** registration: `Purchasely.interceptAction(.login) { … }` (iOS) / `Purchasely.interceptAction<PLYPresentationAction.Login> { … }` (Android) — one call per action you handle, typically right after init. The v5 single `setPaywallActionsInterceptor` is **removed** on native — FAIL if it appears in native code. Cross-platform (RN / Cordova) still use the single `setPaywallActionInterceptor`. WARNING if no interceptor is registered at all and the app needs to handle login/navigate/observer purchases.
+- [ ] **Each handler returns a `PLYInterceptResult`** (native v6) — every registered handler must return `.success` (app handled it, chain advances), `.failed` (app tried, failed, remaining actions skipped), or `.notHandled` (SDK executes the action). FAIL if a handler falls through without returning a result. (Mapping from v5: `processAction(false)` → `.success`, `processAction(true)` → `.notHandled`.)
+- [ ] **LOGIN action handled** — On login, present the app's login flow. Native v6: return `.success` on success, `.notHandled` to let the SDK proceed without login. Cross-platform: call `onProcessAction(true/false)`. FAIL if the login action is ignored when the app requires authentication.
+- [ ] **PURCHASE action handled** — In **Full mode**, Purchasely handles purchases automatically (native v6: return `.notHandled`; cross-platform: `onProcessAction(true)`). In **Observer mode**, the app must trigger its own purchase flow (native v6: return `.success` after `synchronize()`; cross-platform: `onProcessAction(false)`). FAIL if the mode and handling are mismatched. Note: returning `.notHandled` for `.purchase`/`.restore` in Observer mode is a no-op (logs a warning) — flag it.
 - [ ] **RESTORE action handled** — Similar to purchase: Full mode auto-handles, Observer mode needs custom logic. WARNING if not explicitly handled.
-- [ ] **CLOSE action handled** — The close action must dismiss the paywall and call `processAction(true)`. FAIL if missing (users cannot close the paywall).
-- [ ] **processAction() ALWAYS called** — Every code path through the interceptor MUST call `processAction()` / `proceed()`. If any branch (early return, error catch, switch default) skips it, the paywall UI will freeze permanently. This is the #1 most common Purchasely bug. FAIL if any code path can skip it.
-- [ ] **No double calls to processAction()** — Calling `processAction()` twice causes undefined behavior. WARNING if there's a risk of double invocation.
+- [ ] **CLOSE action handled** — The close action must dismiss the paywall. Native v6: return `.notHandled` to let the SDK close, or `.success` if the app closes it itself. Cross-platform: `onProcessAction(true)`. FAIL if missing (users cannot close the paywall).
+- [ ] **Every cross-platform interceptor path calls `onProcessAction()`** (RN / Cordova only) — every branch (early return, error catch, switch default) MUST call `onProcessAction()` or the paywall freezes. This is the #1 most common cross-platform Purchasely bug. FAIL if any code path can skip it. SKIP on native v6 (replaced by the `PLYInterceptResult` return-value check above — there is no `processAction`/`proceed` callback).
+- [ ] **No double-completion** — On cross-platform, calling `onProcessAction()` twice is undefined; on native v6, returning then mutating state after the handler is a logic error. WARNING if there's a risk of double signalling.
 - [ ] **No attempt to override post-purchase flow from the interceptor** — If the app holds the interceptor open, skips `proceed`, or calls `Purchasely.close()` manually to "stay on the paywall" / "show a custom thank-you screen" after a purchase, that's the wrong layer. The Composer button supports a **second action** (`purchase + open_screen` / `purchase + open_placement` / `purchase + deeplink`) and the default is *close in Full mode, stay open in Observer mode*. WARNING — recommend wiring the second action in the Console (or BYOS if the next screen is custom). See `../../references/concepts/paywall-actions.md` § Chaining multiple actions.
 
 ### 3.4 Deeplinks
 
-- [ ] **handleDeeplink() called** — `Purchasely.handleDeeplink()` (or `handle(deeplink:)`) must be called when the app receives a URL. WARNING if the deprecated `isDeeplinkHandled()` is used instead. SKIP if the app doesn't support deeplinks.
-- [ ] **readyToOpenDeeplink set to true** — `Purchasely.readyToOpenDeeplink = true` (or `allowDeepLinkNavigation`) must be called after the app's UI is fully initialized (e.g., after the root view controller is set). WARNING if set too early (in start callback) or never set.
+- [ ] **handleDeeplink() called** — `Purchasely.handleDeeplink(...)` must be called when the app receives a URL. On native v6 this is the rename of v5 `isDeeplinkHandled(...)` — WARNING if the deprecated `isDeeplinkHandled` is still used (removal in v7). On **iOS** the SDK does NOT auto-intercept, so `handleDeeplink(url)` must be wired from AppDelegate/SceneDelegate. On **Android v6** deeplinks are auto-intercepted (zero code) by reading the foreground activity intent; if the activity is `singleTask`/`singleTop`, verify `setIntent(intent)` is called in `onNewIntent` (otherwise the URI is hidden) or that a manual `handleDeeplink(uri, activity)` call exists. SKIP if the app doesn't support deeplinks.
+- [ ] **allowDeeplink enabled** — Native v6 renamed `readyToOpenDeeplink` → `allowDeeplink` (set via the init builder modifier `.allowDeeplink(true)` or the runtime flag). It defaults to **true** on v6, so usually no action is needed; WARNING only if the app explicitly sets `allowDeeplink(false)` while also relying on campaign/deeplink display. On cross-platform (v5) the old `readyToOpenDeeplink(true)` is still required after the UI is initialized. WARNING if the deprecated `readyToOpenDeeplink` name is used in native v6 code.
 - [ ] **setDefaultPresentationResultHandler configured** — A default result handler should be set so deeplink-triggered paywalls can report their outcome. WARNING if missing.
 
 ### 3.5 User Management
 
 - [ ] **userLogin() called after authentication** — `Purchasely.userLogin(userId:)` must be called when the user signs in. WARNING if missing (anonymous users are fine, but logged-in users lose cross-device sync).
-- [ ] **userLogin() runs BEFORE fetchPresentation / synchronize calls that depend on audience** — race-condition check: if both happen in the same async block, verify identity is set first. FAIL if `fetchPresentation` resolves while still anonymous and the placement depends on logged-in audience attributes. See `../../references/concepts/user-identity.md`.
+- [ ] **userLogin() runs BEFORE presentation build / synchronize calls that depend on audience** — race-condition check: if both happen in the same async block, verify identity is set first. FAIL if the presentation resolves (native v6 `.preload()` / cross-platform `fetchPresentation`) while still anonymous and the placement depends on logged-in audience attributes. See `../../references/concepts/user-identity.md`.
 - [ ] **userLogout() called on sign out** — `Purchasely.userLogout()` must be called when the user signs out. WARNING if missing (stale user data).
 - [ ] **Foreground resync** — `Purchasely.synchronize()` should be called from `applicationDidBecomeActive` (iOS), `ProcessLifecycleOwner` `ON_START` (Android), `AppState 'active'` (RN), `didChangeAppLifecycleState(.resumed)` (Flutter), or the `resume` event (Cordova). WARNING if missing — renewals or cancellations that happen while the app is backgrounded won't reflect in the client until the user re-opens. SKIP if running in Full mode AND the user never backgrounds the app for >1 day.
 - [ ] **User attributes set** — If the app uses audience targeting, `setUserAttribute` should be called with relevant attributes. SKIP if audience targeting is not used.
@@ -171,21 +179,21 @@ For each item below, search the code, analyze the context, and report one of:
 
 If the project routes its Purchasely SDK calls through a single dedicated class — whatever its name (`PurchaselyWrapper`, `PurchaselyService`, `IAPManager`, …) — verify these recommended patterns. SKIP this entire section if there is no such class — do NOT suggest adding one unless the user asks.
 
-- [ ] **SDK calls go through wrapper** — Search for direct `Purchasely.start`, `Purchasely.fetchPresentation`, `Purchasely.setPaywallActionsInterceptor` calls outside the wrapper. WARNING if SDK is called directly from UI code alongside a wrapper.
+- [ ] **SDK calls go through wrapper** — Search for direct Purchasely SDK calls outside the wrapper: init (`Purchasely.apiKey(`/`Purchasely {`/`Purchasely.start`), presentation build (`PLYPresentationBuilder`/`PLYPresentation {`/`fetchPresentation`), interceptor registration (`Purchasely.interceptAction`/`setPaywallActionInterceptor`). WARNING if the SDK is called directly from UI code alongside a wrapper.
 - [ ] **Screens have zero SDK imports** — `import Purchasely` / `import io.purchasely` should not appear in ViewModel/Screen files. WARNING if found.
 - [ ] **Observer mode billing decoupled** — If using Observer mode with a wrapper, check that the native PurchaseManager does NOT import the SDK. WARNING if it directly calls `synchronize()` or references the wrapper.
-- [ ] **Wrapper owns init and interceptor** — `start()` and `setPaywallActionsInterceptor` should be in the wrapper, not scattered. WARNING if init logic is outside.
+- [ ] **Wrapper owns init and interceptor** — init (`start()`) and the action interceptor registration (`Purchasely.interceptAction(...)` on native v6; `setPaywallActionInterceptor` on cross-platform) should be in the wrapper, not scattered. WARNING if init logic is outside.
 - [ ] **Testable wrapper** — iOS: protocol for mocking. Android: DI-injectable. WARNING if not mockable.
 
 See `../../references/architecture-patterns.md` for recommended patterns and improvements to suggest.
 
 ### 3.7 Production Readiness
 
-- [ ] **SDK version is current** — Compare the pinned version against `../../references/sdk-versions.md` (iOS 5.7.5, Android 5.7.4, RN/Flutter/Cordova 5.7.3). FAIL if older than minimum, WARNING if not at latest. FAIL if a floating version (`5.+`, `^5.0.0`, etc.) is used instead of an exact pin.
-- [ ] **Plugin packages aligned** (cross-platform only) — All `react-native-purchasely*`, `purchasely_*`, or `@purchasely/cordova-plugin-*` packages MUST be the same `5.x.y`. FAIL if mismatched.
+- [ ] **SDK version is current** — Compare the pinned version against `../../references/sdk-versions.md` (native iOS and Android on **6.0.0**; RN/Cordova on 5.7.3; Flutter on 6.0.0-beta.0). FAIL if older than minimum, WARNING if not at latest. FAIL if a floating version (`5.+`, `6.+`, `^5.0.0`, `^6.0.0`, etc.) is used instead of an exact pin (SPM `from:`/CocoaPods `~> 6.0` are the accepted iOS forms).
+- [ ] **Plugin packages aligned** (cross-platform only) — All `react-native-purchasely*` / `@purchasely/cordova-plugin-*` (5.x.y) or `purchasely_*` (6.0.0-beta.x) packages MUST be the same version. FAIL if mismatched.
 - [ ] **ProGuard/R8 rules added** (Android only) — `proguard-rules.pro` must include Purchasely keep rules or the dependency must use `consumerProguardFiles`. WARNING if missing.
-- [ ] **No deprecated methods** — Flag any use of deprecated Purchasely APIs: `presentationViewControllerFor`, `presentationView(for:)`, `isDeeplinkHandled`, `productViewControllerFor`, `planViewControllerFor`, `subscriptionViewController`. WARNING for each occurrence.
-- [ ] **Error handling around fetchPresentation** — `fetchPresentation` can fail (network error, invalid placement). The error/failure case must be handled gracefully. FAIL if errors are silently ignored. Map known `PLYError` cases (see `../../references/troubleshooting/error-codes.md`) when surfacing failure to the user.
+- [ ] **No removed / deprecated APIs** — Native v6 **removed**: `setPaywallActionsInterceptor`, `fetchPresentation` (native), `presentationView(for:)`/`presentationViewControllerFor`/`presentationController`, `subscriptionsFragment()` and all `PLYSubscriptions*`/`PLYSubscriptionCancellation*` UI, `purchaseHistory()` (→ `userSubscriptionsHistory()`), `isPastSubscriber()`, the `intro*`/`introductory*` plan methods and `PLYPlanTags.INTRO_PRICE`/`TRIAL_PRICE` (→ `offer*` / `PLYPlanTags.OFFER_PRICE`), `PLYPresentationInfo` (→ `PLYInterceptorInfo`), `PLYPresentationActionParameters`. **FAIL** for each occurrence in native code (it won't compile against v6). Native v6 **deprecated** (removal v7): `readyToOpenDeeplink` (→ `allowDeeplink`), `isDeeplinkHandled` (→ `handleDeeplink`), pre-`start` class funcs like `setEnvironment`/`setThemeMode` (→ builder modifiers) — WARNING for each.
+- [ ] **Error handling around presentation build** — The presentation can fail (network error, invalid placement). The error/failure case must be handled gracefully: native v6 `.preload { loaded, error -> }` / `.preload()` throwing, cross-platform `fetchPresentation` completion. FAIL if errors are silently ignored. Map known `PLYError` cases (see `../../references/troubleshooting/error-codes.md`) when surfacing failure to the user.
 - [ ] **`PrivacyInfo.xcprivacy` present** (iOS only, builds against Xcode 15+ / iOS 17 SDK) — Apple requires a Privacy Manifest declaring the app's required reason API usage, third-party SDKs, and tracking domains. The Purchasely SDK ships its own `PrivacyInfo.xcprivacy` for its data collection. WARNING if the **app's** root `PrivacyInfo.xcprivacy` is missing — App Store Connect rejects submissions without it since May 2024.
 - [ ] **Google Play Billing v8 awareness** (Android only) — If the project pins `com.android.billingclient:billing` (non-KTX) ≥ 8.x while Purchasely uses `billing-ktx`, prices can hang on `queryProductDetails()`. WARNING — recommend `com.android.billingclient:billing-ktx` and/or a Gradle `resolutionStrategy.force(...)`. See `../../references/troubleshooting/error-codes.md` § Google Play Billing v8.
 - [ ] **`LogLevel.DEBUG` not shipped in release** — Confirm that `LogLevel.DEBUG` is gated behind a build flag (`#if DEBUG`, `BuildConfig.DEBUG`, `__DEV__`, etc.). WARNING if always-on. Debug logs leak placement IDs, audience matches, and presentation IDs.
@@ -193,16 +201,16 @@ See `../../references/architecture-patterns.md` for recommended patterns and imp
 
 ### 3.8 Observer Mode Post-Purchase (if Observer mode is detected)
 
-- [ ] **Correct ordering** — Code must call `synchronize()` → `proceed/processAction(false)` → dismiss in this order. Native iOS/Android dismiss with `closeAllScreens()`; React Native / Flutter / Cordova public bridges dismiss with `closePresentation()`. FAIL if reversed. See `../../references/concepts/observer-mode-post-purchase.md`.
-- [ ] **Correct dismiss API** — native iOS/Android should use `closeAllScreens()` (not `closeDisplayedPresentation()`); React Native / Flutter / Cordova should use `closePresentation()` unless the app added a custom native bridge. WARNING if the older or wrong-platform API is used.
-- [ ] **iOS `@MainActor` wrap** (iOS only) — when calling `closeAllScreens()` from a non-isolated context (inside `synchronize` callback or `DispatchQueue.main.async`), it must be wrapped in `Task { @MainActor in ... }`. FAIL if missing on iOS 5.7.5+.
+- [ ] **Correct ordering** — Native iOS/Android v6: inside the `.purchase` interceptor, run billing → `synchronize()` → `closeAllScreens()` → **return `PLYInterceptResult.SUCCESS`** (Observer mode does not auto-close in v6, so the explicit dismiss is required; there is no `proceed`/`processAction` callback). Cross-platform (RN / Cordova): `synchronize()` → `onProcessAction(false)` → `closePresentation()`, in that order — FAIL if reversed. See `../../references/concepts/observer-mode-post-purchase.md`.
+- [ ] **Correct dismiss API** — native iOS/Android v6 should use `closeAllScreens()` (not `closeDisplayedPresentation()`, which was renamed); React Native / Cordova should use `closePresentation()` unless the app added a custom native bridge. WARNING if the older or wrong-platform API is used.
+- [ ] **iOS `@MainActor` wrap** (iOS only) — when calling `closeAllScreens()` from a non-isolated context (inside a `synchronize` callback or `DispatchQueue.main.async`), it must be wrapped in `Task { @MainActor in ... }`. FAIL if missing on iOS v6 (`closeAllScreens()` is `@MainActor`-isolated).
 
 ### 3.9 Campaigns (if Campaigns are used in the Console)
 
 SKIP this entire section if the project doesn't use Campaigns. To detect: ask the user, or check Purchasely Console → Campaigns. Otherwise:
 
 - [ ] **SDK ≥ 5.1.0** — minimum version required for Campaigns. FAIL if pinned below.
-- [ ] **`Purchasely.readyToOpenDeeplink(true)` called once after the splash/launch routine completes** — trigger-based campaigns won't display without it. FAIL if missing. WARNING if called inside the `start()` callback (the campaign paywall lands on top of the splash).
+- [ ] **Deeplink display enabled** — trigger-based campaigns are delivered through deeplinks. Native v6: `allowDeeplink` defaults to **true**, so usually no action is needed; FAIL only if the app sets `allowDeeplink(false)`, and on Android verify the auto-interception isn't broken (e.g. `singleTask` activity missing `setIntent(intent)`). Cross-platform (v5): `Purchasely.readyToOpenDeeplink(true)` must be called once after the splash/launch routine completes — FAIL if missing, WARNING if called inside the `start()` callback (the campaign paywall lands on top of the splash).
 - [ ] **UI Handler keeps the returned presentation object** (if used) — refetching the presentation loses campaign context (audience match, screen variant, exposure tracking). WARNING if the handler refetches.
 
 ### 3.10 Promotional Offers (if promo offers / offer codes are used)
@@ -256,9 +264,9 @@ Format the output as follows:
 X / Y checks passed | Z critical | W warnings
 
 ### Critical Issues (must fix before release)
-1. **[FAIL] processAction() not called in error handler** — `PaywallInterceptor.kt:45`
-   The catch block on line 45 returns without calling processAction(). This will freeze the paywall if an error occurs during login.
-   **Fix:** Add `Purchasely.processAction(false)` in the catch block.
+1. **[FAIL] Interceptor handler does not return a result on every path** — `PaywallInterceptor.kt:45`
+   The catch block on line 45 returns without producing a `PLYInterceptResult`. On native v6 every branch of the handler must return `.success` / `.failed` / `.notHandled`. (On RN / Cordova the equivalent bug is a path that never calls `onProcessAction()`, which freezes the paywall.)
+   **Fix:** Return `PLYInterceptResult.FAILED` from the catch block.
 
 ### Warnings (should fix)
 1. **[WARNING] API key hardcoded** — `AppDelegate.swift:12`
@@ -269,7 +277,7 @@ X / Y checks passed | Z critical | W warnings
 
 ### Passed Checks
 - [PASS] SDK initialized in AppDelegate
-- [PASS] fetchPresentation used (not deprecated)
+- [PASS] v6 presentation builder used (no removed `fetchPresentation`/`presentationView`)
 - ...
 ```
 

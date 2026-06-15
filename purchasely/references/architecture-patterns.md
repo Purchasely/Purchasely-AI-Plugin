@@ -22,21 +22,23 @@ Recommended architecture patterns for production-grade Purchasely SDK integratio
 
 ### What the wrapper typically owns
 
+> The APIs below are the **native v6** entry points (iOS Swift / Android Kotlin). Cross-platform SDKs use their own v5 method names.
+
 | Category | Purchasely APIs it encapsulates |
 |----------|--------------------------------|
-| **Init & Lifecycle** | `Purchasely.start(...)`, `Purchasely.stop()`, `Purchasely.close()`, `Purchasely.closeDisplayedPresentation()` |
-| **Interceptor** | `Purchasely.setPaywallActionsInterceptor { ... }` (LOGIN, NAVIGATE, PURCHASE, RESTORE) |
+| **Init & Lifecycle** | `Purchasely.apiKey(...)....start()` (iOS) / `Purchasely { ... }` or `Purchasely.Builder(...).build().start { ... }` (Android), `Purchasely.close()`, `Purchasely.closeAllScreens()` |
+| **Interceptor** | per-action `Purchasely.interceptAction(...) { ... }` returning `PLYInterceptResult` (LOGIN, NAVIGATE, PURCHASE, RESTORE) |
 | **Events** | `Purchasely.setEventListener(...)` / `PLYEventDelegate` |
-| **Presentations** | `Purchasely.fetchPresentation(...)`, `PLYPresentation.display(...)`, `PLYPresentation.buildView(...)` (Android) / `PLYPresentation.controller` (iOS) |
-| **User Attributes** | `Purchasely.setUserAttribute(...)`, `Purchasely.incrementUserAttribute(...)` |
+| **Presentations** | `PLYPresentationBuilder` (iOS) / `PLYPresentation { ... }` (Android), `.build().preload()`, `presentation.display(...)`, `presentation.buildView(...)` / `getFragment(...)` (Android) / `presentation.controller` / `presentation.swiftUIView` (iOS) |
+| **User Attributes** | `Purchasely.setUserAttribute(...)`, `Purchasely.incrementUserAttribute(...)` (native v6 return `Deferred<Boolean>` on Android) |
 | **User Management** | `Purchasely.userLogin(...)`, `Purchasely.userLogout()`, `Purchasely.anonymousUserId` |
-| **Purchases** | `Purchasely.restoreAllProducts(...)`, `Purchasely.synchronize(...)`, `Purchasely.signPromotionalOffer(...)` (iOS) |
+| **Purchases** | `Purchasely.restoreAllProducts(...)`, `Purchasely.synchronize(...)`, `Purchasely.signPromotionalOffer(...)` (iOS), `Purchasely.userSubscriptionsHistory(...)` |
 | **Consent** | `Purchasely.setUserAttribute(forDataProcessingPurposes:...)` (iOS) / equivalent on Android |
-| **Info** | `Purchasely.sdkVersion`, `Purchasely.isDeeplinkHandled(...)` |
+| **Info** | `Purchasely.sdkVersion`, `Purchasely.handleDeeplink(...)` |
 
 ### SDK types you can keep visible to the rest of the app
 
-`PLYRunningMode`, `PLYDataProcessingPurpose`, `PLYPresentationAction`, `PLYPresentationInfo`, `PLYPresentationActionParameters`, `PLYPresentationViewController`, `EventListener` / `PLYEventDelegate`, `PLYOfferSignature`, `LogLevel` / `PLYLogger.PLYLogLevel` — these are enums / types needed for configuration, interceptor logic, and presentation handling. They are not SDK call points so leaking them outside the wrapper is fine.
+`PLYRunningMode`, `PLYDataProcessingPurpose`, `PLYPresentationAction` (a sealed class in v6), `PLYInterceptorInfo`, `PLYInterceptResult`, `PLYPresentationOutcome`, `PLYPresentationViewController`, `EventListener` / `PLYEventDelegate`, `PLYOfferSignature`, `LogLevel` / `PLYLogger.PLYLogLevel` — these are enums / types needed for configuration, interceptor logic, and presentation handling. They are not SDK call points so leaking them outside the wrapper is fine.
 
 > **Android tip:** If you want to keep `PLYPresentation` itself out of ViewModels / Screens, wrap it in an opaque value class (e.g. `@JvmInline value class PresentationHandle(...)`). Optional.
 
@@ -44,11 +46,11 @@ Recommended architecture patterns for production-grade Purchasely SDK integratio
 
 **Android (Kotlin):**
 - Singleton via DI (Koin / Hilt / manual) so ViewModels receive it via constructor injection
-- App entry point calls a single `initialize(application, apiKey, logLevel)` that wraps `Purchasely.start(...)`
+- App entry point calls a single `initialize(application, apiKey, logLevel)` that wraps the `Purchasely { ... }` DSL (or `Purchasely.Builder(...).build().start { ... }`), setting `runningMode(PLYRunningMode.Full)` when the app processes purchases
 
 **iOS (Swift):**
 - Singleton + protocol (`PurchaselyWrapping` or any name) so ViewModels accept the protocol type and tests inject a mock implementation
-- App entry point calls a single `initialize(apiKey:, appUserId:, logLevel:, onReady:)` that wraps `Purchasely.start(...)`
+- App entry point calls a single `initialize(apiKey:, appUserId:, logLevel:, onReady:)` that wraps the fluent builder (`Purchasely.apiKey(...).runningMode(.full)....start()`)
 
 ---
 
@@ -59,19 +61,22 @@ Recommended architecture patterns for production-grade Purchasely SDK integratio
 ### Architecture
 
 ```
-Purchasely interceptor                     Native billing service
+Purchasely interceptor (suspends)          Native billing service
     │                                           │
     │ PURCHASE (observer) ──────────────────►   │
     │   emit PurchaseRequest                     │
-    │                                           │ Native billing
+    │   suspend until result                     │ Native billing
     │                                           │ (Play Billing / StoreKit 2)
     │   ◄────────────────────────────────────   │
     │   TransactionResult                        │
     │                                           │
     │ Purchasely.synchronize()                   │
-    │ proceed(false)                             │
+    │ Purchasely.closeAllScreens()               │
+    │ return PLYInterceptResult.SUCCESS          │
     │ refresh entitlement state                  │
 ```
+
+> **Native v6:** the interceptor has no `proceed` callback. The per-action handler returns a `PLYInterceptResult`; to wait for the asynchronous native billing result, suspend inside the handler (Android `suspendCancellableCoroutine`, iOS the `async` interceptor form or the completion-based overload), then return `.success` / `.failed` once the `TransactionResult` arrives. v6 Observer mode does not auto-close, so call `Purchasely.closeAllScreens()` before returning.
 
 ### Communication channels
 
@@ -94,29 +99,29 @@ struct PurchaseRequest { let productId: String }
 enum TransactionResult { case success, cancelled, error(String?), idle }
 ```
 
-### `proceed` callback handling
+### Result handling (native v6: return value, not a callback)
 
-When the interceptor receives `PURCHASE` / `RESTORE` (in Observer mode), store the `proceed: (Boolean) -> Unit` closure once and emit a `PurchaseRequest` / `RestoreRequest`. When the matching `TransactionResult` arrives, invoke the stored `proceed` and clear it.
+When the per-action handler receives `PURCHASE` / `RESTORE` (in Observer mode), emit a `PurchaseRequest` / `RestoreRequest` and **suspend the handler** until the matching `TransactionResult` arrives (Android `suspendCancellableCoroutine`; iOS the `async` interceptor or completion form). Then return the corresponding `PLYInterceptResult`.
 
-**Race guard:** Before storing a new `proceed`, cancel any existing one with `proceed?.invoke(false)` — this prevents a second interceptor action from silently overwriting and orphaning the first callback.
+**Race guard:** ensure the suspended continuation is resumed exactly once — resume with `.failed` if a second action would otherwise orphan the first (the SDK cancels a pending handler when a new one starts).
 
 ### Interceptor rules
 
-| Action | Observer mode | Full mode |
+| Action | Observer mode (native v6) | Full mode (native v6) |
 |--------|---------------|-----------|
-| PURCHASE | Store `proceed`, emit PurchaseRequest | proceed(true) |
-| RESTORE | Store `proceed`, emit RestoreRequest | proceed(true) |
-| LOGIN | proceed(false) | proceed(false) |
-| NAVIGATE | Open URL, proceed(false) | Open URL, proceed(false) |
-| Other | proceed(true) | proceed(true) |
+| PURCHASE | emit PurchaseRequest, suspend, then return `.success`/`.failed` | return `.notHandled` |
+| RESTORE | emit RestoreRequest, suspend, then return `.success`/`.failed` | return `.notHandled` |
+| LOGIN | run login, return `.success` (or `.notHandled` to let the SDK proceed) | same |
+| NAVIGATE | open URL, return `.success` | open URL, return `.success` |
+| Other | return `.notHandled` | return `.notHandled` |
 
 ### TransactionResult handling
 
-| Result | Actions |
+| Result | Actions (native v6) |
 |--------|---------|
-| Success | `Purchasely.synchronize(...)` → `proceed(false)` → refresh entitlements |
-| Cancelled | `proceed(false)` |
-| Error | `proceed(false)` |
+| Success | `Purchasely.synchronize(...)` → `Purchasely.closeAllScreens()` → resume handler with `PLYInterceptResult.SUCCESS` → refresh entitlements |
+| Cancelled | resume handler with `PLYInterceptResult.FAILED` |
+| Error | resume handler with `PLYInterceptResult.FAILED` |
 | Idle | ignore |
 
 ### Native billing service rules
@@ -131,54 +136,57 @@ When the interceptor receives `PURCHASE` / `RESTORE` (in Observer mode), store t
 
 ## 3. SDK Initialization
 
-**Rule: `Purchasely.start(...)` is the only entry point that brings the SDK up. Call it once at app launch, then configure the event listener / delegate and the paywall actions interceptor right after.**
+**Rule: the init builder is the only entry point that brings the SDK up. Call it once at app launch, then configure the event listener / delegate and the per-action interceptors right after.**
 
-**Android:** `Application.onCreate()` calls `Purchasely.start(...)` then sets the event listener and the interceptor.
-**iOS:** App start (e.g., `App.init` / `AppDelegate`) calls `Purchasely.start(...)` then sets the event delegate and the interceptor.
+**Android (v6):** `Application.onCreate()` runs the `Purchasely { ... }` DSL (or `Purchasely.Builder(...).build().start { ... }`) then sets the event listener and the `interceptAction(...)` handlers.
+**iOS (v6):** App start (e.g., `App.init` / `AppDelegate`) runs `Purchasely.apiKey(...)....start()` then sets the event delegate and the `interceptAction(...)` handlers.
 
 What needs to happen at init:
-1. `Purchasely.start(...)` with API key, running mode, StoreKit settings
+1. The init builder with API key, **running mode** (⚠️ v6 defaults to Observer — set `.full` explicitly to process purchases), StoreKit settings / stores
 2. Event listener / delegate
-3. Paywall actions interceptor
-4. Deeplink readiness flag
+3. Per-action interceptors (`Purchasely.interceptAction(...)`)
+4. Deeplink flag (native v6 `allowDeeplink`, default true)
 5. (Observer mode only) Reactive subscriptions for the purchase flow
 
 ### Restart on running-mode change
 
-When the SDK running mode changes (Full ↔ Observer), call `Purchasely.close()` then `Purchasely.start(...)` again — the SDK does not let you toggle the running mode in place. Cancel any pending purchase / restore callbacks before closing so they do not orphan.
+When the SDK running mode changes (Full ↔ Observer), call `Purchasely.close()` then re-run the init builder — the SDK does not let you toggle the running mode in place. Cancel any pending purchase / restore continuations before closing so they do not orphan.
 
 ---
 
-## 4. Presentation Loading: Always fetch, then build / display
+## 4. Presentation Loading: Build + preload, then display (native v6)
 
-**Rule: Always use `Purchasely.fetchPresentation(...)` followed by `presentation.display(...)` (modal) or `presentation.buildView(...)` / `presentation.controller` (embedded). Avoid `Purchasely.presentationView(...)` / `presentationController(...)`.**
+**Rule: Build the presentation, `preload()` it, then `display(...)` (modal) or `buildView(...)` / `getFragment(...)` / `controller` / `swiftUIView` (embedded). The v5 `fetchPresentation(...)` / `presentationView(...)` / `presentationController(...)` / VC-returning methods are removed on native v6.**
 
 ### Why
 
-- `fetchPresentation` + `display` / `buildView` gives full control over the presentation lifecycle
+- Building + preloading + displaying gives full control over the presentation lifecycle (and `preload` does the network work, so a later `display` is instant)
 - You can inspect `presentation.type` before deciding what to do (`NORMAL`, `CLIENT`, `DEACTIVATED`)
-- You can handle errors from the fetch step separately from display errors
-- `presentationView()` / `presentationController()` are convenience shortcuts that hide these steps — unsuitable when you need fine-grained control
+- You can handle errors from the preload step separately from display errors
 
 ### Pattern
 
 ```kotlin
-// Android — suspend fetch, then display or buildView
-val result = Purchasely.fetchPresentation(context, placementId)
-result.presentation?.display(activity) { displayResult, plan -> /* ... */ }
+// Android (v6) — coroutine preload, then display or buildView
+val loaded = PLYPresentation { placementId(placementId) }.preload()
+loaded.display(activity)
 // or for embedded:
-val view = result.presentation?.buildView(context) { displayResult, plan -> /* ... */ }
+val view = loaded.buildView(context) { outcome -> /* ... */ }   // wrap in AndroidView for Compose
 ```
 
 ```swift
-// iOS — async/await bridge then display or controller
-let presentation = try await fetchPresentation(for: placementId)
+// iOS (v6) — async build + preload, then display or controller
+let presentation = try await PLYPresentationBuilder
+    .forPlacementId(placementId)
+    .build()
+    .preload()
 presentation.display(from: viewController)
 // or for embedded:
-let controller = presentation.controller
+let controller = presentation.controller        // UIKit
+let swiftUIView = presentation.swiftUIView       // SwiftUI
 ```
 
-> Map fetch outcomes to a small app-side sealed type (e.g. `FetchResult.Success(presentation, height)` / `Client(...)` / `Deactivated` / `Error(message)`) so the rest of the app does not depend on raw SDK error types.
+> Map preload outcomes to a small app-side sealed type (e.g. `FetchResult.Success(presentation, height)` / `Client(...)` / `Deactivated` / `Error(message)`) so the rest of the app does not depend on raw SDK error types.
 
 ---
 
@@ -203,7 +211,7 @@ init {
 }
 
 private suspend fun fetchPresentationSafely(placementId: String): FetchResult =
-    runCatching { Purchasely.fetchPresentation(context, placementId).toFetchResult() }
+    runCatching { PLYPresentation { placementId(placementId) }.preload().toFetchResult() }
         .getOrElse { FetchResult.Error(it.message) }
 ```
 
@@ -228,21 +236,21 @@ private suspend fun fetchPresentationSafely(placementId: String): FetchResult =
 
 ### Prefetch cache (optional, recommended on iOS for flow placements)
 
-Caching `Purchasely.fetchPresentation(...)` results in memory (keyed by `placementId[/contentId]`) is a useful optimization, **not a requirement**. First call fetches over the network, subsequent calls return the cached result instantly. It prevents:
+Caching preloaded presentations in memory (keyed by `placementId[/contentId]`) is a useful optimization, **not a requirement**. Note that on native v6 you can simply hold the loaded presentation from `preload()` and call `display(...)` on it later (no extra network call), which covers most cases. A dedicated app-side cache still prevents:
 
 - Duplicate network calls when SwiftUI `.onAppear` fires repeatedly (nav back, sheet dismiss, etc.)
-- Accumulation of stale `flowSteps` entries in the SDK's `FlowsManager` for **flow** placements — a known SDK issue where each fetch appends a new entry and dismissing the only visible step leaves a stuck `PLYWindow`. Caching avoids re-fetching the same flow.
+- Accumulation of stale `flowSteps` entries in the SDK's `FlowsManager` for **flow** placements — a known SDK issue where each rebuild appends a new entry and dismissing the only visible step leaves a stuck `PLYWindow`. Caching / reusing the loaded presentation avoids re-building the same flow.
 
 **Cache invalidation triggers (when you adopt this cache):**
 - `PLYUserAttributeDelegate.onUserAttributeSet` / `onUserAttributeRemoved` (iOS) — any attribute change can alter audience targeting
 - Successful `Purchasely.synchronize()` — subscription state may have changed
 - Running-mode change (Full ↔ Observer) — the session is reset
 
-> **Note:** Invalidation is coarse-grained (clear all) because the SDK does not expose attribute → audience dependencies. This is the simplest correct approach; native placement-level caching is expected in Purchasely SDK 6.x and the app-side cache should be removed then.
+> **Note:** Invalidation is coarse-grained (clear all) because the SDK does not expose attribute → audience dependencies. On native v6, prefer simply holding the loaded presentation from `preload()` and reusing it — the builder/preload split already avoids most redundant network calls, so a separate cache is rarely needed.
 
-> **Note on `onResult` binding:** The `onResult` closure is captured by the SDK at first fetch. On cache hits, the original binding is reused — subsequent callers' `onResult` closures are ignored. This is safe when all closures perform the same work (e.g., refresh entitlements on purchased / restored).
+> **Note on the outcome handler:** The display result is delivered through the loaded presentation's `display(...)` / `buildView(...)` callback (`PLYPresentationOutcome`). If you reuse one loaded presentation across several display call sites, ensure the callbacks all perform the same work (e.g., refresh entitlements on purchased / restored).
 
-> **Android:** the same cache concept applies. The Android SDK does not (yet) expose a public user-attribute delegate, so invalidation is currently limited to explicit `Purchasely.synchronize()` and running-mode changes. When Android exposes the delegate (SDK 6.x), wire it up the same way.
+> **Android:** the same concept applies — keep the loaded `PLYPresentation` from `preload()` and call `display(context)` later. Invalidate (re-build) on explicit `Purchasely.synchronize()` and running-mode changes.
 
 ---
 
@@ -323,17 +331,17 @@ Always handle all `FetchResult` variants:
 
 **Rule: Use the platform's native async pattern. Only use callbacks when the SDK does not provide an alternative.**
 
-### Android (Kotlin)
+### Android (Kotlin, v6)
 
-- `Purchasely.fetchPresentation(...)` — `suspend` API, call directly from a coroutine
-- `presentation.display(activity)` — callback-based; bridge with `suspendCoroutine` if you want a `suspend` API
-- `presentation.buildView(context)` — synchronous (returns `View?`); the `onResult` callback fires later on purchase events
+- `PLYPresentation { ... }.preload()` — `suspend` API, call directly from a coroutine (or `.preload { loaded, error -> }` for the callback form)
+- `loaded.display(context)` / `loaded.display(context, transition)` — **non-suspend** (Java-callable); returns a `PLYPresentationSession` you can `.await()` for the `PLYPresentationOutcome`
+- `loaded.buildView(context) { outcome -> }` — returns a `PLYPresentationView?` (an Android View); the outcome callback fires later on purchase events
 
-### iOS (Swift)
+### iOS (Swift, v6)
 
-- `Purchasely.fetchPresentation(for:, fetchCompletion:, completion:)` — bridge to `async/await` with `withCheckedContinuation`; the `onResult` callback is bound at fetch time via the `completion` closure
-- `presentation.display(from:)` — synchronous, must be called on main thread; result delivered through the `onResult` callback from fetch
-- `presentation.controller` — returns `PLYPresentationViewController?` for embedding
+- `PLYPresentationBuilder.forPlacementId(_).build().preload()` — `async`/`throws`; or `.preload { presentation, error in }` on the builder for the callback form
+- `presentation.display(from:)` — must be called on the main thread; the dismissal `PLYPresentationOutcome` is delivered via the builder's `.onDismissed { outcome in }`
+- `presentation.controller` — returns `PLYPresentationViewController?` (UIKit); `presentation.swiftUIView` for SwiftUI embedding
 
 ---
 
@@ -346,7 +354,7 @@ Always handle all `FetchResult` variants:
 **With a wrapper class:** define a protocol (e.g. `PurchaselyWrapping`) that mirrors the SDK calls your app uses. ViewModels accept the protocol type via init with a default real implementation. Tests inject a mock implementation.
 
 **Without a wrapper:** the static `Purchasely` API cannot be mocked directly. Two practical options:
-- Inject **typed closures** into your ViewModels for the few SDK calls you exercise — e.g. `init(fetchPresentation: (String) async throws -> PLYPresentation = { try await Purchasely.fetchPresentation(for: $0) })`. Tests pass canned closures.
+- Inject **typed closures** into your ViewModels for the few SDK calls you exercise — e.g. `init(loadPresentation: (String) async throws -> any PLYPresentation = { try await PLYPresentationBuilder.forPlacementId($0).build().preload() })`. Tests pass canned closures.
 - Or wrap each call site in a tiny **protocol-with-one-method** seam (the lightweight equivalent of a wrapper, scoped to the test surface).
 - Tests that only need to assert non-SDK behavior (state transitions, premium gating logic) can stub the boundary and never touch the SDK.
 
@@ -356,7 +364,7 @@ Always handle all `FetchResult` variants:
 
 **Without a wrapper:** `Purchasely` is a Kotlin `object`, so direct calls are hard to intercept. Options:
 - Use **MockK's static mocking** (`mockkStatic(Purchasely::class)`) to stub the SDK calls your ViewModel makes. Remember to `unmockkStatic` in `@After` — leftover static mocks leak across tests.
-- Or inject **lambdas / functional interfaces** for the SDK calls you exercise (`fetchPresentation: suspend (String) -> PLYPresentation = { Purchasely.fetchPresentation(...) }`). Tests pass fakes.
+- Or inject **lambdas / functional interfaces** for the SDK calls you exercise (`loadPresentation: suspend (String) -> PLYPresentation = { PLYPresentation { placementId(it) }.preload() }`). Tests pass fakes.
 - Tests covering only ViewModel state, premium gating, or domain logic can stub the boundary and skip the SDK entirely.
 
 ### Native billing service testability
@@ -376,21 +384,21 @@ Repositories that need persistent storage accept a custom `UserDefaults` for tes
 
 ## 12. Platform-Specific Notes
 
-### Android (Kotlin / Jetpack Compose)
+### Android (Kotlin / Jetpack Compose, v6)
 
-- `Purchasely.start(...)` runs in `Application.onCreate()` along with `setEventListener(...)` and `setPaywallActionsInterceptor { ... }`
-- `PLYPresentation.buildView(context)` returns `PLYPresentationView?` (extends `FrameLayout`) — wrap with `AndroidView` in Compose
+- The `Purchasely { ... }` DSL (or `Purchasely.Builder(...).build().start { ... }`) runs in `Application.onCreate()` along with `setEventListener(...)` and the per-action `Purchasely.interceptAction(...) { ... }` handlers
+- `PLYPresentation.buildView(context) { outcome -> }` returns a `PLYPresentationView?` (an Android View extending `FrameLayout`) — wrap with `AndroidView` in Compose (there is no `presentation-compose` artifact or `PLYPresentationView` composable)
 - Domain layer (`domain/repository/`) defines interfaces; `data/` contains `*Impl` implementations — ViewModels depend on interfaces, not concrete classes
 - Repositories accept a `KeyValueStore` interface — DI injects `SharedPreferencesKeyValueStore` in production, an in-memory store in tests
 - Embedded banner Composables can pull dependencies via `koinInject()` (or equivalent) when needed
 - Screens use `collectAsStateWithLifecycle()` (not `collectAsState()`) for lifecycle-aware Flow collection
 
-### iOS (SwiftUI)
+### iOS (SwiftUI, v6)
 
-- `Purchasely.start(...)` runs at app start (e.g., `App.init` or `AppDelegate.application(_:didFinishLaunchingWithOptions:)`) along with the event delegate and paywall actions interceptor
-- Async operations use Swift `async/await` — bridge SDK callbacks with `withCheckedContinuation`
-- `presentation.controller` returns `PLYPresentationViewController?` for embedding via `UIViewControllerRepresentable`
-- Embedded banner is a `UIViewControllerRepresentable` wrapping `presentation.controller`
+- The fluent builder (`Purchasely.apiKey(...)....start()`) runs at app start (e.g., `App.init` or `AppDelegate.application(_:didFinishLaunchingWithOptions:)`) along with the event delegate and the per-action `Purchasely.interceptAction(...)` handlers
+- Async operations use Swift `async/await`; bridge any remaining SDK callbacks with `withCheckedContinuation`. Under Swift 6 strict concurrency, `@preconcurrency import Purchasely` at `@MainActor` call sites
+- `presentation.controller` returns `PLYPresentationViewController?` for embedding via `UIViewControllerRepresentable`; `presentation.swiftUIView` is the native SwiftUI view
+- Embedded banner can use `presentation.swiftUIView` directly, or a `UIViewControllerRepresentable` wrapping `presentation.controller`
 - Modal display: resolve a `UIViewController` (e.g., via a `ViewControllerResolver` helper) and call `presentation.display(from:)`
 - `presentation.height` is in points — use as `CGFloat` directly in `.frame(height:)`
 - Prefetch from `onAppear` since `@StateObject` init does not have access to `@EnvironmentObject`
@@ -403,14 +411,15 @@ Repositories that need persistent storage accept a custom `UserDefaults` for tes
 
 ### Universal (apply regardless of architecture choice)
 
-- [ ] Uses `Purchasely.fetchPresentation(...)` + `display(...)` / `buildView(...)` / `controller`, not the deprecated `presentationView(...)` / `presentationController(...)`
-- [ ] Presentations are prefetched (Android: in ViewModel `init`, iOS: from `onAppear`) when the user is not already premium
+- [ ] Uses the v6 builder + `preload()` + `display(...)` / `buildView(...)` / `controller` / `swiftUIView`, not the removed `fetchPresentation(...)` / `presentationView(...)` / `presentationController(...)`
+- [ ] Presentations are preloaded (Android: in ViewModel `init`, iOS: from `onAppear`) when the user is not already premium
 - [ ] Handles all `FetchResult` variants: success, client, deactivated, error
-- [ ] No crashes on SDK errors — nothing is shown if fetch fails
+- [ ] No crashes on SDK errors — nothing is shown if preload fails
 - [ ] Uses `presentation.height` (dp on Android, points on iOS) for embedded view sizing
 - [ ] User attributes are set on actual state changes, not on every recomposition / re-render
 - [ ] Android Screens use `collectAsStateWithLifecycle()` (not `collectAsState()`) for lifecycle-aware collection
-- [ ] `Purchasely.start(...)`, the event listener / delegate and the paywall actions interceptor are configured once at app start
+- [ ] The init builder, the event listener / delegate and the per-action `interceptAction(...)` handlers are configured once at app start
+- [ ] Running mode is set explicitly to Full (`.runningMode(.full)` / `runningMode(PLYRunningMode.Full)`) when the app expects Purchasely to process/validate purchases — v6 defaults to Observer silently
 
 ### Recommended when adopting the wrapper pattern
 
@@ -430,5 +439,5 @@ Repositories that need persistent storage accept a custom `UserDefaults` for tes
 
 ### Recommended when adopting the prefetch cache (iOS especially)
 
-- [ ] In-memory cache keyed by `placementId[/contentId]`, populated on first `Purchasely.fetchPresentation(...)`
+- [ ] Loaded presentations from `preload()` are held and reused (or an in-memory cache keyed by `placementId[/contentId]` is populated on first preload)
 - [ ] Cache invalidated on user-attribute changes (iOS), successful `Purchasely.synchronize()`, and running-mode change
