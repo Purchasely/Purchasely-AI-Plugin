@@ -72,11 +72,12 @@ Purchasely interceptor (suspends)          Native billing service
     │                                           │
     │ Purchasely.synchronize()                   │
     │ return PLYInterceptResult.SUCCESS          │
-    │ (SDK dismisses after the success result)   │
+    │ closeAllScreens() (Observer doesn't         │
+    │   auto-close; or wire a Console close action)│
     │ refresh entitlement state                  │
 ```
 
-> **Native v6:** the interceptor has no `proceed` callback. The per-action handler returns a `PLYInterceptResult`; to wait for the asynchronous native billing result, suspend inside the handler (Android `suspendCancellableCoroutine`, iOS the `async` interceptor form or the completion-based overload), then return `.success` / `.failed` once the `TransactionResult` arrives. On native v6 the SDK dismisses the presentation after a successful result — **do not call `Purchasely.closeAllScreens()` inside the interceptor**; use it only for an explicit out-of-band close.
+> **Native v6:** the interceptor has no `proceed` callback. The per-action handler returns a `PLYInterceptResult`; to wait for the asynchronous native billing result, suspend inside the handler (Android `suspendCancellableCoroutine`, iOS the `async` interceptor form or the completion-based overload), then return `.success` / `.failed` once the `TransactionResult` arrives. This is an **Observer-mode** flow, and **Observer mode does not auto-close** after a purchase/restore (the implicit `close_all` is Full-only). So once the interceptor has resolved with a successful result, dismiss the paywall yourself with `Purchasely.closeAllScreens()` from your billing-result handler — unless a `close` / `close_all` action is wired on the button in the Console. **Do not call `closeAllScreens()` inside the interceptor closure before returning the result** — that races the SDK. (Full mode auto-closes: the SDK appends `close_all` itself, no manual close needed.)
 
 ### Communication channels
 
@@ -119,7 +120,7 @@ When the per-action handler receives `PURCHASE` / `RESTORE` (in Observer mode), 
 
 | Result | Actions (native v6) |
 |--------|---------|
-| Success | `Purchasely.synchronize(...)` → resume handler with `PLYInterceptResult.SUCCESS` (the SDK dismisses after the success result) → refresh entitlements |
+| Success | `Purchasely.synchronize(...)` → resume handler with `PLYInterceptResult.SUCCESS` → after the handler has resolved, `Purchasely.closeAllScreens()` to dismiss (Observer mode does not auto-close; skip if a Console `close` action is wired) → refresh entitlements |
 | Cancelled | resume handler with `PLYInterceptResult.FAILED` |
 | Error | resume handler with `PLYInterceptResult.FAILED` |
 | Idle | ignore |

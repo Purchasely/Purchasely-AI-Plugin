@@ -6,7 +6,7 @@ All notable changes to this project are documented here. The format is based on 
 
 ### Fixed
 
-- `references/android/common-patterns.md` Observer-mode bridge: removed erroneous `closeAllScreens()` call after `PLYInterceptResult.SUCCESS` (SDK auto-dismisses the paywall on success); added orphan-guard + `invokeOnCancellation` to protect against a second purchase action arriving before the first billing flow resolves.
+- Corrected the Observer-mode post-purchase dismissal guidance (`concepts/observer-mode-post-purchase.md`, `android/common-patterns.md`, `architecture-patterns.md`, and the integrate/review/debug skills): in **Observer** mode the SDK does **not** auto-close after a purchase/restore — the implicit `close_all` is appended only in **Full** mode (verified in the iOS/Android SDK source: Android `runningMode == PLYRunningMode.Full`, iOS `appendCloseIfNeeded` `validatesTransactions` guard). Apps must call `Purchasely.closeAllScreens()` after resolving the interceptor (from the async billing-result handler, not inside the interceptor closure), unless a `close` action is configured on the button in the Console. Also hardened the Observer-mode bridge with an orphan-guard + `invokeOnCancellation`.
 - `references/concepts/campaigns.md` iOS Swift snippet: corrected `allowCampaigns` from property-assignment syntax (`= false/true`) to the documented method-call form (`allowCampaigns(false/true)`), consistent with the iOS v6 API reference.
 - `skills/migrate/SKILL.md` Android step 3: removed `screenId` from the v5-symbol detection list — `screenId` is the v6 target name (step 9 renames `PLYPresentation.id` → `screenId`), not a v5 symbol to replace.
 

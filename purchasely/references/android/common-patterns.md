@@ -165,8 +165,10 @@ fun onBillingSuccess() {
     Purchasely.synchronize()
     pendingResult?.invoke(PLYInterceptResult.SUCCESS)
     pendingResult = null
-    // Do NOT call closeAllScreens() here — the SDK dismisses the paywall automatically
-    // when the interceptor resolves with SUCCESS.
+    // Observer mode does not auto-close (the implicit close_all is Full-only). This handler
+    // runs after the interceptor has resolved, so dismiss the paywall here — unless a
+    // `close` / `close_all` action is configured on the button in the Console.
+    Purchasely.closeAllScreens()
 }
 
 fun onBillingCancelled() {
