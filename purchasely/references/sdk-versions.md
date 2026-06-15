@@ -2,7 +2,7 @@
 
 > **Single source of truth.** When pinning a Purchasely dependency, pin to these exact versions unless the user explicitly asks otherwise. If you find an outdated version in a project, recommend upgrading to the version below for that platform.
 
-## Current latest stable versions
+## Current supported versions
 
 _Last updated: 2026-06-15._
 
@@ -26,6 +26,15 @@ pod 'Purchasely', '6.0.0-rc1'
 ### iOS — Swift Package Manager
 
 In Xcode → File → Add Packages → enter `https://github.com/Purchasely/Purchasely-iOS` and select **Exact Version 6.0.0-rc1**.
+
+### iOS — Carthage
+
+```
+# Cartfile
+binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json" == 6.0.0-rc1
+```
+
+Then run `carthage update`. Pin **exactly** (`== 6.0.0-rc1`) — a floating constraint will not resolve a pre-release.
 
 ### Android — Gradle (Kotlin DSL)
 

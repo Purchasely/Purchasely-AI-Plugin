@@ -475,7 +475,7 @@ private func synchronizeReceipt() async throws {
 }
 ```
 
-By default the SDK runs `synchronize()` in the background — you do **not** need to await it before dismissing the paywall.
+By default the SDK runs `synchronize(success:failure:)` in the background — you do **not** need to await it before dismissing the paywall.
 
 ## Events
 
@@ -530,8 +530,8 @@ Actions that can be intercepted from paywall user interactions:
 | `.login` | `PLYPresentationActionLogin` | User tapped the login button |
 | `.close` | `PLYPresentationActionClose` | User tapped the close button |
 | `.navigate` | `PLYPresentationActionNavigate` | User tapped a custom navigation link |
-| `.open_presentation` | `PLYPresentationActionOpenPresentation` | User tapped a link to another presentation |
-| `.promo_code` | `PLYPresentationActionPromoCode` | User tapped the promo code button |
+| `.openPresentation` | `PLYPresentationActionOpenPresentation` | User tapped a link to another presentation |
+| `.promoCode` | `PLYPresentationActionPromoCode` | User tapped the promo code button |
 
 ## `PLYPresentationType` Enum
 

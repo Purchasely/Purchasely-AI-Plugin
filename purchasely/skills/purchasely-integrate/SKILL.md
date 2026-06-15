@@ -140,7 +140,7 @@ carthage update
 
 ### Android
 
-Requirements: minSdk 23, compileSdk 36, Kotlin 2.2.x, Gradle 9.x, JDK 11
+Requirements: minSdk 23, compileSdk 36, Kotlin 2.2.x, Gradle 9.x, JDK 17 (to build)
 
 The Purchasely SDK is published on **Maven Central** — no custom repository needed. Just make sure `mavenCentral()` is present in your `settings.gradle.kts` (it is by default in modern projects).
 
@@ -954,36 +954,35 @@ See `../../references/architecture-patterns.md` for detailed architecture diagra
 
 When the interceptor receives a `PURCHASE` action in Observer mode, you run the native billing flow yourself. After it succeeds:
 
-- **Native iOS/Android (v6):** intercept the `.purchase` action, run your billing flow, call **`Purchasely.synchronize()`** to upload the receipt, then **return `PLYInterceptResult.SUCCESS`** (`.success` on iOS) from the interceptor. In v6 Observer mode the presentation does **not** auto-close, so dismiss it yourself with **`Purchasely.closeAllScreens()`**. (There is no `proceed`/`processAction` callback in the v6 native interceptor; returning `.success` is the v6 equivalent of the old `processAction(false)`.)
+- **Native iOS/Android (v6):** intercept the `.purchase` action, run your billing flow, call **`Purchasely.synchronize()`** to upload the receipt, then **return `PLYInterceptResult.SUCCESS`** (`.success` on iOS) from the interceptor. The SDK dismisses the presentation after a successful result — do **not** call `Purchasely.closeAllScreens()` inside the interceptor (it is for an explicit out-of-band close only). (There is no `proceed`/`processAction` callback in the v6 native interceptor; returning `.success` is the v6 equivalent of the old `processAction(false)`.)
 - **React Native / Flutter / Cordova bridges:** still call `Purchasely.synchronize()` → `Purchasely.onProcessAction(false)` → `Purchasely.closePresentation()`, in that order.
 
-**The order matters:** the SDK must learn the action was handled BEFORE the paywall tears down. Reversing it leaves the paywall in an inconsistent state.
+**The order matters:** on the cross-platform bridges, the SDK must learn the action was handled BEFORE the paywall tears down; reversing it leaves the paywall in an inconsistent state. On native v6 you return the result and the SDK handles dismissal — don't race it with a manual close.
 
 ### SDK version requirements for dismissal
 
 | Platform | Minimum version |
 |----------|-----------------|
-| iOS (native) | **6.0.0-rc1** — `closeAllScreens()` is `@MainActor`-isolated. Wrap in `Task { @MainActor in Purchasely.closeAllScreens() }` when called from a non-isolated synchronous context. |
-| Android (native) | **6.0.0-rc1** — `closeAllScreens()`, no threading constraint. |
+| iOS (native) | **6.0.0-rc1** — return `.success` and the SDK dismisses. `closeAllScreens()` (out-of-band close only) is `@MainActor`-isolated. Wrap in `Task { @MainActor in Purchasely.closeAllScreens() }` when called from a non-isolated synchronous context. |
+| Android (native) | **6.0.0-rc1** — return `PLYInterceptResult.SUCCESS` and the SDK dismisses. `closeAllScreens()` (out-of-band close only), no threading constraint. |
 | React Native | Use `Purchasely.closePresentation()` in the public JS bridge. |
 | Flutter | **5.7.3** — use `Purchasely.closePresentation()` in the public Dart bridge (also `hidePresentation()` / `showPresentation()`). |
 | Cordova | Use `Purchasely.closePresentation()` in the public JS bridge. |
 
 Full version list: `../../references/sdk-versions.md`.
 
-> On native iOS/Android, use `closeAllScreens()` (not `closeDisplayedPresentation()`) — it correctly tears down Flow paywalls with multiple steps. On React Native / Flutter / Cordova, use the public bridge `closePresentation()` unless the app added its own native `closeAllScreens()` bridge.
+> On native iOS/Android, returning a successful `PLYInterceptResult` lets the SDK dismiss the presentation. `closeAllScreens()` (not `closeDisplayedPresentation()`) is for an explicit out-of-band close — it correctly tears down Flow paywalls with multiple steps. On React Native / Flutter / Cordova, use the public bridge `closePresentation()` unless the app added its own native `closeAllScreens()` bridge.
 
 ### iOS Observer-mode post-purchase (v6)
 
-In v6 the `.purchase` interceptor returns a `PLYInterceptResult`. Run your billing flow, `synchronize()`, return `.success`, then dismiss explicitly (Observer mode no longer auto-closes):
+In v6 the `.purchase` interceptor returns a `PLYInterceptResult`. Run your billing flow, `synchronize()`, then return `.success` — the SDK dismisses the presentation for you:
 
 ```swift
 Purchasely.interceptAction(.purchase) { info, params in
     let bought = await self.runMyBillingFlow()
     guard bought else { return .failed }
     await self.synchronizeReceipt()       // upload receipt; await if you chain a follow-up placement
-    Purchasely.closeAllScreens()          // dismiss — Observer mode does not auto-close in v6
-    return .success                        // v6 equivalent of the old processAction(false)
+    return .success                        // v6 equivalent of processAction(false); SDK dismisses after this
 }
 
 @MainActor
@@ -1004,8 +1003,7 @@ Purchasely.interceptAction<PLYPresentationAction.Purchase> { _, purchase ->
     val bought = runMyBillingFlow(purchase.plan)
     if (!bought) return@interceptAction PLYInterceptResult.FAILED
     Purchasely.synchronize()         // refresh subscriptions cache (onSuccess/onError optional)
-    Purchasely.closeAllScreens()     // dismiss — Observer mode does not auto-close in v6
-    PLYInterceptResult.SUCCESS       // v6 equivalent of the old processAction(false)
+    PLYInterceptResult.SUCCESS       // v6 equivalent of processAction(false); SDK dismisses after this
 }
 ```
 

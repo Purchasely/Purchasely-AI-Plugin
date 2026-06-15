@@ -344,6 +344,8 @@ Purchasely.removeAllActionInterceptors();
 
 `PLYPresentationInfo` → `PLYInterceptorInfo`. `PLYPresentationActionParameters` is removed (parameters are now on each action subclass). Also removed: `PLYPaywallActionHandler`, `PLYCompletionHandler`, `PLYPaywallActionListener`, `PLYProcessActionListener`.
 
+> `OpenPresentation.presentationId` is the **target presentation** the action wants to open (`PLYPresentationAction.OpenPresentation(presentationId = …)` in source) — it is a parameter on the action, not a renamed field. It is distinct from `PLYPresentation.screenId` (the loaded presentation's own id, renamed from `id` in v6). The "don't use `presentationId`" guidance above applies to the loaded `PLYPresentation`, not to this action parameter.
+
 ## Deeplinks and Campaigns
 
 The SDK **auto-intercepts** its own deeplinks (zero code): it reads the foreground activity's intent on create and resume. Manual calls still work and are deduped.

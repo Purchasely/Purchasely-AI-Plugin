@@ -177,6 +177,8 @@ Action data still comes from `PLYPresentationActionParameters`:
 - Promotional offer: `params?.promoOffer?.storeOfferId`.
 - Navigation URL: `params?.url`.
 
+> Note: iOS **retains** `PLYPresentationActionParameters` (passed to every interceptor as `params`). This differs from Android, which removed it in favor of typed `PLYPresentationAction` subclasses carrying their own fields.
+
 Remove interceptors with `Purchasely.removeActionInterceptor(.login)` / `Purchasely.removeAllActionInterceptors()`. The `paywallActionsInterceptor:` start parameter and the `PLYPaywallActionsInterceptor` typealias no longer exist.
 
 ### `PLYPresentationInfo` → `PLYInterceptorInfo`

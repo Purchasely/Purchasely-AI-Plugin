@@ -71,12 +71,12 @@ Purchasely interceptor (suspends)          Native billing service
     │   TransactionResult                        │
     │                                           │
     │ Purchasely.synchronize()                   │
-    │ Purchasely.closeAllScreens()               │
     │ return PLYInterceptResult.SUCCESS          │
+    │ (SDK dismisses after the success result)   │
     │ refresh entitlement state                  │
 ```
 
-> **Native v6:** the interceptor has no `proceed` callback. The per-action handler returns a `PLYInterceptResult`; to wait for the asynchronous native billing result, suspend inside the handler (Android `suspendCancellableCoroutine`, iOS the `async` interceptor form or the completion-based overload), then return `.success` / `.failed` once the `TransactionResult` arrives. v6 Observer mode does not auto-close, so call `Purchasely.closeAllScreens()` before returning.
+> **Native v6:** the interceptor has no `proceed` callback. The per-action handler returns a `PLYInterceptResult`; to wait for the asynchronous native billing result, suspend inside the handler (Android `suspendCancellableCoroutine`, iOS the `async` interceptor form or the completion-based overload), then return `.success` / `.failed` once the `TransactionResult` arrives. On native v6 the SDK dismisses the presentation after a successful result — **do not call `Purchasely.closeAllScreens()` inside the interceptor**; use it only for an explicit out-of-band close.
 
 ### Communication channels
 
@@ -119,7 +119,7 @@ When the per-action handler receives `PURCHASE` / `RESTORE` (in Observer mode), 
 
 | Result | Actions (native v6) |
 |--------|---------|
-| Success | `Purchasely.synchronize(...)` → `Purchasely.closeAllScreens()` → resume handler with `PLYInterceptResult.SUCCESS` → refresh entitlements |
+| Success | `Purchasely.synchronize(...)` → resume handler with `PLYInterceptResult.SUCCESS` (the SDK dismisses after the success result) → refresh entitlements |
 | Cancelled | resume handler with `PLYInterceptResult.FAILED` |
 | Error | resume handler with `PLYInterceptResult.FAILED` |
 | Idle | ignore |

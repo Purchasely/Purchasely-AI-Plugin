@@ -30,7 +30,7 @@ The mapping between the v6 `PLYInterceptResult` and the legacy `proceed`/`proces
 |--------|---------------|------------------------------|
 | `purchase` | User tapped a purchase button | Full mode → `.notHandled`. Observer mode → run your own billing flow, then `.success` (or `.failed`). |
 | `restore` | User tapped Restore | Full mode → `.notHandled`. Observer mode → run your own restore, then `.success` (or `.failed`). |
-| `login` | User tapped a login link | Show your login UI; on success `.notHandled` (let the SDK re-fetch) or `.success`, on cancel `.failed`. |
+| `login` | User tapped a login link | Show your login UI; on success `.notHandled` (let the SDK re-fetch) or `.success`, on cancel `.success`. |
 | `close` | User tapped Close | `.notHandled` to let the SDK dismiss, or handle it and `.success`. |
 | `navigate` | User tapped a custom navigation link | Handle the link (push a screen, open a URL), then `.success`. |
 | `open_presentation` | User tapped a link to another presentation | Either let the SDK handle (`.notHandled`) or build it yourself and `.success`. |
@@ -57,7 +57,7 @@ In v6 the global `setPaywallActionsInterceptor` is removed; register per action 
 ```swift
 Purchasely.interceptAction(.login) { info, params in
     let loggedIn = await self.showLogin()
-    return loggedIn ? .notHandled : .failed   // .notHandled lets the SDK re-fetch with the new user
+    return loggedIn ? .notHandled : .success   // .notHandled lets the SDK re-fetch with the new user
 }
 
 Purchasely.interceptAction(.purchase) { info, params in
@@ -69,7 +69,7 @@ Completion-handler form (Objective-C-compatible):
 
 ```swift
 Purchasely.interceptAction(.login) { info, params, completion in
-    self.showLogin { loggedIn in completion(loggedIn ? .notHandled : .failed) }
+    self.showLogin { loggedIn in completion(loggedIn ? .notHandled : .success) }
 }
 ```
 

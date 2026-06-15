@@ -189,7 +189,7 @@ You can drive a Custom Screen on its own — display it via the normal preload +
 If your Custom Screen runs its own billing flow (legacy paywall variant, etc.), call `Purchasely.synchronize()` after a successful transaction so the SDK refreshes its receipt cache and emits the correct events. **Critical for A/B and A/A tests** — without it, conversions are not attributed to the experiment.
 
 ```swift
-Purchasely.synchronize()
+Purchasely.synchronize(success: {}, failure: { _ in })
 ```
 
 ```kotlin

@@ -1,17 +1,12 @@
 # Flutter Integration
 
-> ⚠️ **Preview — the Flutter v6 API ships in the final 2.0.0 release.** The currently published Flutter SDK is **5.7.3 (v5 API)**; for production today use the v5 API and `purchasely_flutter: 5.7.3`. The v5 Dart surface is `Purchasely.start(...)`, `fetchPresentation` / `presentPresentation[ForPlacement]`, `setPaywallActionInterceptorCallback` + `onProcessAction`, and `closePresentation()` — see the [`purchasely-integrate` skill](../../skills/purchasely-integrate/SKILL.md) Flutter sections and the [v5 docs](https://docs.purchasely.com). The builder-based API documented below (`PurchaselyBuilder`, `PresentationBuilder`, `Purchasely.interceptAction`) is **not published yet** — keep it for reference for when the final release lands.
+## Published version: 5.7.3 (v5 API) — what to use today
 
-> **Purchasely 6.0 API.** This file covers the Flutter plugin adapted to the
-> Purchasely 6.0 native SDKs. The paywall surface (start, display / preload /
-> close, action interceptor) moved to a fluent builder API; everything else on the
-> `Purchasely` class is unchanged. See [`migration-v6.md`](./migration-v6.md) for
-> the complete v5 → 6.0 old→new mapping (e.g. `Purchasely.start(...)` →
-> `PurchaselyBuilder`, `fetchPresentation` / `presentPresentation` →
-> `PresentationBuilder` + `PresentationRequest`,
-> `setPaywallActionInterceptorCallback` / `onProcessAction` →
-> `Purchasely.interceptAction`). There are no `v6` / `V6` symbols — the public Dart
-> symbols keep their plain names.
+> ⚠️ **The published Flutter package is `5.7.3`, which exposes the v5 API.** For any production integration today, pin `purchasely_flutter: 5.7.3` and use the v5 Dart surface: `Purchasely.start(...)`, `fetchPresentation` / `presentPresentation[ForPlacement]`, `setPaywallActionInterceptorCallback` + `onProcessAction`, and `closePresentation()`. See the [`purchasely-integrate` skill](../../skills/purchasely-integrate/SKILL.md) Flutter sections and the [v5 docs](https://docs.purchasely.com). Like React Native and Cordova, Flutter 5.7.3 sits on the **v5 bridge surface** (default Full mode, `onProcessAction`, `closePresentation()`).
+
+## Preview: Flutter v6 builder API — ships in the final 2.0.0 release
+
+> 🚧 **Everything below this point documents the Flutter v6 builder API, which is NOT published yet.** It ships with the final **2.0.0** release and is provided here as a **preview only** — do not treat these APIs as the current integration path. The paywall surface (start, display / preload / close, action interceptor) will move to a fluent builder API (`PurchaselyBuilder`, `PresentationBuilder` + `PresentationRequest`, `Purchasely.interceptAction`); the rest of the `Purchasely` class is unchanged. The preview packages carry `6.0.0-beta.0` version strings. See [`migration-v6.md`](./migration-v6.md) for the complete v5 → 2.0.0 old→new mapping (e.g. `Purchasely.start(...)` → `PurchaselyBuilder`, `fetchPresentation` / `presentPresentation` → `PresentationBuilder` + `PresentationRequest`, `setPaywallActionInterceptorCallback` / `onProcessAction` → `Purchasely.interceptAction`). There are no `v6` / `V6` symbols — the public Dart symbols keep their plain names.
 
 > **Cross-platform reference.** This file covers Flutter-specific syntax. Many concepts (Observer-mode post-purchase flow, presentation type guard, presentation cache, programmatic purchases, audience-targeting attributes, GDPR consent, subscription checks) are **universal across iOS / Android / RN / Flutter / Cordova** and live in `../concepts/`. Load:
 >

@@ -10,7 +10,7 @@ This is the single most impactful change of SDK v6 and it is **silent** — the 
 
 | SDK version | Default running mode |
 |-------------|----------------------|
-| v5.x (and current React Native / Cordova plugins) | **Full** |
+| v5.x (and current React Native / Flutter / Cordova plugins) | **Full** |
 | **v6.0.0-rc1+ (native iOS & Android)** | **Observer** ⚠️ |
 
 > 🚧 In v6, if your app relies on Purchasely to process purchases and validate receipts, you **must set the running mode to Full explicitly**. If you forget, the SDK still compiles and runs but **stops validating transactions**. In Observer mode, presentations also **no longer auto-close** after a purchase/restore (v5 Full auto-appended a `close_all`).
@@ -135,7 +135,7 @@ Purchasely.start(
 );
 ```
 
-> **Cross-platform note.** React Native and Cordova plugins are still on the v5 API (default Full, `start({...})` / positional `start(...)`). Their v6 migrations are pending — keep their existing initialization. Always confirm the exact plugin signature in that platform's integration reference and in [`sdk-versions.md`](../sdk-versions.md).
+> **Cross-platform note.** React Native, Flutter, and Cordova plugins are still on the v5 API (default Full, `start({...})` / positional `start(...)`). Their v6 migrations are pending — keep their existing initialization. Always confirm the exact plugin signature in that platform's integration reference and in [`sdk-versions.md`](../sdk-versions.md).
 
 ## Log Levels
 

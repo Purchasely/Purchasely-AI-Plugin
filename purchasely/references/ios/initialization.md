@@ -34,6 +34,22 @@ dependencies: [
 ]
 ```
 
+### Carthage
+
+Add to your `Cartfile`:
+
+```
+binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json" == 6.0.0-rc1
+```
+
+Then run:
+
+```bash
+carthage update
+```
+
+Pin **exactly** (`== 6.0.0-rc1`) — a floating constraint will not resolve a pre-release.
+
 ## Import
 
 ```swift

@@ -24,7 +24,7 @@ There is **no** `presentation-compose` artifact. For Compose embedding, wrap the
 | Gradle | 9.3.0+ |
 | AGP | 9.x |
 | Kotlin | 2.2.x (K2 compiler) |
-| JDK | 11 |
+| JDK (to build) | 17 |
 | `minSdk` | 23 |
 | `compileSdk` | 36 |
 

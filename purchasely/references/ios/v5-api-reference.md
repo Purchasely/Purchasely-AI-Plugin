@@ -12,8 +12,10 @@ setPaywallActionsInterceptor                 PLYPresentationInfo
 fetchPresentation     presentationController .PresentationView
 PLYProductViewControllerResult               readyToOpenDeeplink
 isDeeplinkHandled     closeDisplayedPresentation                displayMode:
-PLYPaywallActionsInterceptor                 PLYPresentationActionParameters
+PLYPaywallActionsInterceptor
 ```
+
+> `PLYPresentationActionParameters` is **not** a v5-only token on iOS: v6 still passes it to each interceptor as `params`. Only the `PLYPaywallActionsInterceptor` typealias and the `paywallActionsInterceptor:` start parameter were removed.
 
 ## Initialization
 

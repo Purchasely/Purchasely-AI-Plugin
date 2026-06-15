@@ -149,7 +149,7 @@ Purchasely.interceptAction(.purchase) { info, params in
     }
     let error = await ExistingPurchaseManager.shared.purchase(productId: productId)
     if error == nil {
-        Purchasely.synchronize()   // notify Purchasely for analytics + receipt validation
+        Purchasely.synchronize(success: {}, failure: { _ in })   // notify Purchasely for analytics + receipt validation
         return .success            // app handled the purchase
     }
     return .failed
@@ -157,7 +157,7 @@ Purchasely.interceptAction(.purchase) { info, params in
 
 Purchasely.interceptAction(.restore) { info, params in
     let error = await ExistingPurchaseManager.shared.restorePurchases()
-    Purchasely.synchronize()
+    Purchasely.synchronize(success: {}, failure: { _ in })
     return error == nil ? .success : .failed
 }
 ```
@@ -184,7 +184,7 @@ Purchasely.interceptAction(.purchase) { info, params in
         let result = try await product.purchase()
         switch result {
         case .success:
-            Purchasely.synchronize()
+            Purchasely.synchronize(success: {}, failure: { _ in })
             return .success
         case .pending, .userCancelled:
             return .notHandled    // not an error — user backed out
@@ -199,7 +199,7 @@ Purchasely.interceptAction(.purchase) { info, params in
 Purchasely.interceptAction(.restore) { info, params in
     do {
         try await AppStore.sync()
-        Purchasely.synchronize()
+        Purchasely.synchronize(success: {}, failure: { _ in })
         return .success
     } catch {
         return .failed
@@ -290,7 +290,7 @@ actor PresentationCache {
 
 **Invalidation triggers** (when the cached result may be stale):
 - `PLYUserAttributeDelegate.onUserAttributeSet` / `onUserAttributeRemoved` — any attribute change can alter audience targeting
-- Successful `Purchasely.synchronize()` — subscription state may have changed
+- Successful `Purchasely.synchronize(success:failure:)` — subscription state may have changed
 - SDK mode change (Full ↔ Observer)
 
 > Invalidation is intentionally coarse-grained (`invalidateAll`) because the SDK doesn't expose attribute→audience dependencies.

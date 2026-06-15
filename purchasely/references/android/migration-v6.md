@@ -21,7 +21,7 @@ There is **no** `presentation-compose` artifact. For Compose embedding, wrap the
 
 If `6.0.0-rc1` is only installed on the developer machine, add `mavenLocal()` in `dependencyResolutionManagement.repositories` before `google()` and `mavenCentral()`.
 
-SDK v6 uses the modern Android toolchain: Gradle 9.3.0+, AGP 9.x, Kotlin 2.2.x (K2 compiler), JDK 11, minSdk 23, compileSdk 36.
+SDK v6 uses the modern Android toolchain: Gradle 9.3.0+, AGP 9.x, Kotlin 2.2.x (K2 compiler), JDK 17 to build, minSdk 23, compileSdk 36.
 
 The reified entry points `interceptAction<T> { … }` / `removeActionInterceptor<T>()` are `inline` functions targeting JVM 11. Compile your Kotlin module with `jvmTarget = 11`, or use the `Class`-based overload.
 
@@ -235,7 +235,7 @@ prepared.state.collect { state ->
 
 ### Embedded Compose
 
-There is **no** `presentation-compose` artifact and **no** `PLYPresentationView` composable. `buildView(...)` returns an Android `View?`. Wrap it in an `AndroidView`:
+There is **no** `presentation-compose` artifact and **no** `PLYPresentationView` composable. `buildView(...)` returns a `PLYPresentationView?` (an Android `View`). Wrap it in an `AndroidView`:
 
 ```kotlin
 AndroidView(factory = { context ->
@@ -439,7 +439,7 @@ All `intro*` / `introductory*` methods and `INTRO_*` / `TRIAL_*` tags were remov
 Mechanical, in order:
 
 1. **Dependencies** pinned to `6.0.0-rc1`; no `presentation-compose` artifact; alt-store artifacts use `huawei-services` / `amazon`.
-2. **Toolchain**: Gradle 9.3.0+, AGP 9.x, Kotlin 2.2.x, JDK 11, `minSdk 23`, `compileSdk 36`; `org.jetbrains.kotlin.android` plugin and `kotlinOptions {}` removed under AGP 9; Kotlin module on `jvmTarget = 11` (or interceptors use the `Class`-based overload).
+2. **Toolchain**: Gradle 9.3.0+, AGP 9.x, Kotlin 2.2.x, JDK 17 to build, `minSdk 23`, `compileSdk 36`; `org.jetbrains.kotlin.android` plugin and `kotlinOptions {}` removed under AGP 9; Kotlin module on `jvmTarget = 11` (or interceptors use the `Class`-based overload).
 3. **Init**: `runningMode(PLYRunningMode.Full)` set if the app needs purchase validation / auto-close; `PaywallObserver` -> `Observer`; init callback is `start { error -> }`.
 4. **Imports** moved to `io.purchasely.ext.presentation.*`.
 5. **Builder** has no `flowId(...)` / `productId(...)` / `planId(...)`; Flows shown via `app_scheme://ply/flows/FLOW_ID`.
