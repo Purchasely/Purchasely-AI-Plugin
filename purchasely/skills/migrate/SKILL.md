@@ -31,12 +31,12 @@ Determine the project's intended mode before rewriting init: if the v5 code did 
 
 ## Reference files
 
-- `references/android/migration-v6.md` — authoritative Android v5.x → v6.0.0 migration checklist and API mapping.
-- `references/ios/migration-v6.md` — authoritative iOS v5.x → v6.0.0 migration checklist and API mapping.
-- `references/android/v5-api-reference.md` / `references/ios/v5-api-reference.md` — the **v5** API surface, used to recognize the legacy code you are replacing.
-- `references/android/api-reference.md` / `references/ios/api-reference.md` — the **v6** API surface to migrate to.
-- `references/concepts/running-modes.md` — running modes and the default-mode change.
-- `references/sdk-versions.md` — current supported SDK versions.
+- `../../references/android/migration-v6.md` — authoritative Android v5.x → v6.0.0 migration checklist and API mapping.
+- `../../references/ios/migration-v6.md` — authoritative iOS v5.x → v6.0.0 migration checklist and API mapping.
+- `../../references/android/v5-api-reference.md` / `../../references/ios/v5-api-reference.md` — the **v5** API surface, used to recognize the legacy code you are replacing.
+- `../../references/android/api-reference.md` / `../../references/ios/api-reference.md` — the **v6** API surface to migrate to.
+- `../../references/concepts/running-modes.md` — running modes and the default-mode change.
+- `../../references/sdk-versions.md` — current supported SDK versions.
 
 **Always fact-check against the official documentation when a detail is uncertain or not covered by these references.** Same source, two mirrors — use whichever is easier:
 - GitHub: `https://github.com/Purchasely/Documentation/` on the branch matching the target version (`v6.0`).
@@ -55,7 +55,7 @@ Never invent a signature: if the references and the official docs disagree, the 
 ## Mandatory Workflow — Android (Kotlin & Java)
 
 1. Detect Android project files: `settings.gradle(.kts)`, `build.gradle(.kts)`, version catalogs, `gradle-wrapper.properties`, and app modules. Detect the **primary call-site language** of `Purchasely.start(...)` — Kotlin or Java — because that drives the initialization rewrite (Kotlin DSL vs fluent Builder) and the interceptor form (reified vs `Class`-based).
-2. Read `references/android/migration-v6.md`, and skim `references/android/v5-api-reference.md` so you recognize every legacy symbol.
+2. Read `../../references/android/migration-v6.md`, and skim `../../references/android/v5-api-reference.md` so you recognize every legacy symbol.
 3. Find current Purchasely usages with ripgrep (these are the v5 symbols to replace): `Purchasely`, `PLYPresentation`, `PLYPresentationAction`, `setPaywallActionsInterceptor`, `processAction`, `fetchPresentation`, `presentationView`, `PLYPresentationProperties`, `PLYPresentationActionParameters`, `PLYPresentationInfo`, `PLYProductViewResult`, `readyToOpenDeeplink`, `isDeeplinkHandled`, `PaywallObserver`, `subscriptionsFragment`, `purchaseHistory`, `isPastSubscriber`, `hasIntroductoryPrice`, `INTRO_`, `TRIAL_`, `presentationId`, `screenId`.
 4. Update Gradle first:
    - Pin Purchasely Android artifacts to `6.0.0` (`io.purchasely:core`, `io.purchasely:google-play`, optional `io.purchasely:player`). There is **no `presentation-compose` artifact** — do not add one.
@@ -69,7 +69,7 @@ Never invent a signature: if the references and the official docs disagree, the 
 8. **Action interceptor.** Replace the global `setPaywallActionsInterceptor` with per-action interceptors returning `PLYInterceptResult` (`SUCCESS`/`FAILED`/`NOT_HANDLED`; map `processAction(false)`→`SUCCESS`, `processAction(true)`→`NOT_HANDLED`). `PLYPresentationAction` is now a sealed class with typed parameters on each subclass (`Purchase.plan`, `Navigate.url`, …) — `PLYPresentationActionParameters` is gone. Use the reified `interceptAction<PLYPresentationAction.Purchase> { info, purchase -> … }` in Kotlin, or the **`Class`-based overload in Java**: `Purchasely.interceptAction(PLYPresentationAction.Purchase.class, (info, action, result) -> result.invoke(PLYInterceptResult.NOT_HANDLED))`. `PLYPresentationInfo` → `PLYInterceptorInfo`.
 9. **Presentation API.** Replace `fetchPresentation(...)` / `PLYPresentationProperties` with `PLYPresentation { placementId(...) ; screenId(...) ; contentId(...) ; onPresented{…}; onCloseRequested{}; onDismissed{outcome->} }.preload { loaded, error -> }` (or `.preload()` in a coroutine, or the atomic `display(context, presentation, callback)`). **Do not put `flowId`/`productId`/`planId` on the builder — they are not exposed in v6;** display a Flow via its deeplink `app_scheme://ply/flows/FLOW_ID`. Update imports `io.purchasely.ext.*` → `io.purchasely.ext.presentation.*`. Rename `PLYPresentation.id` → `screenId` (keep `screenId`; do not rename Android code to `presentationId`) and `onClose` → `onCloseRequested`. `display(context)` is non-suspend and returns a `PLYPresentationSession` you can `.await()`. Callbacks now deliver one `PLYPresentationOutcome` (`purchaseResult`/`plan`/`closeReason`/`error`); `PLYProductViewResult` → `PLYPurchaseResult`.
 10. **Embedded UI.** Replace `presentationView(...)` with `loaded.buildView(context) { outcome -> }` or `loaded.getFragment { outcome -> }`. For Jetpack Compose there is **no SDK composable** — wrap the view: `AndroidView(factory = { loaded.buildView(it) { outcome -> } })`. Do not reference `io.purchasely:presentation-compose` or a `PLYPresentationView` composable; `PLYPresentationView` is the Android `View` type that `buildView()` returns.
-11. **Observer mode.** If the app used `processAction(Boolean)` to gate the SDK on the host purchase flow, port that to a `pendingResult: ((PLYInterceptResult) -> Unit)?` field + a `suspendCancellableCoroutine` bridge inside the new `suspend` interceptor (see `references/android/migration-v6.md` → "Observer-mode bridge"). On billing success call `Purchasely.synchronize(onSuccess = { … }, onError = { … })` then resolve with `SUCCESS`; resolve `NOT_HANDLED`/`FAILED` otherwise. Clear `pendingResult` in `close()`/`restart()` before `removeAllActionInterceptors()` to avoid leaking suspended coroutines.
+11. **Observer mode.** If the app used `processAction(Boolean)` to gate the SDK on the host purchase flow, port that to a `pendingResult: ((PLYInterceptResult) -> Unit)?` field + a `suspendCancellableCoroutine` bridge inside the new `suspend` interceptor (see `../../references/android/migration-v6.md` → "Observer-mode bridge"). On billing success call `Purchasely.synchronize(onSuccess = { … }, onError = { … })` then resolve with `SUCCESS`; resolve `NOT_HANDLED`/`FAILED` otherwise. Clear `pendingResult` in `close()`/`restart()` before `removeAllActionInterceptors()` to avoid leaking suspended coroutines.
 12. **Other renames/removals.** Deeplinks: `readyToOpenDeeplink` → `allowDeeplink`, `isDeeplinkHandled(uri, activity)` → `handleDeeplink(uri, activity)`; v6 also auto-intercepts deeplinks (the manual call may become unnecessary, but watch the `singleTask`/`singleTop` + `setIntent()` pitfall). User-attribute mutations now return `Deferred<Boolean>` (`.await()` when you need the result). Replace removed APIs: `subscriptionsFragment()` and the subscription/cancellation UI (build your own from `userSubscriptions`/`userSubscriptionsHistory`), `purchaseHistory()` → `userSubscriptionsHistory()`, `isPastSubscriber()` → derive from history, and all `intro*`/`INTRO_*`/`TRIAL_*` → `offer*`/`OFFER_*`.
 13. Update tests to the v6 API and run unit tests.
 14. Run the final Android assemble command before reporting completion.
@@ -77,7 +77,7 @@ Never invent a signature: if the references and the official docs disagree, the 
 ## Mandatory Workflow — iOS (Swift & Objective-C)
 
 1. Detect the iOS project: `*.xcodeproj` / `*.xcworkspace`, `project.yml` (XcodeGen), `Package.swift`, or a `Podfile`. Detect how Purchasely is integrated — **SPM** or **CocoaPods** — and the **call-site language** (Swift vs Objective-C), because both drive the rewrite.
-2. Read `references/ios/migration-v6.md`, and skim `references/ios/v5-api-reference.md` so you recognize every legacy symbol.
+2. Read `../../references/ios/migration-v6.md`, and skim `../../references/ios/v5-api-reference.md` so you recognize every legacy symbol.
 3. Find current Purchasely usages with ripgrep: `start(withAPIKey`, `paywallObserver`, `readyToOpenDeeplink`, `isDeeplinkHandled`, `setPaywallActionsInterceptor`, `proceed(`, `fetchPresentation`, `PresentationView`, `closeDisplayedPresentation`, `PLYProductViewControllerResult`, `PLYPresentationInfo`, `displayMode:`, plus Objective-C call sites (`[Purchasely startWithAPIKey`, `PLYPresentation *`).
 4. Bump the dependency to `6.0.0` first (SPM `from: "6.0.0"` or Podfile `~> 6.0`), resolve packages / `pod install`, and clean the build folder.
 5. Add `@preconcurrency import Purchasely` at SDK call sites compiled under Swift 6 strict concurrency, and relax test targets to `SWIFT_STRICT_CONCURRENCY = minimal`.

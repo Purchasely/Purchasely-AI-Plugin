@@ -398,25 +398,25 @@ These v5 signatures are identical in v6 — leave them alone:
 
 ### Breaking (must fix to compile)
 
-* [ ] Replace `Purchasely.start(withAPIKey:…)` with the fluent chain `Purchasely.apiKey("…")…start()`
-* [ ] If using Full mode, add explicit `.runningMode(.full)` — default changed to `.observer`
-* [ ] Update the completion to a single `Error?` (drop the `Bool success` parameter)
-* [ ] Replace `setPaywallActionsInterceptor { … }` with per-action `Purchasely.interceptAction(.x) { … }`
-* [ ] Map `proceed(false)` → `.success`, `proceed(true)` → `.notHandled`; use `.failed` for failures
-* [ ] Replace `PLYPresentationInfo` with `PLYInterceptorInfo` (`info.presentationId` → `info.presentation?.id`, etc.)
-* [ ] Remove the `paywallActionsInterceptor:` start parameter and any `PLYPaywallActionsInterceptor` typealias
-* [ ] Replace `Purchasely.fetchPresentation(...)` / `presentationController(...)` with `PLYPresentationBuilder.…build().preload { … }`
-* [ ] Replace `controller.PresentationView` with `presentation.swiftUIView` (SwiftUI) / `presentation.controller` (UIKit)
-* [ ] Replace `Purchasely.closeDisplayedPresentation()` with `Purchasely.closeAllScreens()`
-* [ ] Update `Purchasely.display(for:displayMode:)` to `Purchasely.display(for:transition:)`
-* [ ] Replace the `(PLYProductViewControllerResult, PLYPlan?)` tuple with `PLYPresentationOutcome` (`purchaseResult` / `plan` / `closeReason`)
-* [ ] In Objective-C, change `PLYPresentation *` to `id<PLYPresentation>` and `PLYRunningModePaywallObserver` to `PLYRunningModeObserver`
+- [ ] Replace `Purchasely.start(withAPIKey:…)` with the fluent chain `Purchasely.apiKey("…")…start()`
+- [ ] If using Full mode, add explicit `.runningMode(.full)` — default changed to `.observer`
+- [ ] Update the completion to a single `Error?` (drop the `Bool success` parameter)
+- [ ] Replace `setPaywallActionsInterceptor { … }` with per-action `Purchasely.interceptAction(.x) { … }`
+- [ ] Map `proceed(false)` → `.success`, `proceed(true)` → `.notHandled`; use `.failed` for failures
+- [ ] Replace `PLYPresentationInfo` with `PLYInterceptorInfo` (`info.presentationId` → `info.presentation?.id`, etc.)
+- [ ] Remove the `paywallActionsInterceptor:` start parameter and any `PLYPaywallActionsInterceptor` typealias
+- [ ] Replace `Purchasely.fetchPresentation(...)` / `presentationController(...)` with `PLYPresentationBuilder.…build().preload { … }`
+- [ ] Replace `controller.PresentationView` with `presentation.swiftUIView` (SwiftUI) / `presentation.controller` (UIKit)
+- [ ] Replace `Purchasely.closeDisplayedPresentation()` with `Purchasely.closeAllScreens()`
+- [ ] Update `Purchasely.display(for:displayMode:)` to `Purchasely.display(for:transition:)`
+- [ ] Replace the `(PLYProductViewControllerResult, PLYPlan?)` tuple with `PLYPresentationOutcome` (`purchaseResult` / `plan` / `closeReason`)
+- [ ] In Objective-C, change `PLYPresentation *` to `id<PLYPresentation>` and `PLYRunningModePaywallObserver` to `PLYRunningModeObserver`
 
 ### Deprecated (fix before v7)
 
-* [ ] Migrate the pre-`start` `set*` class funcs to chain modifiers
-* [ ] Replace `readyToOpenDeeplink(_:)` with `allowDeeplink(_:)` and `isDeeplinkHandled(deeplink:)` with `handleDeeplink(_:)`
-* [ ] Build and verify no deprecation warnings remain
+- [ ] Migrate the pre-`start` `set*` class funcs to chain modifiers
+- [ ] Replace `readyToOpenDeeplink(_:)` with `allowDeeplink(_:)` and `isDeeplinkHandled(deeplink:)` with `handleDeeplink(_:)`
+- [ ] Build and verify no deprecation warnings remain
 
 ### Verify
 
