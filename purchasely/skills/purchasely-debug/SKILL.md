@@ -27,7 +27,7 @@ The bundled references are intentionally curated, not a full copy of the public 
 - `../../references/concepts/subscription-checks.md` — "user paid but premium gating doesn't unlock" bugs
 - `../../references/concepts/subscription-management.md` — "user cancelled but the app doesn't reflect it" (foreground resync)
 - `../../references/concepts/promotional-offers.md` — promo offer not applied / charged at regular price / `invalidOfferSignature`
-- `../../references/concepts/campaigns.md` — trigger-based campaigns silently don't fire (missing `readyToOpenDeeplink`)
+- `../../references/concepts/campaigns.md` — trigger-based campaigns silently don't fire (missing `readyToOpenDeeplink` on v5 / cross-platform; on native v6 it is `allowDeeplink`, default `true`, and Android auto-intercepts)
 - `../../references/concepts/lottie-animations.md` — blank/static Lottie blocks, missing native bridge/dependency, oversized animation JSON
 - `../../references/concepts/analytics-integration.md` — events fire but don't reach Firebase/Amplitude/AppsFlyer (or duplicate)
 - `../../references/architecture-patterns.md` — for projects using a wrapper class, diagnose wrapper-side issues (init order, decoupled Observer billing)
@@ -62,10 +62,10 @@ Almost no integration ticket can be diagnosed without the SDK log stream. Before
 
 | Platform | How to enable |
 |----------|---------------|
-| iOS (Swift) | `Purchasely.logLevel = .debug` — or pass `logLevel: .debug` to `Purchasely.start(...)` |
-| Android (Kotlin) | `.logLevel(LogLevel.DEBUG)` on the `Purchasely.Builder` |
+| iOS (Swift, v6) | `.logLevel(.debug)` on the init builder chain (`Purchasely.apiKey(...).logLevel(.debug)...`) — or set `Purchasely.logLevel = .debug` at runtime |
+| Android (Kotlin, v6) | `logLevel(LogLevel.DEBUG)` in the `Purchasely { ... }` DSL or on `Purchasely.Builder` (custom loggers now receive all messages regardless of level; `logcatEnabled` is a separate flag) |
 | React Native | `logLevel: Purchasely.LogLevel.DEBUG` in `Purchasely.start({...})` |
-| Flutter | `logLevel: PLYLogLevel.debug` in `Purchasely.start(...)` |
+| Flutter | `logLevel: PLYLogLevel.debug` in `Purchasely.start({...})` — or `Purchasely.setLogLevel(PLYLogLevel.debug)` at runtime |
 | Cordova | `Purchasely.LogLevel.DEBUG` as the 4th argument to `Purchasely.start(...)` |
 
 > **Production note** — debug logs must be gated behind a build flag (`#if DEBUG`, `BuildConfig.DEBUG`, `__DEV__`, etc.). Shipping `.debug` in a release build leaks placement IDs, audience matches, and presentation IDs into device logs.
@@ -96,28 +96,30 @@ Identify the platform (iOS, Android, React Native, Flutter, Cordova) from the co
 
 ### Paywall Not Showing / Blank Screen
 
-1. **Check SDK initialization** -- search for `Purchasely.start(`, `.start(`, or platform-equivalent. Verify the start callback/completion succeeds without errors.
-2. **Check placementId** -- find the `fetchPresentation(` or `presentationFor(` call. Verify the placement ID string matches one that is active in the Purchasely Console.
-3. **Check the presentation result** -- look for how the result of `fetchPresentation` is handled. If the presentation type is `DEACTIVATED`, the Console has disabled it intentionally.
-4. **Check display call** -- on iOS, `display()` or `present()` must be called on the main thread. On Android, the context passed must be an Activity context (not Application).
-5. **Check network** -- search logs or add temporary logging to confirm the SDK can reach Purchasely servers. A missing or invalid API key will also cause silent failures here.
-6. **Check for nil/null guards** -- a common mistake is silently discarding the presentation when it is nil/null instead of logging the error.
+1. **Check SDK initialization** -- native v6: search for the init builder (`Purchasely.apiKey(` on iOS, `Purchasely {` / `Purchasely.Builder(` on Android) and `.start(`; cross-platform: `Purchasely.start(`. Verify the start callback/completion succeeds without errors (native v6 callback is `start { error -> }` / `start { error in }`, a single nullable `PLYError`).
+2. **Check placement / builder** -- native v6: find the `PLYPresentation { placementId(...) }` (Android) / `PLYPresentationBuilder.forPlacementId(...)` (iOS) call and confirm `.preload()` (or `.preload { … }`) is actually invoked — a built-but-never-preloaded/displayed presentation shows nothing. Cross-platform: find the `fetchPresentation(` call. Verify the placement ID string matches one active in the Console (also accept a `screenId(...)` / `.forScreenId(...)` for a direct Screen).
+3. **Check the presentation result** -- look at the loaded presentation's `type`. If it is `DEACTIVATED`, the Console has disabled it intentionally (blank screen is expected). A common native v6 blank-paywall cause is building the presentation but never calling `display(...)`/`buildView(...)` on the loaded object.
+4. **Check display call** -- on iOS, `display(from:)` must run on the main thread. On Android, `display(context)` needs an Activity context (not Application); for embedded use the View comes from `buildView(context) { outcome -> }` (wrap in `AndroidView` for Compose — there is no `PLYPresentationView` composable).
+5. **Check network** -- search logs or add temporary logging to confirm the SDK can reach Purchasely servers. A missing or invalid API key will also cause silent failures here (native v6 surfaces `PLYError.Configuration` / `PLYError.configuration` when the key is blank).
+6. **Check for nil/null guards** -- a common mistake is silently discarding the presentation (or the `.preload { loaded, error -> }` error) instead of logging it.
 
 ### UI Frozen After Paywall Action
 
-This is almost always because `processAction()` / `proceed()` was not called in every code path.
+The cause differs by platform:
+- **Native iOS/Android (v6):** the per-action handler did **not return a `PLYInterceptResult`** on some path (or an `async` handler never resumed). There is no `processAction`/`proceed` callback in v6 — the handler's return value (`.success` / `.failed` / `.notHandled`) is the signal. A handler that throws, hangs on an unawaited async call, or falls through without returning will freeze the paywall.
+- **Cross-platform (RN / Flutter / Cordova):** `onProcessAction()` was not called in every code path.
 
-1. **Find the action interceptor** -- search for `onProcessAction`, `processAction`, `PLYProductViewControllerDelegate`, `PurchaseListener`, or `EventListener` depending on platform.
-2. **Audit every code path** -- every branch (success, failure, cancellation, timeout) MUST call `processAction(true)` or `processAction(false)`. A missing call freezes the paywall.
-3. **Check async operations** -- if the interceptor makes an API call (e.g., login, server validation), verify it always completes. Look for missing error handlers, timeouts, or network failures that skip the callback.
-4. **Check try/catch blocks** -- exceptions caught silently without calling `processAction` will freeze the UI.
-5. **Fix**: ensure every exit path calls `processAction`. When in doubt, wrap the entire handler in a try/finally where the finally calls `processAction(false)`.
+1. **Find the interceptor** -- native v6: search for `Purchasely.interceptAction`. Cross-platform: `setPaywallActionInterceptor` / `onProcessAction`. Older native code may still reference the removed `setPaywallActionsInterceptor` — that won't compile against v6.
+2. **Audit every code path** -- native v6: every branch (success, failure, cancellation, timeout) MUST return a `PLYInterceptResult`. Cross-platform: every branch MUST call `onProcessAction(true/false)`. A missing return / missing call freezes the paywall.
+3. **Check async operations** -- if the handler makes an API call (login, server validation), verify it always resolves. Native v6 `async` handlers must reach a `return`; the completion-based form must always invoke the completion. Look for missing error handlers, timeouts, or network failures that skip it.
+4. **Check try/catch blocks** -- native v6: a caught exception must still `return .failed` (or `.notHandled`). Cross-platform: it must still call `onProcessAction(false)`.
+5. **Fix**: ensure every exit path produces a result. Native v6: wrap in `do/catch` (Swift) / `try/finally` (Kotlin) and return `.failed` on error. Cross-platform: `try/finally` calling `onProcessAction(false)`.
 
 ### Purchases Not Working
 
-1. **Check running mode** -- search for `runningMode`, `.full`, `.paywallObserver`, or `PLYRunningMode`. Determine if the app uses Full mode or Observer mode.
-2. **Full mode**: the SDK handles the purchase flow. Check that store products are correctly configured in the Purchasely Console and that the store (App Store / Google Play) sandbox account is set up.
-3. **Observer mode**: the app handles purchases itself. After a successful purchase, `Purchasely.synchronize()` must be called so the SDK knows about it.
+1. **Check running mode** -- search for `runningMode`, `.full`, `.observer`/`PLYRunningMode.Observer`, or `PLYRunningMode`. ⚠️ **On native iOS/Android v6 the default changed from Full to Observer, silently.** If the init does NOT call `.runningMode(.full)` (iOS) / `runningMode(PLYRunningMode.Full)` (Android), the SDK is in Observer mode and will NOT process or validate purchases — this is the #1 "purchases stopped working after upgrading to v6" cause. (`PLYRunningMode.PaywallObserver` was also renamed to `PLYRunningMode.Observer`.)
+2. **Full mode**: the SDK handles the purchase flow. Check that store products are correctly configured in the Console and that the store sandbox account is set up. On native v6, a Full-mode purchase with no store configured returns `PLYError.NoStoreConfigured`.
+3. **Observer mode**: the app handles purchases itself. After a successful purchase, `Purchasely.synchronize()` must be called so the SDK validates the receipt. Native v6 Observer mode also does NOT auto-close the paywall (the implicit `close_all` is Full-only) — return `PLYInterceptResult.SUCCESS` to resolve the interceptor, then dismiss with `Purchasely.closeAllScreens()` from your billing-result handler (after the interceptor has resolved), unless a `close` / `close_all` action is configured on the button in the Console.
 4. **Check store configuration** -- verify product IDs in Console match the store exactly (case-sensitive). Check that subscriptions/products are approved and available in sandbox.
 5. **Check sandbox/test accounts** -- on iOS, verify a Sandbox Apple ID is signed in under Settings > App Store. On Android, verify the test account is in the license testers list.
 
@@ -132,11 +134,12 @@ This is almost always because `processAction()` / `proceed()` was not called in 
 
 ### Deeplinks Not Working
 
-1. **Check handler method** -- search for `handleDeeplink` (current) vs `isDeeplinkHandled` (deprecated). If using the deprecated version, recommend switching to `handleDeeplink`.
-2. **Check deeplink readiness flags** -- search for `readyToOpenDeeplink`. It must be set to `true` before deeplinks will be processed on the current 5.x SDK line.
-3. **Check default presentation result handler** -- `setDefaultPresentationResultHandler` must be configured, or the SDK has nowhere to send deeplink paywall results.
-4. **Check URL scheme / universal links** -- verify the app's URL scheme or associated domains are correctly configured in the platform project settings and match what the Console generates.
-5. **Check timing** -- if `handleDeeplink` is called before `start()` completes, it will silently fail.
+1. **Check handler method** -- native v6: `handleDeeplink(...)` (renamed from `isDeeplinkHandled(...)`); cross-platform / v5: `handleDeeplink` (current) vs `isDeeplinkHandled` (deprecated). If the deprecated name is used, recommend switching.
+2. **Check the deeplink display flag** -- native v6 renamed `readyToOpenDeeplink` → `allowDeeplink`, default **true** (so usually nothing to set). On cross-platform (v5) `readyToOpenDeeplink(true)` must be set after the UI is ready. If a native app explicitly set `allowDeeplink(false)`, deeplinks won't display.
+3. **Android v6 auto-interception** -- Android v6 reads the foreground activity intent automatically (zero code). **Pitfall:** a `singleTask`/`singleTop` activity that receives the deeplink in `onNewIntent` WITHOUT calling `setIntent(intent)` hides the URI — the SDK never sees it. Verify `setIntent(intent)` is called, or fall back to a manual `handleDeeplink(uri, activity)`. iOS does NOT auto-intercept — `handleDeeplink(url)` must be wired from AppDelegate/SceneDelegate.
+4. **Check default presentation result handler** -- `setDefaultPresentationResultHandler` must be configured, or the SDK has nowhere to send deeplink paywall results.
+5. **Check URL scheme / universal links** -- verify the app's URL scheme or associated domains are correctly configured and match what the Console generates.
+6. **Check timing** -- if `handleDeeplink` is called before `start()` completes, it will silently fail. For a cold-start deeplink, pass it on the init builder (`.handleDeeplink(url)` / `.handleDeeplink(intent.data)`).
 
 ### Events Not Firing
 
@@ -148,7 +151,7 @@ This is almost always because `processAction()` / `proceed()` was not called in 
 ### Paywall Showing Wrong Content
 
 1. **Check placement vs presentation** -- a placement can have multiple presentations with audience targeting and A/B tests. The "wrong" content may be the correct one for the current audience.
-2. **Check audience targeting** -- verify user attributes are set correctly before fetching the presentation. Use `Purchasely.setAttribute()` calls and verify they happen before `fetchPresentation`.
+2. **Check audience targeting** -- verify user attributes are set correctly before building/fetching the presentation. Use `Purchasely.setUserAttribute()` calls and verify they happen before the presentation resolves (native v6 `.preload()` / cross-platform `fetchPresentation`). Note: **Android** v6 user-attribute setters return `Deferred<Boolean>` and can be awaited if you need to guarantee ordering (iOS setters return no value).
 3. **Check A/B test configuration** -- in the Console, check if an A/B test is active on the placement. The user may be seeing the variant, not the control.
 4. **Check caching** -- the SDK caches presentations. During development, try clearing the app data/cache or reinstalling.
 5. **Check presentationId vs placementId** -- using `presentationId` directly bypasses placement logic (audiences, A/B tests). Verify the correct method is called.
@@ -162,9 +165,9 @@ After identifying the likely issue category:
 3. **Propose a fix** with concrete code changes. Show the before and after.
 4. **If the cause is unclear**, suggest adding temporary debug logging at key points:
    - Before and after `start()`
-   - In the `fetchPresentation` callback (log the result type and any error)
+   - Where the presentation finishes loading (native v6: the builder `onPresented` / `.preload` result — log type + error; cross-platform: the `fetchPresentation` callback)
    - In every branch of the action interceptor
-   - Before and after `processAction` calls
+   - At each interceptor exit (native v6: log the returned `PLYInterceptResult`; cross-platform: before/after `onProcessAction`)
 
 ## Step 4: Common Fixes Database
 
@@ -173,19 +176,19 @@ When you identify one of these patterns, apply the known fix immediately:
 | Symptom | Root Cause | Fix |
 |---------|-----------|-----|
 | Paywall shows briefly then disappears | Fragment/View lifecycle issue; no strong reference kept to the presentation controller | Store the controller/fragment in a property that outlives the current scope |
-| `processAction` called but nothing happens | Boolean argument is inverted (`true` vs `false` swapped) | `processAction(true)` means "continue the SDK flow"; `false` means "I handled it myself" -- verify the intent matches |
+| Interceptor result has the opposite effect of what's intended | Wrong `PLYInterceptResult` returned (native v6) or inverted boolean in `onProcessAction` (cross-platform) | Native v6: `.notHandled` = "SDK, you do it"; `.success` = "I handled it, chain advances"; `.failed` = "I tried and failed, skip the rest". (Maps from v5: `processAction(true)` → `.notHandled`, `processAction(false)` → `.success`.) Cross-platform: `onProcessAction(true)` continues the SDK flow, `false` means you handled it -- verify the intent matches |
 | Events fire twice | Listener registered in `onResume`/`viewWillAppear` instead of `onCreate`/`viewDidLoad` | Move registration to a lifecycle method that runs only once, or guard with a flag |
 | User attributes not syncing | `setAttribute` called before `start()` completes | Move `setAttribute` calls into the `start()` completion handler or after it resolves |
 | Wrong paywall showing | Confusion between `placementId` and `presentationId`, or audience not matching | Use `placementId` for production flows (respects targeting); `presentationId` only for testing a specific screen |
 | Purchase succeeds but status not updated | Observer mode without `synchronize()` call | Add `Purchasely.synchronize()` after every successful purchase in Observer mode. If using a wrapper pattern, ensure the wrapper calls `synchronize()` when observing `TransactionResult.Success` |
-| Observer purchase works but paywall freezes | `processAction` not called after native purchase completes | In wrapper-based architectures, ensure `TransactionResult` observation calls `pendingProcessAction(false)` for all outcomes (success, cancel, error) |
+| Observer purchase works but paywall freezes | The interceptor never signalled completion after the native purchase finished | Native v6: the `.purchase` handler must `return PLYInterceptResult.SUCCESS` (or `.FAILED`) for every outcome (success, cancel, error) -- a hung/unawaited billing call leaves it unsignalled. Cross-platform: call `onProcessAction(false)` for all outcomes. In decoupled (reactive) architectures, make sure the billing result is mapped back to a returned result / completion for every branch |
 | Paywall loads but buttons do nothing | `PLYUIDelegate` / `UIDelegate` not set or not retained | Set the delegate and store a strong reference to the delegate object |
 | Crash on paywall display (Android) | Application context passed instead of Activity context | Pass the current Activity, not `applicationContext` |
 | App freezes after closing a flow paywall (touches don't register) | The X button fires `.close` (back navigation) instead of `.closeAll` (full exit); `PLYWindow` stays alive waiting for a next step that never comes | Fix the paywall in Purchasely Console: change X button action from `close` to `closeAll`. Fallback: map `.close` → `closeAllScreens()` in interceptor. See `../../references/troubleshooting/common-issues.md` §11 |
-| Paywall doesn't dismiss after Observer-mode purchase | Dismiss API not called, or called BEFORE `proceed(false)` / `processAction(false)` | Order MUST be `proceed(false)` → dismiss. Native iOS/Android use `closeAllScreens()`; React Native / Flutter / Cordova public bridges use `closePresentation()`. iOS requires SDK 5.7.5+ and `Task { @MainActor in … }` from non-isolated contexts |
+| Paywall doesn't dismiss after Observer-mode purchase | Observer mode does **not** auto-close (the implicit `close_all` is Full-only), so the app must dismiss itself — the missing `closeAllScreens()` is the bug; or (cross-platform) the dismiss/signal order is wrong | Native iOS/Android v6: inside the `.purchase` handler, `synchronize()` → `return PLYInterceptResult.SUCCESS`, then call `Purchasely.closeAllScreens()` from your billing-result handler **after** the interceptor has resolved (do not call it inside the interceptor closure before returning — that races the SDK). Or configure a `close` / `close_all` action on the button in the Console. iOS `closeAllScreens()` is `@MainActor`-isolated — wrap in `Task { @MainActor in … }` from non-isolated contexts. Cross-platform (RN / Flutter / Cordova): `onProcessAction(false)` → `closePresentation()`, in that order |
 | Wrong screen reappears after Observer-mode purchase (e.g. the onboarding paywall replays) | The flow hosting the placement chains a post-purchase step to the wrong paywall on the Console | Inspect `flow_id` + `displayed_presentation` in the `PRESENTATION_LOADED` event after purchase. Dashboard → Flows → fix the post-purchase branch |
 | Chained follow-up placement shows the wrong/fallback screen | The follow-up `fetchPresentation` resolved against stale subscription state | iOS: await `synchronize()` via `withCheckedThrowingContinuation` BEFORE fetching the next placement. Android: fire-and-forget — accept brief stale-state risk |
-| Paywall not updating after Console changes | SDK presentation cache | Clear app data, force kill, or invalidate the app-side cache via attribute change (iOS `PLYUserAttributeDelegate`) or explicit `wrapper.synchronize()`/`wrapper.restart()` (Android) |
+| Paywall not updating after Console changes | SDK presentation cache | Clear app data, force kill, or invalidate any app-side cache via an attribute change (iOS `PLYUserAttributeDelegate`) or an explicit `Purchasely.synchronize()` (Android) |
 | iOS compile error: *"Call to main actor-isolated class method 'closeAllScreens()' in a synchronous nonisolated context."* | Calling `closeAllScreens()` from a `DispatchQueue.main.async` block, a `synchronize(success:)` callback, or a `nonisolated` delegate | Wrap in `Task { @MainActor in Purchasely.closeAllScreens() }` |
 | iOS: presentation re-fetches on every `.onAppear` (and Flow paywalls get stuck) | SDK has no native placement-level cache; repeated fetches accumulate `flowSteps` entries in `FlowsManager` | Add an app-side `PresentationCache` keyed by `placementId[/contentId]`. Invalidate on user-attribute changes and `synchronize()`. See `../../references/ios/common-patterns.md` |
 | RN/Flutter/Cordova: same stuck-paywall / repeated-fetch issue as iOS above | Same SDK quirk — the cross-platform bridge calls native fetch every time and has no shared cache | Apply the universal cache pattern from `../../references/concepts/presentation-cache.md` (skeleton implementations included for RN, Flutter, Cordova) |

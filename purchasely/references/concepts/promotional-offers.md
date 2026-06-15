@@ -93,22 +93,20 @@ The SDK fetches the Apple signature transparently. No app-side cryptography is r
 
 #### Android (Kotlin) — offer token from the interceptor
 
+In v6 the offer parameters live on the `PLYPresentationAction.Purchase` sealed subclass; register a per-action interceptor and return a `PLYInterceptResult`:
+
 ```kotlin
-Purchasely.setPaywallActionsInterceptor { info, action, parameters, processAction ->
-    when (action) {
-        PLYPresentationAction.PURCHASE -> {
-            val sku = parameters.subscriptionOffer?.subscriptionId
-            val basePlanId = parameters.subscriptionOffer?.basePlanId
-            val offerId = parameters.subscriptionOffer?.offerId
-            val offerToken = parameters.subscriptionOffer?.offerToken
+Purchasely.interceptAction<PLYPresentationAction.Purchase> { info, purchase ->
+    val sku = purchase.subscriptionOffer?.subscriptionId
+    val basePlanId = purchase.subscriptionOffer?.basePlanId
+    val offerId = purchase.subscriptionOffer?.offerId
+    val offerToken = purchase.subscriptionOffer?.offerToken
 
-            // Trigger your own Google Play Billing purchase with offerToken
-            // …
+    // Trigger your own Google Play Billing purchase with offerToken, then synchronize
+    // …
+    Purchasely.synchronize(onSuccess = { }, onError = { })
 
-            processAction(false)
-        }
-        else -> processAction(true)
-    }
+    PLYInterceptResult.SUCCESS   // app handled the purchase
 }
 ```
 

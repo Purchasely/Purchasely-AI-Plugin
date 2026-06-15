@@ -16,7 +16,7 @@ Applies to: **iOS (Swift/SwiftUI) and Android (Kotlin)** — SDK **v5.6.0+** man
 
 ## How it works (handover model)
 
-1. The app fetches a Screen / Flow as usual (`fetchPresentation(...)` then `display()`).
+1. The app fetches a Screen / Flow as usual (native iOS/Android v6: `PLYPresentationBuilder` / the `PLYPresentation { }` DSL + `preload`, then `display(...)`).
 2. When the SDK reaches a step whose layout is **Bring Your Own Screen**, it does **not** render it. Instead it invokes your delegate (iOS) / provider (Android) with a `PLYPresentation` carrying:
    - `id` — the Screen ID configured in the Console.
    - `connections` — the list of exit points (each `PLYConnection` has an `id` like `login_successful`, `signup`, `cancel`).
@@ -182,14 +182,14 @@ override fun onCustomScreenRequested(presentation: PLYPresentation): PLYCustomSc
 
 ## Standalone usage (no Flow)
 
-You can drive a Custom Screen on its own — display it via the normal `fetchPresentation(...)` + `display()` path. The delegate/provider is invoked, you build the view, the user taps a button, and you call `executeConnection(...)` with the matching connection. The connection's configured action runs (e.g. open the next placement, close the experience).
+You can drive a Custom Screen on its own — display it via the normal preload + `display(...)` path (native iOS/Android v6: `PLYPresentationBuilder` / the `PLYPresentation { }` DSL). The delegate/provider is invoked, you build the view, the user taps a button, and you call `executeConnection(...)` with the matching connection. The connection's configured action runs (e.g. open the next placement, close the experience).
 
 ## Synchronizing purchases performed in a Custom Screen
 
 If your Custom Screen runs its own billing flow (legacy paywall variant, etc.), call `Purchasely.synchronize()` after a successful transaction so the SDK refreshes its receipt cache and emits the correct events. **Critical for A/B and A/A tests** — without it, conversions are not attributed to the experiment.
 
 ```swift
-Purchasely.synchronize()
+Purchasely.synchronize(success: {}, failure: { _ in })
 ```
 
 ```kotlin

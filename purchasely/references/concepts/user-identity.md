@@ -26,7 +26,7 @@ Does your app have a login / signup flow?
 └── Yes
     ├── Is the user already logged in when the app launches?
     │   └── YES → call userLogin(userId) inside / immediately after start() completion
-    │             (before any fetchPresentation / synchronize call).
+    │             (before any presentation fetch / preload / synchronize call).
     │
     ├── Does the user log in mid-session (login screen)?
     │   └── YES → call userLogin(userId) on successful authentication, BEFORE you
@@ -46,7 +46,7 @@ Does your app have a login / signup flow?
 | End of `signIn` / `signUp` success | Merges any anonymous receipts; needs to happen **before** subscription gating runs. |
 | `applicationDidBecomeActive` / `onResume` after a logout-then-login on another device | Pulls latest server-side state if the user logged in elsewhere. |
 
-> **Order matters.** If `fetchPresentation` runs before `userLogin`, the audience evaluation may run against the anonymous user (no targeting matches). Always **set the identity first**, then fetch.
+> **Order matters.** If a presentation fetch/preload runs before `userLogin`, the audience evaluation may run against the anonymous user (no targeting matches). Always **set the identity first**, then fetch.
 
 ## When to call `userLogout`
 
@@ -173,7 +173,7 @@ document.addEventListener('resume', () => {
 
 ## Anti-patterns
 
-- ❌ **Calling `userLogin` inside the `start()` closure without ordering.** If you also call `fetchPresentation` from the same closure, race the identity ahead.
+- ❌ **Calling `userLogin` inside the `start()` closure without ordering.** If you also fetch/preload a presentation from the same closure, race the identity ahead.
 - ❌ **Calling `userLogout` then `userLogin` on every app launch.** That generates a new anonymous ID each time and breaks attribution. Persist the session, restore the ID, call `userLogin` once.
 - ❌ **Hashing or encrypting the userId before passing it.** The userId is a stable identifier you control — keep it stable, reversible, and consistent with your backend / webhooks. PII concerns belong to user attributes, not the ID.
 - ❌ **Skipping `synchronize` on Observer mode.** Without it, the server never learns about purchases handled by your billing layer.

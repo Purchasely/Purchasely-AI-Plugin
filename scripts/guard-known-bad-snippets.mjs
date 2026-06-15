@@ -31,6 +31,7 @@ const requiredBuildGateSkillFiles = [
   'purchasely/skills/purchasely-debug/SKILL.md',
   'purchasely/skills/purchasely-integrate/SKILL.md',
   'purchasely/skills/purchasely-review/SKILL.md',
+  'purchasely/skills/migrate/SKILL.md',
 ];
 
 for (const rel of requiredBuildGateSkillFiles) {
@@ -87,8 +88,12 @@ for (const file of walk(root)) {
     if (/storePromotionalOffer/.test(line)) {
       failures.push(`${where} uses stale iOS promotional-offer parameter`);
     }
-    if (/allowDeeplink/.test(line)) {
-      failures.push(`${where} uses SDK 6 deeplink readiness name in 5.x references`);
+    // Flutter is intentionally NOT included here: the flutter/*.md files carry an explicit
+    // preview section for the upcoming v6 Flutter builder API, which legitimately uses
+    // allowDeeplink. React Native / Cordova have no such preview, so allowDeeplink there is
+    // always a v5 mistake (the v5 name is readyToOpenDeeplink).
+    if ((rel.includes('react-native') || rel.includes('cordova')) && /allowDeeplink/.test(line) && !isInstructionalNegative(line)) {
+      failures.push(`${where} uses the v6 deeplink readiness name (allowDeeplink) in a v5 cross-platform (React Native / Cordova) reference — use readyToOpenDeeplink`);
     }
     if (/userSubscriptions\(invalidateCache/.test(line) && rel.includes('flutter')) {
       failures.push(`${where} uses unsupported Flutter userSubscriptions invalidateCache parameter`);

@@ -155,7 +155,7 @@ Purchasely.restoreAllProducts(
 
 > On iOS, restore may prompt the user to sign in to the App Store. On Android, it queries Google Play Billing locally (no prompt). The user experience differs; account for that in your UI copy.
 
-> **Observer mode:** if you handle restores yourself, intercept the `RESTORE` action in the [paywall actions interceptor](paywall-actions.md), run your own restore flow, then call `Purchasely.synchronize()` followed by `proceed(success)`.
+> **Observer mode:** if you handle restores yourself, intercept the `RESTORE` action in the [paywall actions interceptor](paywall-actions.md), run your own restore flow, then call `Purchasely.synchronize()` and resolve the interceptor (native iOS/Android v6: return `PLYInterceptResult.success` / `SUCCESS`; cross-platform: `proceed(success)`).
 
 ## Close paywalls programmatically
 
