@@ -87,8 +87,8 @@ for (const file of walk(root)) {
     if (/storePromotionalOffer/.test(line)) {
       failures.push(`${where} uses stale iOS promotional-offer parameter`);
     }
-    if (/allowDeeplink/.test(line)) {
-      failures.push(`${where} uses SDK 6 deeplink readiness name in 5.x references`);
+    if ((rel.includes('react-native') || rel.includes('cordova')) && /allowDeeplink/.test(line) && !isInstructionalNegative(line)) {
+      failures.push(`${where} uses the v6 deeplink readiness name (allowDeeplink) in a v5 cross-platform (React Native / Cordova) reference — use readyToOpenDeeplink`);
     }
     if (/userSubscriptions\(invalidateCache/.test(line) && rel.includes('flutter')) {
       failures.push(`${where} uses unsupported Flutter userSubscriptions invalidateCache parameter`);
