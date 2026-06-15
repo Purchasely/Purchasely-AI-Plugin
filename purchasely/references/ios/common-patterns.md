@@ -1,219 +1,208 @@
 # iOS Common Integration Patterns
 
-> **Platform-specific elaborations.** This file covers iOS idioms (SwiftUI, UIKit, Swift 6 concurrency, external billing / StoreKit 2 bridging). Concepts that apply to **every** Purchasely SDK (Observer-mode post-purchase flow, presentation type guard, presentation cache, audience-targeting attributes, GDPR consent, subscription checks) live in `../concepts/`:
+> **Platform-specific elaborations for v6.0.0.** This file covers iOS idioms (SwiftUI, UIKit, Swift 6 concurrency, external billing / StoreKit 2 bridging). Concepts that apply to **every** Purchasely SDK (Observer-mode post-purchase flow, presentation type guard, presentation cache, audience-targeting attributes, GDPR consent, subscription checks) live in `../concepts/`:
 >
-> - [`../concepts/running-modes.md`](../concepts/running-modes.md), [`../concepts/paywall-actions.md`](../concepts/paywall-actions.md), [`../concepts/presentation-types.md`](../concepts/presentation-types.md), [`../concepts/presentation-cache.md`](../concepts/presentation-cache.md), [`../concepts/observer-mode-post-purchase.md`](../concepts/observer-mode-post-purchase.md), [`../concepts/user-attributes-targeting.md`](../concepts/user-attributes-targeting.md), [`../concepts/subscription-checks.md`](../concepts/subscription-checks.md), [`../sdk-versions.md`](../sdk-versions.md) (iOS pinned at **5.7.5**).
+> - [`../concepts/running-modes.md`](../concepts/running-modes.md), [`../concepts/paywall-actions.md`](../concepts/paywall-actions.md), [`../concepts/presentation-types.md`](../concepts/presentation-types.md), [`../concepts/presentation-cache.md`](../concepts/presentation-cache.md), [`../concepts/observer-mode-post-purchase.md`](../concepts/observer-mode-post-purchase.md), [`../concepts/user-attributes-targeting.md`](../concepts/user-attributes-targeting.md), [`../concepts/subscription-checks.md`](../concepts/subscription-checks.md). Migrating from v5? See [`migration-v6.md`](migration-v6.md).
 
 ## Displaying a Paywall from SwiftUI
 
-For normal modal/full-screen paywalls and Flows, prefer `fetchPresentation(...)` followed by `presentation.display(from:)`. Use the controller patterns below only when SwiftUI must own the embedded container.
-
-Use a `UIViewControllerRepresentable` wrapper to embed the Purchasely paywall in SwiftUI:
+For SwiftUI apps, build the presentation with `PLYPresentationBuilder`, preload it, and read `presentation.swiftUIView` — a native SwiftUI `View`. No `UIViewControllerRepresentable` wrapper needed.
 
 ```swift
 import SwiftUI
 import Purchasely
 
-struct PaywallView: UIViewControllerRepresentable {
-    let placementId: String
-    @Environment(\.dismiss) var dismiss
+@MainActor
+final class PaywallLoader: ObservableObject {
+    @Published var paywallView: AnyView?
 
-    func makeUIViewController(context: Context) -> UIViewController {
-        let controller = Purchasely.presentationController(
-            for: placementId,
-            loaded: { _, isLoaded, error in
-                if let error = error {
-                    print("Paywall load error: \(error)")
-                }
-            },
-            completion: { result, plan in
-                dismiss()
+    func load(placementId: String) {
+        PLYPresentationBuilder
+            .forPlacementId(placementId)
+            .onDismissed { outcome in
+                // user closed; outcome.purchaseResult / outcome.closeReason
             }
-        )
-        return controller ?? UIViewController()
+            .build()
+            .preload { presentation, error in
+                if let error { print("Paywall load error: \(error)") }
+                // swiftUIView is nil for .deactivated presentations
+                if let view = presentation?.swiftUIView {
+                    self.paywallView = AnyView(view)
+                }
+            }
     }
-
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
 }
 
-// Usage in a SwiftUI View:
 struct ContentView: View {
-    @State private var showPaywall = false
+    @StateObject private var loader = PaywallLoader()
 
     var body: some View {
-        Button("Show Paywall") {
-            showPaywall = true
+        Group {
+            if let view = loader.paywallView {
+                view
+            } else {
+                ProgressView()
+            }
         }
-        .fullScreenCover(isPresented: $showPaywall) {
-            PaywallView(placementId: "ONBOARDING")
-        }
+        .onAppear { loader.load(placementId: "ONBOARDING") }
     }
 }
+```
+
+For a full-screen / modal presentation that the SDK presents for you, the one-liner is enough:
+
+```swift
+Purchasely.display(for: "ONBOARDING", transition: nil)   // backend-defined transition
 ```
 
 ## Displaying a Paywall from UIKit
 
-For regular modal display, prefer:
+For regular modal display, preload via the builder and call `display(from:)`:
 
 ```swift
-Purchasely.fetchPresentation(for: "ONBOARDING") { presentation, error in
-    guard let presentation,
-          presentation.type == .normal || presentation.type == .fallback else { return }
-    presentation.display(from: self)
-} completion: { result, plan in
-    // Handle result
+Task {
+    do {
+        let presentation = try await PLYPresentationBuilder
+            .forPlacementId("ONBOARDING")
+            .build()
+            .preload()
+        guard presentation.type == .normal || presentation.type == .fallback else { return }
+        presentation.display(from: self)   // flows: presentation.display() — see isFlow
+    } catch {
+        print("Paywall error: \(error)")
+    }
 }
 ```
 
-Use `presentationController(...)` only when you need to push/embed the controller yourself.
-
-### Modal Presentation
+When SwiftUI/UIKit must own the embedded container (push onto a navigation stack, host in a custom window, render a nested Screen), read `presentation.controller` (a `UIViewController`):
 
 ```swift
-let controller = Purchasely.presentationController(
-    for: "ONBOARDING",
-    loaded: { _, isLoaded, error in
-        // Paywall content loaded
-    },
-    completion: { result, plan in
-        self.dismiss(animated: true)
+PLYPresentationBuilder
+    .forPlacementId("SETTINGS_PAYWALL")
+    .onDismissed { outcome in /* dismissed */ }
+    .build()
+    .preload { presentation, error in
+        guard let controller = presentation?.controller else { return }
+        controller.modalPresentationStyle = .fullScreen
+        self.present(controller, animated: true)
     }
-)
-if let controller = controller {
-    controller.modalPresentationStyle = .fullScreen
-    present(controller, animated: true)
-}
-```
-
-### Push onto Navigation Stack
-
-```swift
-let controller = Purchasely.presentationController(
-    for: "SETTINGS_PAYWALL",
-    loaded: nil,
-    completion: { result, plan in
-        self.navigationController?.popViewController(animated: true)
-    }
-)
-if let controller = controller {
-    navigationController?.pushViewController(controller, animated: true)
-}
 ```
 
 ## Handling the LOGIN Action
 
-When users tap "Login" on a paywall, intercept the action and present your login flow:
+When users tap "Login" on a paywall, intercept the action and present your login flow. Register one interceptor per action; the closure returns a `PLYInterceptResult`:
 
 ```swift
-Purchasely.setPaywallActionsInterceptor { [weak self] action, parameters, presentationInfo, proceed in
-    switch action {
-    case .login:
-        self?.presentLoginScreen { success, userId in
-            if success, let userId = userId {
-                Purchasely.userLogin(with: userId) { _ in
-                    return true // refresh paywall with user's entitlements
-                }
-                proceed(true)
-            } else {
-                proceed(false) // user cancelled login
-            }
+Purchasely.interceptAction(.login) { [weak self] info, params in
+    guard let self else { return .notHandled }
+    let (success, userId) = await self.presentLoginScreen()
+    if success, let userId {
+        Purchasely.userLogin(with: userId) { _ in
+            return true   // refresh paywall with the user's entitlements
         }
-    default:
-        proceed(true)
+        return .success   // app handled the login
     }
+    return .failed        // user cancelled / login failed
 }
 
-func presentLoginScreen(completion: @escaping (Bool, String?) -> Void) {
-    let loginVC = LoginViewController()
-    loginVC.onComplete = completion
-    if let topVC = UIApplication.shared.topViewController() {
-        topVC.present(loginVC, animated: true)
+@MainActor
+func presentLoginScreen() async -> (Bool, String?) {
+    await withCheckedContinuation { cont in
+        let loginVC = LoginViewController()
+        loginVC.onComplete = { success, userId in cont.resume(returning: (success, userId)) }
+        UIApplication.shared.topViewController()?.present(loginVC, animated: true)
     }
 }
 ```
 
-## PaywallObserver Mode with an Existing Purchase Manager
-
-Use Purchasely for paywall display only while your existing purchase manager handles purchases:
+Completion-handler form (no async context):
 
 ```swift
-// Initialize in observer mode
-Purchasely.start(withAPIKey: "YOUR_API_KEY",
-                  runningMode: .observer,
-                  storekitSettings: .storeKit2) { success, error in }
-
-// Intercept purchase actions to route through your existing purchase manager
-Purchasely.setPaywallActionsInterceptor { action, parameters, presentationInfo, proceed in
-    switch action {
-    case .purchase:
-        guard let plan = parameters?.plan,
-              let productId = plan.appleProductId else {
-            proceed(false)
-            return
+Purchasely.interceptAction(.login) { info, params, completion in
+    presentLoginScreen { success, userId in
+        if success, let userId {
+            Purchasely.userLogin(with: userId) { _ in true }
+            completion(.success)
+        } else {
+            completion(.failed)
         }
-        ExistingPurchaseManager.shared.purchase(productId: productId) { result in
-            let error = result.error
-            if let error = error {
-                proceed(false)
-            } else {
-                // Notify Purchasely of the purchase for analytics
-                Purchasely.synchronize(success: {}, failure: { _ in })
-                proceed(true)
-            }
-        }
-    case .restore:
-        ExistingPurchaseManager.shared.restorePurchases { error in
-            Purchasely.synchronize(success: {}, failure: { _ in })
-            proceed(error == nil)
-        }
-    default:
-        proceed(true)
     }
 }
 ```
 
-## PaywallObserver Mode with StoreKit 2
+## Observer Mode with an Existing Purchase Manager
+
+Use Purchasely for paywall display only while your existing purchase manager handles purchases. Initialize in Observer mode, then intercept `.purchase` / `.restore`:
 
 ```swift
-Purchasely.start(withAPIKey: "YOUR_API_KEY",
-                  runningMode: .observer,
-                  storekitSettings: .storeKit2) { success, error in }
+// Initialize in observer mode (the v6 default)
+try await Purchasely
+    .apiKey("YOUR_API_KEY")
+    .runningMode(.observer)
+    .storekitSettings(.storeKit2)
+    .start()
 
-Purchasely.setPaywallActionsInterceptor { action, parameters, presentationInfo, proceed in
-    switch action {
-    case .purchase:
-        guard let plan = parameters?.plan,
-              let productId = plan.appleProductId else {
-            proceed(false)
-            return
+// Route purchases through your existing purchase manager
+Purchasely.interceptAction(.purchase) { info, params in
+    guard let plan = params?.plan, let productId = plan.appleProductId else {
+        return .notHandled
+    }
+    let error = await ExistingPurchaseManager.shared.purchase(productId: productId)
+    if error == nil {
+        Purchasely.synchronize()   // notify Purchasely for analytics + receipt validation
+        return .success            // app handled the purchase
+    }
+    return .failed
+}
+
+Purchasely.interceptAction(.restore) { info, params in
+    let error = await ExistingPurchaseManager.shared.restorePurchases()
+    Purchasely.synchronize()
+    return error == nil ? .success : .failed
+}
+```
+
+> 📘 `.notHandled` for `.purchase` / `.restore` in Observer mode logs a warning and skips — the SDK cannot execute purchases in Observer mode. Always return `.success` / `.failed` from your own flow.
+
+## Observer Mode with StoreKit 2
+
+```swift
+try await Purchasely
+    .apiKey("YOUR_API_KEY")
+    .runningMode(.observer)
+    .storekitSettings(.storeKit2)
+    .start()
+
+Purchasely.interceptAction(.purchase) { info, params in
+    guard let plan = params?.plan, let productId = plan.appleProductId else {
+        return .notHandled
+    }
+    do {
+        guard let product = try await Product.products(for: [productId]).first else {
+            return .failed
         }
-        Task {
-            do {
-                let product = try await Product.products(for: [productId]).first!
-                let result = try await product.purchase()
-                switch result {
-                case .success(let verification):
-                    Purchasely.synchronize(success: {}, failure: { _ in })
-                    proceed(true)
-                case .pending:
-                    proceed(false)
-                case .userCancelled:
-                    proceed(false)
-                @unknown default:
-                    proceed(false)
-                }
-            } catch {
-                proceed(false)
-            }
+        let result = try await product.purchase()
+        switch result {
+        case .success:
+            Purchasely.synchronize()
+            return .success
+        case .pending, .userCancelled:
+            return .notHandled    // not an error — user backed out
+        @unknown default:
+            return .failed
         }
-    case .restore:
-        Task {
-            try? await AppStore.sync()
-            Purchasely.synchronize(success: {}, failure: { _ in })
-            proceed(true)
-        }
-    default:
-        proceed(true)
+    } catch {
+        return .failed
+    }
+}
+
+Purchasely.interceptAction(.restore) { info, params in
+    do {
+        try await AppStore.sync()
+        Purchasely.synchronize()
+        return .success
+    } catch {
+        return .failed
     }
 }
 ```
@@ -223,21 +212,25 @@ Purchasely.setPaywallActionsInterceptor { action, parameters, presentationInfo, 
 After a successful Observer-mode purchase, the recommended sequence is:
 
 1. **Await `synchronize()`** (only if you chain a follow-up placement that targets users based on subscription state — otherwise fire-and-forget is fine)
-2. **`proceed(false)`** — tell the SDK interceptor we handled the purchase (skip its own flow)
+2. **Return `.success`** from the interceptor — tells the SDK the action was handled
 3. **`Purchasely.closeAllScreens()`** — force-dismiss the paywall
 
-The order **proceed → closeAllScreens** matters: the interceptor must learn the action was handled BEFORE the paywall tears down.
+The order **return result → closeAllScreens** matters: the interceptor must learn the action was handled before the paywall tears down.
 
 ```swift
 @MainActor
-private func handlePurchaseSuccess(proceed: @escaping (Bool) -> Void) async {
-    do {
-        try await synchronizeReceipt()   // only await if you chain a placement that targets subscribers
-        proceed(false)                   // tell interceptor we handled it
-        Purchasely.closeAllScreens()     // dismiss
-    } catch {
-        proceed(false)                   // dismiss anyway on sync error
-        Purchasely.closeAllScreens()
+func handlePurchase(params: PLYPresentationActionParameters?) async -> PLYInterceptResult {
+    guard let productId = params?.plan?.appleProductId else { return .notHandled }
+    let result = await PurchaseManager.shared.purchase(productId: productId)
+    switch result {
+    case .success:
+        try? await synchronizeReceipt()    // only await if you chain a placement that targets subscribers
+        Purchasely.closeAllScreens()       // dismiss after returning .success
+        return .success
+    case .cancelled:
+        return .notHandled                 // user backed out
+    case .error:
+        return .failed
     }
 }
 
@@ -253,28 +246,28 @@ private func synchronizeReceipt() async throws {
 }
 ```
 
-> `closeAllScreens()` requires Purchasely iOS SDK **5.7.5+** and is `@MainActor`-isolated. From a non-isolated context, wrap in `Task { @MainActor in Purchasely.closeAllScreens() }`.
+> `closeAllScreens()` is `@MainActor`-isolated. From a non-isolated context, wrap in `Task { @MainActor in Purchasely.closeAllScreens() }`. It replaces the removed `closeDisplayedPresentation()`.
 
 ### Chaining a Follow-up Placement After Purchase (optional)
 
-Some apps display a follow-up paywall after a successful purchase — a thank-you screen, an onboarding tour for premium features, a one-tap upsell, etc. This is **not part of the SDK contract**: it's just `fetchPresentation` called again with whatever placement ID you've configured on the Console (e.g. `"post_purchase"`, `"thank_you"`, `"premium_welcome"` — pick your own).
+Some apps display a follow-up paywall after a successful purchase — a thank-you screen, a premium onboarding tour, a one-tap upsell. This is **not part of the SDK contract**: it's just `PLYPresentationBuilder` called again with whatever placement ID you've configured on the Console (e.g. `"post_purchase"`, `"thank_you"` — pick your own).
 
-If you do chain a placement and its audience targets users based on subscription state, **`synchronize()` must complete first** — otherwise the fetch resolves against stale state and may return a deactivated/fallback presentation. On iOS, that's why the `synchronizeReceipt()` await above matters.
+If you chain a placement whose audience targets users by subscription state, **`synchronize()` must complete first** — otherwise the fetch resolves against stale state and may return a deactivated/fallback presentation.
 
 ```swift
-// After closeAllScreens() above, fetch and display the chained placement
+@MainActor
 private func showPostPurchaseScreen() {
-    Purchasely.fetchPresentation(
-        for: "YOUR_POST_PURCHASE_PLACEMENT_ID",
-        fetchCompletion: { presentation, error in
-            guard let presentation = presentation,
+    PLYPresentationBuilder
+        .forPlacementId("YOUR_POST_PURCHASE_PLACEMENT_ID")
+        .onDismissed { _ in /* dismissed */ }
+        .build()
+        .preload { presentation, error in
+            guard let presentation,
                   presentation.type == .normal || presentation.type == .fallback,
                   let topVC = UIApplication.shared.topViewController()
             else { return }
             presentation.display(from: topVC)
-        },
-        completion: { _, _ in /* dismissed */ }
-    )
+        }
 }
 ```
 
@@ -282,9 +275,7 @@ private func showPostPurchaseScreen() {
 
 ## Presentation Cache & Audience Invalidation
 
-The iOS SDK fetches presentations from the network on every call. If you display the same placement repeatedly (`.onAppear` fires several times, sheet/back navigation, etc.), each call hits the network and — for flow placements — accumulates `flowSteps` entries in the SDK's `FlowsManager`. A known SDK issue: dismissing the only visible step then leaves a stuck `PLYWindow` that intercepts touches.
-
-**Fix:** wrap the fetch in an app-side cache keyed by `placementId[/contentId]`:
+The SDK fetches presentations from the network on every `preload`. If you display the same placement repeatedly (`.onAppear` fires several times, sheet/back navigation, etc.), each call hits the network. Wrap the preload in an app-side cache keyed by `placementId[/contentId]` and reuse the loaded presentation (`display(from:)` on a kept reference does not re-fetch):
 
 ```swift
 actor PresentationCache {
@@ -302,47 +293,45 @@ actor PresentationCache {
 - Successful `Purchasely.synchronize()` — subscription state may have changed
 - SDK mode change (Full ↔ Observer)
 
-> Invalidation is intentionally coarse-grained (`invalidateAll`) because the SDK doesn't expose attribute→audience dependencies. Purchasely SDK 6.x is expected to add native placement-level caching — remove the app-side cache then.
+> Invalidation is intentionally coarse-grained (`invalidateAll`) because the SDK doesn't expose attribute→audience dependencies.
 
 ## Swift 6 Concurrency Notes
 
-- Use `@preconcurrency import Purchasely` where needed — the current SDK exposes Objective-C class properties / callback types without full Swift 6 concurrency annotations.
+- Use `@preconcurrency import Purchasely` where needed — the SDK exposes Objective-C class properties / callback types without full Swift 6 concurrency annotations.
 - SDK callbacks fire on unknown threads. Hop to the main actor with `Task { @MainActor [weak self] in … }`, **not** `DispatchQueue.main.async`, to keep one consistent concurrency model.
-- Mark Purchasely-facing protocols (`PurchaselyWrapping`, etc.) `@MainActor` so call sites don't accidentally cross actor boundaries.
+- The v6 `interceptAction(_:)` closure is already `async` — `await` your native StoreKit flow directly and return the `PLYInterceptResult`; no `suspendCancellableCoroutine`/continuation bridge is needed (unlike Android).
 - Keep `PLYEventDelegate` / `PLYUserAttributeDelegate` callbacks `nonisolated` and do only thread-safe work in them (logging, cache invalidation).
+- Relax **test targets** to `SWIFT_STRICT_CONCURRENCY = minimal` — `XCTestCase` predates async/await and `complete` checking flags every `try await super.setUp()`. Keep production code on `complete`.
 
 ## Guard Against Overlapping Observer Purchases
 
-In Observer mode, the interceptor fires once per user tap. If a second purchase/restore action arrives while one is already running, you'll have two overlapping StoreKit flows and two independent `proceed(_:)` closures to call. Guard with a single in-flight task:
+In Observer mode, the interceptor fires once per user tap. If a second purchase/restore action arrives while one is already running, you'll have two overlapping StoreKit flows. Guard with a single in-flight task:
 
 ```swift
-private var observerActionTask: Task<Void, Never>?
+private var observerActionTask: Task<PLYInterceptResult, Never>?
 
-private func handlePurchaseAction(productId: String, proceed: @escaping (Bool) -> Void) {
-    guard observerActionTask == nil else {
-        proceed(false) // already busy — ignore this action
-        return
-    }
-    observerActionTask = Task { @MainActor [weak self] in
-        defer { self?.observerActionTask = nil }
+@MainActor
+private func handlePurchaseAction(productId: String) async -> PLYInterceptResult {
+    if observerActionTask != nil { return .notHandled }   // already busy — ignore
+    let task = Task<PLYInterceptResult, Never> { @MainActor in
         let result = await PurchaseManager.shared.purchase(productId: productId)
-        await self?.handleTransactionResult(result, proceed: proceed)
+        return result.isSuccess ? .success : .failed
     }
+    observerActionTask = task
+    defer { observerActionTask = nil }
+    return await task.value
 }
 ```
 
 ## Setting User Attributes for Targeting
 
-Set attributes to enable audience targeting and paywall personalization:
+Set attributes to enable audience targeting and paywall personalization (unchanged from v5):
 
 ```swift
-// After user login or profile update
 func updatePurchaselyAttributes(user: User) {
     Purchasely.setUserAttribute(withStringValue: user.firstName, forKey: "first_name")
     Purchasely.setUserAttribute(withStringValue: user.email, forKey: "email")
     Purchasely.setUserAttribute(withIntValue: user.age, forKey: "age")
-
-    // Custom attributes for targeting rules
     Purchasely.setUserAttribute(withStringValue: user.tier, forKey: "subscription_tier")
     Purchasely.setUserAttribute(withIntValue: user.articlesRead, forKey: "articles_read")
     Purchasely.setUserAttribute(withDateValue: user.signupDate, forKey: "signup_date")
@@ -358,15 +347,12 @@ Check active subscriptions to gate content:
 func checkSubscriptionAccess(completion: @escaping (Bool) -> Void) {
     Purchasely.userSubscriptions(
         success: { subscriptions in
-            let hasActiveSubscription = subscriptions?.contains { subscription in
-                subscription.plan.vendorId == "premium_monthly" ||
-                subscription.plan.vendorId == "premium_yearly"
+            let hasActive = subscriptions?.contains { sub in
+                sub.plan.vendorId == "premium_monthly" || sub.plan.vendorId == "premium_yearly"
             } ?? false
-            completion(hasActiveSubscription)
+            completion(hasActive)
         },
-        failure: { _ in
-            completion(false)
-        }
+        failure: { _ in completion(false) }
     )
 }
 
@@ -375,84 +361,64 @@ checkSubscriptionAccess { hasAccess in
     if hasAccess {
         // Show premium content
     } else {
-        // Show paywall
-        let controller = Purchasely.presentationController(for: "PREMIUM_UPSELL",
-                                                            completion: { result, plan in
-            self.dismiss(animated: true)
-            if result == .purchased {
-                // Refresh content access
-            }
-        })
-        if let controller = controller {
-            self.present(controller, animated: true)
-        }
+        Purchasely.display(for: "PREMIUM_UPSELL", transition: .modal)
     }
 }
 ```
 
 ## GDPR Consent Management
 
-Handle consent before initializing Purchasely or enabling tracking:
+Handle consent alongside initialization:
 
 ```swift
 func application(_ application: UIApplication,
                  didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+    Task {
+        try? await Purchasely
+            .apiKey("YOUR_API_KEY")
+            .runningMode(.full)
+            .storekitSettings(.storeKit2)
+            .logLevel(.warn)
+            .start()
+    }
 
-    // Always initialize Purchasely (required for paywall display)
-    Purchasely.start(withAPIKey: "YOUR_API_KEY",
-                      runningMode: .full,
-                      storekitSettings: .storeKit2,
-                      logLevel: .warn) { success, error in }
-
-    // Check consent status
     if hasUserConsent() {
         enableTracking()
     } else {
-        showConsentDialog { granted in
-            if granted {
-                enableTracking()
-            }
-        }
+        showConsentDialog { granted in if granted { enableTracking() } }
     }
-
     return true
 }
 
 func enableTracking() {
-    // Set attribute to indicate consent for server-side processing
     Purchasely.setUserAttribute(withBoolValue: true, forKey: "gdpr_consent")
     Purchasely.setUserAttribute(withStringValue: ISO8601DateFormatter().string(from: Date()), forKey: "consent_date")
 }
 ```
 
-## Fetch Presentation with Type Guard
+## Preload with Type Guard
 
-Always check the presentation type before displaying, especially when using `fetchPresentation`:
+Always check the presentation type before displaying:
 
 ```swift
-Purchasely.fetchPresentation(for: "PREMIUM_PAYWALL") { presentation, error in
-    guard let presentation = presentation else {
-        print("Failed to fetch: \(error?.localizedDescription ?? "")")
-        return
-    }
-
-    switch presentation.type {
-    case .normal, .fallback:
-        // Safe to display
-        if let controller = presentation.controller {
-            self.present(controller, animated: true)
+PLYPresentationBuilder
+    .forPlacementId("PREMIUM_PAYWALL")
+    .onDismissed { outcome in /* handle purchase result */ }
+    .build()
+    .preload { presentation, error in
+        guard let presentation else {
+            print("Failed to fetch: \(error?.localizedDescription ?? "")")
+            return
         }
-    case .deactivated:
-        // Do NOT display -- the presentation was disabled in the dashboard
-        print("Presentation is deactivated")
-    case .client:
-        // Use your own UI with Purchasely plan data
-        let plans = presentation.plans
-        self.showCustomPaywall(plans: plans)
-    @unknown default:
-        break
+        switch presentation.type {
+        case .normal, .fallback:
+            presentation.display(from: self)
+        case .deactivated:
+            print("Presentation is deactivated — do not display")
+        case .client:
+            self.showCustomPaywall(plans: presentation.plans)
+        @unknown default:
+            break
+        }
     }
-} completion: { result, plan in
-    // Handle purchase result
-}
 ```
