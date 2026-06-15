@@ -6,14 +6,22 @@ All notable changes to this project are documented here. The format is based on 
 
 ### Added
 
+- `references/ios/v5-api-reference.md` and `references/android/v5-api-reference.md` — compact snapshots of the v5 public API (legacy symbols, signatures, and a `→ v6` pointer for each) so the `migrate` skill can recognize the code it is replacing.
 - `references/concepts/lottie-animations.md` — covers Purchasely Screen Lottie setup with the iOS `PLYLottieBridge`, Android `PLYLottieInterface` / `Purchasely.lottieView`, cross-platform host-project notes, and troubleshooting for missing bridges, file size, and Console template availability.
-- `references/android/api-reference.md` — refreshed native Android SDK v6 API reference covering `PLYPresentation` builder/preload/display, canonical `screenId`, `PLYPresentationState`, `PLYPresentationOutcome`, typed action interceptors, Observer-mode transaction bridge, and optional `presentation-compose` embedding.
-- `references/android/migration-v6.md` — expanded Android v5→v6 migration guide with Presentation builder options, `screenId`, prepared display timing, `StateFlow` lifecycle, embedded Compose helper, and verification searches.
-- `references/sdk-versions.md` — updated native Android to `6.0.0` while leaving iOS and cross-platform SDK pins unchanged.
 
 ### Changed
 
+- **Native iOS and Android references fully aligned with the published SDK v6.0.0 API.** Reworked `references/ios/*` and `references/android/*` (`api-reference`, `initialization`, `common-patterns`, `migration-v6`) around the fluent init builder, per-action `interceptAction` + `PLYInterceptResult`, the `PLYPresentationBuilder` / `PLYPresentation { }` builder→preload→display model, `PLYPresentationOutcome` (with `closeReason`), `screenId`, SwiftUI `swiftUIView`, `StateFlow<PLYPresentationState>`, Android deeplink auto-interception, `synchronize(onSuccess, onError)`, and the v6 removals — covering Swift, Objective-C, Kotlin and Java.
+- `migrate` skill — now leads with the silent default-running-mode change (Observer in v6; set Full explicitly for purchase handling & validation), covers Kotlin/Java/Swift/Objective-C, uses the new v5 API snapshots to detect legacy code, and instructs fact-checking against the official v6 docs (`docs.purchasely.com` / the `v6.0` branch of `Purchasely/Documentation`).
+- `references/concepts/running-modes.md` — documents the v6 default-mode change (Observer) with v6 initialization for iOS (Swift/Obj-C) and Android (Kotlin/Java); cross-platform examples kept on v5.
+- Concept references, the `purchasely-integrate` / `purchasely-review` / `purchasely-debug` skills, and the `sdk-expert` agent updated to the v6 native API.
+- `references/sdk-versions.md` — native iOS bumped to `6.0.0`; iOS pinning snippets updated.
 - `purchasely-integrate`, `purchasely-review`, and `purchasely-debug` now require a final app build; build failures must be fixed and rechecked before reporting success.
+
+### Fixed
+
+- Removed the non-existent `io.purchasely:presentation-compose` artifact and `PLYPresentationView` composable from the Android docs — `buildView(...)` returns an Android `View`; for Jetpack Compose, wrap it in an `AndroidView`.
+- Removed `flowId(...)` / `productId(...)` / `planId(...)` from the Android `PLYPresentation { }` builder examples — they are not exposed in v6; display a Flow via its `app_scheme://ply/flows/FLOW_ID` deeplink.
 
 ## [1.1.0] — 2026-05-25
 
