@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Changed
+
+- **`migrate` skill renamed to `purchasely-migrate`** — for consistency with `purchasely-integrate` / `purchasely-review` / `purchasely-debug` and to disambiguate the skill when installed alongside other repos via the [`skills` CLI](https://www.skills.sh/docs). The slash command keeps its name (`/purchasely:migrate`) since it is already namespaced by the Claude Code plugin prefix. Migration: re-run `npx skills update` (or `npx skills add Purchasely/Purchasely-AI-Plugin` again) to pick up the new name.
+
 ## [2.0.0-rc1] — 2026-06-15
 
 First release candidate of the **v6 line**. The plugin now targets the **Purchasely SDK v6.0.0-rc1** on **native iOS (Swift / Objective-C)** and **native Android (Kotlin / Java)**. Flutter, React Native and Cordova guidance stays on v5 in this RC and will move to v6 for the final `2.0.0`.

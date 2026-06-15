@@ -93,7 +93,7 @@ To **validate the repo layout** locally before pushing (catches frontmatter / di
 npx --yes skills add . --list
 ```
 
-Should report `Found 3 skills` with names `purchasely-debug`, `purchasely-integrate`, `purchasely-review`. The CLI auto-discovers `skills/` and the `.claude-plugin/` manifests — no extra config needed.
+Should report `Found 4 skills` with names `purchasely-debug`, `purchasely-integrate`, `purchasely-migrate`, `purchasely-review`. The CLI auto-discovers `skills/` and the `.claude-plugin/` manifests — no extra config needed.
 
 # context-mode — MANDATORY routing rules
 

@@ -1,5 +1,5 @@
 ---
-name: migrate
+name: purchasely-migrate
 description: "Use when migrating an existing Purchasely SDK integration between major SDK versions. Supports native Android (Kotlin & Java) and native iOS (Swift & Objective-C) v5.x to v6.0.0-rc1 — handles every v5→v6 breaking change so a project can be upgraded in a single prompt."
 ---
 

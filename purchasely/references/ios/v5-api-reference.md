@@ -1,6 +1,6 @@
 # iOS SDK v5.x API — reference for MIGRATION ONLY (replaced in v6)
 
-> **Do not write new v5 code.** This is a compact snapshot of the legacy v5.x public API so the migrate skill can **recognize** existing v5 code in a project and map it forward. Every symbol below is **removed or deprecated in v6.0.0-rc1**. For the v6 surface, see [`api-reference.md`](api-reference.md); for the step-by-step migration, see [`migration-v6.md`](migration-v6.md).
+> **Do not write new v5 code.** This is a compact snapshot of the legacy v5.x public API so the `purchasely-migrate` skill can **recognize** existing v5 code in a project and map it forward. Every symbol below is **removed or deprecated in v6.0.0-rc1**. For the v6 surface, see [`api-reference.md`](api-reference.md); for the step-by-step migration, see [`migration-v6.md`](migration-v6.md).
 
 ## How to recognize a v5 iOS integration
 
@@ -142,4 +142,4 @@ let handled = Purchasely.isDeeplinkHandled(deeplink: url)
 
 ## Unchanged in v6 (no migration needed)
 
-These v5 APIs are identical in v6 — they are listed here only so the migrate skill does **not** flag them: `userLogin(with:shouldRefresh:)`, `userLogout()`, `setUserAttribute(with*Value:forKey:)`, `userSubscriptions(success:failure:)`, `restoreAllProducts(success:failure:)`, `synchronize(success:failure:)`, `purchase(plan:contentId:success:failure:)`, `setEventDelegate(_:)`, `setDefaultPresentationResultHandler(_:)`.
+These v5 APIs are identical in v6 — they are listed here only so the `purchasely-migrate` skill does **not** flag them: `userLogin(with:shouldRefresh:)`, `userLogout()`, `setUserAttribute(with*Value:forKey:)`, `userSubscriptions(success:failure:)`, `restoreAllProducts(success:failure:)`, `synchronize(success:failure:)`, `purchase(plan:contentId:success:failure:)`, `setEventDelegate(_:)`, `setDefaultPresentationResultHandler(_:)`.
