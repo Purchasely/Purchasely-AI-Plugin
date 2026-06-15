@@ -20,12 +20,12 @@ _Last updated: 2026-06-15._
 
 ```ruby
 # Podfile
-pod 'Purchasely', '~> 6.0'
+pod 'Purchasely', '6.0.0-rc1'
 ```
 
 ### iOS — Swift Package Manager
 
-In Xcode → File → Add Packages → enter `https://github.com/Purchasely/Purchasely-iOS` and select **Up to Next Major 6.0.0-rc1** (or pin an exact `6.0.0-rc1`).
+In Xcode → File → Add Packages → enter `https://github.com/Purchasely/Purchasely-iOS` and select **Exact Version 6.0.0-rc1**.
 
 ### Android — Gradle (Kotlin DSL)
 

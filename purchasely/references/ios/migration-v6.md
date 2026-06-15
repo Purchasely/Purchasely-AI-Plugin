@@ -28,13 +28,13 @@ Bump the Purchasely iOS package to `6.0.0-rc1`.
 **Swift Package Manager** — in `Package.swift` or the Xcode package list:
 
 ```swift
-.package(url: "https://github.com/Purchasely/Purchasely-iOS", from: "6.0.0-rc1")
+.package(url: "https://github.com/Purchasely/Purchasely-iOS", exact: "6.0.0-rc1")
 ```
 
 **CocoaPods** — in the `Podfile`:
 
 ```ruby
-pod 'Purchasely', '~> 6.0'
+pod 'Purchasely', '6.0.0-rc1'
 ```
 
 After bumping, resolve packages (`File ▸ Packages ▸ Resolve Package Versions`, or `pod install`) and clean the build folder before the first compile.

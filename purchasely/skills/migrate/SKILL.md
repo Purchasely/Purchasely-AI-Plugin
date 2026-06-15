@@ -79,7 +79,7 @@ Never invent a signature: if the references and the official docs disagree, the 
 1. Detect the iOS project: `*.xcodeproj` / `*.xcworkspace`, `project.yml` (XcodeGen), `Package.swift`, or a `Podfile`. Detect how Purchasely is integrated — **SPM** or **CocoaPods** — and the **call-site language** (Swift vs Objective-C), because both drive the rewrite.
 2. Read `../../references/ios/migration-v6.md`, and skim `../../references/ios/v5-api-reference.md` so you recognize every legacy symbol.
 3. Find current Purchasely usages with ripgrep: `start(withAPIKey`, `paywallObserver`, `readyToOpenDeeplink`, `isDeeplinkHandled`, `setPaywallActionsInterceptor`, `proceed(`, `fetchPresentation`, `PresentationView`, `closeDisplayedPresentation`, `PLYProductViewControllerResult`, `PLYPresentationInfo`, `displayMode:`, plus Objective-C call sites (`[Purchasely startWithAPIKey`, `PLYPresentation *`).
-4. Bump the dependency to `6.0.0-rc1` first (SPM `from: "6.0.0-rc1"` or Podfile `~> 6.0`), resolve packages / `pod install`, and clean the build folder.
+4. Bump the dependency to `6.0.0-rc1` first — pin it **exactly** (SPM `exact: "6.0.0-rc1"`, CocoaPods `pod 'Purchasely', '6.0.0-rc1'`); floating ranges (`~> 6.0`, `from:`) do not resolve a pre-release and would silently drift. Resolve packages / `pod install`, and clean the build folder.
 5. Add `@preconcurrency import Purchasely` at SDK call sites compiled under Swift 6 strict concurrency, and relax test targets to `SWIFT_STRICT_CONCURRENCY = minimal`.
 6. Compile immediately. Treat compiler errors as the migration worklist; apply API migrations in small passes and recompile after each.
 7. **Rewrite initialization** from the removed `Purchasely.start(withAPIKey:…)` to the fluent chain `Purchasely.apiKey("…")…start()`. Prefer Swift async (`try await …start()`); use the completion form (`.start { error in }`, single `Error?`) when async is impractical or for Objective-C interop. **Objective-C:** `[[[[Purchasely apiKey:@"…"] appUserId:@"…"] runningMode:PLYRunningModeFull] startWithInitialized:^(NSError *e){}]`. **Set `.runningMode(.full)` explicitly when the app needs purchase handling/validation** (default is now `.observer`). Map `.paywallObserver` → `.observer`. Migrate the deprecated pre-`start` `set*` class funcs (`setEnvironment`, `setThemeMode`, …) to chain modifiers.
@@ -90,6 +90,10 @@ Never invent a signature: if the references and the official docs disagree, the 
 12. **Deeplinks.** `readyToOpenDeeplink(_:)` → `allowDeeplink(_:)`, `isDeeplinkHandled(deeplink:)` → `handleDeeplink(_:)`. iOS does **not** auto-intercept — keep passing deeplinks via `Purchasely.handleDeeplink(_:)` from `AppDelegate`/`SceneDelegate`.
 13. If the project uses XcodeGen, run `xcodegen generate`. Update tests to the v6 API.
 14. Run the final iOS `xcodebuild build` then `xcodebuild test` before reporting completion.
+
+## Completion Build Gate
+
+Before declaring the migration complete, build the user's app with the project's canonical command (Android: `./gradlew :app:assembleDebug` then `:app:testDebugUnitTest`; iOS: `xcodebuild build` then `xcodebuild test` on the `.xcworkspace`). If the build fails, fix the error, rerun the build, and run the tests again until the app builds successfully with no v5-only Purchasely symbols left. Do not report the migration as done from edits or reasoning alone; include the exact build/test commands and their outcomes in the final response.
 
 ## Output Requirements
 

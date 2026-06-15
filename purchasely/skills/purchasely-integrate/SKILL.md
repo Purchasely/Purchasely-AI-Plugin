@@ -110,7 +110,7 @@ Requirements: iOS 11.0+, Xcode 13.0+, Swift 5.0+ (Swift 6 strict concurrency sup
 
 Add to the app's `Podfile`:
 ```ruby
-pod 'Purchasely', '~> 6.0'
+pod 'Purchasely', '6.0.0-rc1'
 ```
 Then run:
 ```bash
@@ -123,13 +123,13 @@ In Xcode: File > Add Packages, then enter the repository URL:
 ```
 https://github.com/Purchasely/Purchasely-iOS
 ```
-Select **Up to Next Major Version 6.0.0-rc1** (Package.swift: `.package(url: "https://github.com/Purchasely/Purchasely-iOS", from: "6.0.0-rc1")`).
+Select **Exact Version 6.0.0-rc1** (Package.swift: `.package(url: "https://github.com/Purchasely/Purchasely-iOS", exact: "6.0.0-rc1")`).
 
 **Option C — Carthage**:
 
 Add to `Cartfile`:
 ```
-binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json" ~> 6.0
+binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json" == 6.0.0-rc1
 ```
 Then run:
 ```bash

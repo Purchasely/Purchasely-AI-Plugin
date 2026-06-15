@@ -363,7 +363,7 @@ name, signature and behaviour:
 > iOS. Build your own subscriptions screen with `userSubscriptions()` if you need
 > cross-platform parity.
 
-> **Native dependency.** This release targets the Purchasely 6.0 native SDKs
-> (iOS `Purchasely 6.0.0`, Android `io.purchasely:core 6.0.0`). These versions may
-> not be published on CocoaPods / Maven Central yet; local builds resolve them via
-> `mavenLocal()` (Android) and a development pod (iOS).
+> **Native dependency.** This (upcoming) Flutter release targets the Purchasely v6 native SDKs
+> (iOS `Purchasely 6.0.0-rc1`, Android `io.purchasely:core 6.0.0-rc1`), published as pre-releases
+> on CocoaPods / Maven Central — see [`../sdk-versions.md`](../sdk-versions.md) for the canonical
+> pins. The published **Flutter** package is still `5.7.3` (v5); this guide is a preview.

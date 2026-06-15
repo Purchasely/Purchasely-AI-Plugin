@@ -9,7 +9,7 @@
 Add to your `Podfile`:
 
 ```ruby
-pod 'Purchasely', '~> 6.0'
+pod 'Purchasely', '6.0.0-rc1'
 ```
 
 Then run:
@@ -30,7 +30,7 @@ Or add to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Purchasely/Purchasely-iOS", from: "6.0.0-rc1")
+    .package(url: "https://github.com/Purchasely/Purchasely-iOS", exact: "6.0.0-rc1")
 ]
 ```
 
