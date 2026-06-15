@@ -44,9 +44,9 @@ Trigger-based campaigns can be deferred until your app explicitly authorises dis
 ### iOS (Swift)
 
 ```swift
-Purchasely.allowCampaigns = false   // queue campaigns during onboarding
+Purchasely.allowCampaigns(false)    // queue campaigns during onboarding
 // …later, when the launch routine is complete:
-Purchasely.allowCampaigns = true    // queued campaigns display immediately
+Purchasely.allowCampaigns(true)     // queued campaigns display immediately
 ```
 
 `allowCampaigns` can also be set at init: `Purchasely.apiKey("…").allowCampaigns(false).start { … }`. It defaults to `true`.

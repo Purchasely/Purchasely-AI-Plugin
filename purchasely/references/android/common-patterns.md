@@ -144,10 +144,15 @@ private var pendingResult: ((PLYInterceptResult) -> Unit)? = null
 Purchasely.interceptAction<PLYPresentationAction.Purchase> { info, purchase ->
     if (!observerMode) return@interceptAction PLYInterceptResult.NOT_HANDLED
 
+    // Cancel any orphaned previous result before suspending for the new one
+    pendingResult?.invoke(PLYInterceptResult.NOT_HANDLED)
+    pendingResult = null
+
     suspendCancellableCoroutine { continuation ->
         pendingResult = { result ->
             if (continuation.isActive) continuation.resume(result)
         }
+        continuation.invokeOnCancellation { pendingResult = null }
         startBilling(
             activity = info?.activity,
             productId = purchase.plan.store_product_id,
@@ -160,7 +165,8 @@ fun onBillingSuccess() {
     Purchasely.synchronize()
     pendingResult?.invoke(PLYInterceptResult.SUCCESS)
     pendingResult = null
-    Purchasely.closeAllScreens()
+    // Do NOT call closeAllScreens() here — the SDK dismisses the paywall automatically
+    // when the interceptor resolves with SUCCESS.
 }
 
 fun onBillingCancelled() {

@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Fixed
+
+- `references/android/common-patterns.md` Observer-mode bridge: removed erroneous `closeAllScreens()` call after `PLYInterceptResult.SUCCESS` (SDK auto-dismisses the paywall on success); added orphan-guard + `invokeOnCancellation` to protect against a second purchase action arriving before the first billing flow resolves.
+- `references/concepts/campaigns.md` iOS Swift snippet: corrected `allowCampaigns` from property-assignment syntax (`= false/true`) to the documented method-call form (`allowCampaigns(false/true)`), consistent with the iOS v6 API reference.
+- `skills/migrate/SKILL.md` Android step 3: removed `screenId` from the v5-symbol detection list — `screenId` is the v6 target name (step 9 renames `PLYPresentation.id` → `screenId`), not a v5 symbol to replace.
+
 ## [2.0.0-rc1] — 2026-06-15
 
 First release candidate of the **v6 line**. The plugin now targets the **Purchasely SDK v6.0.0-rc1** on **native iOS (Swift / Objective-C)** and **native Android (Kotlin / Java)**. Flutter, React Native and Cordova guidance stays on v5 in this RC and will move to v6 for the final `2.0.0`.
