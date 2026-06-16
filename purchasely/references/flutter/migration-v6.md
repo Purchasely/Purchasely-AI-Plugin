@@ -364,6 +364,6 @@ name, signature and behaviour:
 > cross-platform parity.
 
 > **Native dependency.** This (upcoming) Flutter release targets the Purchasely v6 native SDKs
-> (iOS `Purchasely 6.0.0-rc1`, Android `io.purchasely:core 6.0.0-rc1`), published as pre-releases
+> (iOS `Purchasely 6.0.0-rc.1`, Android `io.purchasely:core 6.0.0-rc.1`), published as pre-releases
 > on CocoaPods / Maven Central — see [`../sdk-versions.md`](../sdk-versions.md) for the canonical
 > pins. The published **Flutter** package is still `5.7.3` (v5); this guide is a preview.

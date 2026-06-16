@@ -1,6 +1,6 @@
 # Android SDK v5.x API — reference for MIGRATION ONLY (replaced in v6)
 
-This is a compact snapshot of the **public Android v5.x** API. It exists so the migrate skill can **recognize legacy v5 code** in a project and rewrite it. Do not use these signatures for new code — every entry below was removed or renamed in v6. For the v6 replacements and full rewrite steps, see [migration-v6.md](migration-v6.md).
+This is a compact snapshot of the **public Android v5.x** API. It exists so the `purchasely-migrate` skill can **recognize legacy v5 code** in a project and rewrite it. Do not use these signatures for new code — every entry below was removed or renamed in v6. For the v6 replacements and full rewrite steps, see [migration-v6.md](migration-v6.md).
 
 Each entry adds a one-line `-> v6` pointer.
 

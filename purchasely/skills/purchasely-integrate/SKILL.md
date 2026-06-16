@@ -86,13 +86,13 @@ Run the appropriate installation commands and modify project files as needed.
 
 | Platform | Latest stable version |
 |----------|-----------------------|
-| iOS (native) | **6.0.0-rc1** |
-| Android (native) | **6.0.0-rc1** |
+| iOS (native) | **6.0.0-rc.1** |
+| Android (native) | **6.0.0-rc.1** |
 | React Native | **5.7.3** |
 | Flutter | **5.7.3** |
 | Cordova | **5.7.3** |
 
-Always pin to the **exact** version above, never floating (`5.+`, `6.+`, `^5.0.0`, `^6.0.0-rc1`). Floating versions break reproducibility and silently pull regressions.
+Always pin to the **exact** version above, never floating (`5.+`, `6.+`, `^5.0.0`, `^6.0.0-rc.1`). Floating versions break reproducibility and silently pull regressions.
 
 **Before installing, ask the user these questions (adapt per platform):**
 
@@ -110,7 +110,7 @@ Requirements: iOS 11.0+, Xcode 13.0+, Swift 5.0+ (Swift 6 strict concurrency sup
 
 Add to the app's `Podfile`:
 ```ruby
-pod 'Purchasely', '6.0.0-rc1'
+pod 'Purchasely', '6.0.0-rc.1'
 ```
 Then run:
 ```bash
@@ -123,13 +123,13 @@ In Xcode: File > Add Packages, then enter the repository URL:
 ```
 https://github.com/Purchasely/Purchasely-iOS
 ```
-Select **Exact Version 6.0.0-rc1** (Package.swift: `.package(url: "https://github.com/Purchasely/Purchasely-iOS", exact: "6.0.0-rc1")`).
+Select **Exact Version 6.0.0-rc.1** (Package.swift: `.package(url: "https://github.com/Purchasely/Purchasely-iOS", exact: "6.0.0-rc.1")`).
 
 **Option C — Carthage**:
 
 Add to `Cartfile`:
 ```
-binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json" == 6.0.0-rc1
+binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json" == 6.0.0-rc.1
 ```
 Then run:
 ```bash
@@ -144,27 +144,27 @@ Requirements: minSdk 23, compileSdk 36, Kotlin 2.2.x, Gradle 9.x, JDK 17 (to bui
 
 The Purchasely SDK is published on **Maven Central** — no custom repository needed. Just make sure `mavenCentral()` is present in your `settings.gradle.kts` (it is by default in modern projects).
 
-**Add dependencies** in `app/build.gradle.kts` (pin to exact `6.0.0-rc1` — see `../../references/sdk-versions.md`):
+**Add dependencies** in `app/build.gradle.kts` (pin to exact `6.0.0-rc.1` — see `../../references/sdk-versions.md`):
 ```kotlin
 dependencies {
     // Core SDK — Required
-    implementation("io.purchasely:core:6.0.0-rc1")
+    implementation("io.purchasely:core:6.0.0-rc.1")
 
     // Google Play Store — Required if publishing on Google Play
-    implementation("io.purchasely:google-play:6.0.0-rc1")
+    implementation("io.purchasely:google-play:6.0.0-rc.1")
 
     // Video Player — Optional, for video support in Screens
-    implementation("io.purchasely:player:6.0.0-rc1")
+    implementation("io.purchasely:player:6.0.0-rc.1")
 }
 ```
 
 **Alternative stores** (instead of or in addition to Google Play):
 ```kotlin
 // Huawei AppGallery (also requires Huawei AGConnect plugin and repo)
-implementation("io.purchasely:huawei-services:6.0.0-rc1")
+implementation("io.purchasely:huawei-services:6.0.0-rc.1")
 
 // Amazon Appstore
-implementation("io.purchasely:amazon:6.0.0-rc1")
+implementation("io.purchasely:amazon:6.0.0-rc.1")
 ```
 
 For **Huawei**, also add to the project-level build.gradle:
@@ -963,8 +963,8 @@ When the interceptor receives a `PURCHASE` action in Observer mode, you run the 
 
 | Platform | Minimum version |
 |----------|-----------------|
-| iOS (native) | **6.0.0-rc1** — return `.success`, then call `Purchasely.closeAllScreens()` after the interceptor resolves (Observer mode does not auto-close; or wire a Console `close` action). It is `@MainActor`-isolated. Wrap in `Task { @MainActor in Purchasely.closeAllScreens() }` when called from a non-isolated synchronous context. |
-| Android (native) | **6.0.0-rc1** — return `PLYInterceptResult.SUCCESS`, then call `Purchasely.closeAllScreens()` after the interceptor resolves (Observer mode does not auto-close; or wire a Console `close` action). No threading constraint. |
+| iOS (native) | **6.0.0-rc.1** — return `.success`, then call `Purchasely.closeAllScreens()` after the interceptor resolves (Observer mode does not auto-close; or wire a Console `close` action). It is `@MainActor`-isolated. Wrap in `Task { @MainActor in Purchasely.closeAllScreens() }` when called from a non-isolated synchronous context. |
+| Android (native) | **6.0.0-rc.1** — return `PLYInterceptResult.SUCCESS`, then call `Purchasely.closeAllScreens()` after the interceptor resolves (Observer mode does not auto-close; or wire a Console `close` action). No threading constraint. |
 | React Native | Use `Purchasely.closePresentation()` in the public JS bridge. |
 | Flutter | **5.7.3** — use `Purchasely.closePresentation()` in the public Dart bridge (also `hidePresentation()` / `showPresentation()`). |
 | Cordova | Use `Purchasely.closePresentation()` in the public JS bridge. |

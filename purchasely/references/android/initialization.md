@@ -6,12 +6,12 @@ Native Android SDK v6 initializes with the Kotlin DSL (`Purchasely { … }`, rec
 
 ```kotlin
 dependencies {
-    implementation("io.purchasely:core:6.0.0-rc1")
-    implementation("io.purchasely:google-play:6.0.0-rc1")        // Google Play
-    implementation("io.purchasely:player:6.0.0-rc1")             // optional video support
+    implementation("io.purchasely:core:6.0.0-rc.1")
+    implementation("io.purchasely:google-play:6.0.0-rc.1")        // Google Play
+    implementation("io.purchasely:player:6.0.0-rc.1")             // optional video support
     // alternative stores:
-    implementation("io.purchasely:huawei-services:6.0.0-rc1")    // Huawei AppGallery
-    implementation("io.purchasely:amazon:6.0.0-rc1")             // Amazon Appstore
+    implementation("io.purchasely:huawei-services:6.0.0-rc.1")    // Huawei AppGallery
+    implementation("io.purchasely:amazon:6.0.0-rc.1")             // Amazon Appstore
 }
 ```
 

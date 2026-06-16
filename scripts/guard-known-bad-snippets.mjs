@@ -31,7 +31,7 @@ const requiredBuildGateSkillFiles = [
   'purchasely/skills/purchasely-debug/SKILL.md',
   'purchasely/skills/purchasely-integrate/SKILL.md',
   'purchasely/skills/purchasely-review/SKILL.md',
-  'purchasely/skills/migrate/SKILL.md',
+  'purchasely/skills/purchasely-migrate/SKILL.md',
 ];
 
 for (const rel of requiredBuildGateSkillFiles) {

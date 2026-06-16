@@ -1,6 +1,6 @@
 {
   "name": "@purchasely/ai-plugin",
-  "version": "2.0.0-rc1",
+  "version": "2.0.0-rc.2",
   "description": "AI coding assistant plugin for Purchasely SDK integration across all platforms",
   "scripts": {
     "test": "node scripts/guard-known-bad-snippets.mjs"
