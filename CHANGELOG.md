@@ -4,27 +4,33 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+## [2.0.0-rc.2] — 2026-06-16
+
 ### Changed
 
 - **`migrate` skill renamed to `purchasely-migrate`** — for consistency with `purchasely-integrate` / `purchasely-review` / `purchasely-debug` and to disambiguate the skill when installed alongside other repos via the [`skills` CLI](https://www.skills.sh/docs). The slash command keeps its name (`/purchasely:migrate`) since it is already namespaced by the Claude Code plugin prefix. Migration: re-run `npx skills update` (or `npx skills add Purchasely/Purchasely-AI-Plugin` again) to pick up the new name.
 
+### Fixed
+
+- Corrected the native SDK version string to **`6.0.0-rc.1`** (was `6.0.0-rc1`) across every reference, skill, and pinning snippet — the published tag uses the SemVer dot separator, and **iOS and Android are both on `6.0.0-rc.1`**.
+
 ## [2.0.0-rc1] — 2026-06-15
 
-First release candidate of the **v6 line**. The plugin now targets the **Purchasely SDK v6.0.0-rc1** on **native iOS (Swift / Objective-C)** and **native Android (Kotlin / Java)**. Flutter, React Native and Cordova guidance stays on v5 in this RC and will move to v6 for the final `2.0.0`.
+First release candidate of the **v6 line**. The plugin now targets the **Purchasely SDK v6.0.0-rc.1** on **native iOS (Swift / Objective-C)** and **native Android (Kotlin / Java)**. Flutter, React Native and Cordova guidance stays on v5 in this RC and will move to v6 for the final `2.0.0`.
 
 ### Added
 
-- **`migrate` skill — native v5.x → v6.0.0-rc1 migration.** A dedicated skill that upgrades an existing Purchasely integration in a single prompt: it leads with the silent default-running-mode change (Observer in v6 — set Full explicitly for purchase handling & validation), covers **Kotlin, Java, Swift and Objective-C**, detects legacy code via the new v5 API snapshots, applies every v5→v6 breaking change (init builder, per-action interceptor, presentation builder/preload/display, deeplink renames, removed APIs), and verifies with the platform build/test commands. **iOS and Android only for now**; Flutter, React Native and Cordova will be added for the final `2.0.0`. Fact-checks uncertain details against the official v6 docs (`docs.purchasely.com` / the `v6.0` branch of `Purchasely/Documentation`).
+- **`migrate` skill — native v5.x → v6.0.0-rc.1 migration.** A dedicated skill that upgrades an existing Purchasely integration in a single prompt: it leads with the silent default-running-mode change (Observer in v6 — set Full explicitly for purchase handling & validation), covers **Kotlin, Java, Swift and Objective-C**, detects legacy code via the new v5 API snapshots, applies every v5→v6 breaking change (init builder, per-action interceptor, presentation builder/preload/display, deeplink renames, removed APIs), and verifies with the platform build/test commands. **iOS and Android only for now**; Flutter, React Native and Cordova will be added for the final `2.0.0`. Fact-checks uncertain details against the official v6 docs (`docs.purchasely.com` / the `v6.0` branch of `Purchasely/Documentation`).
 - `references/ios/v5-api-reference.md` and `references/android/v5-api-reference.md` — compact snapshots of the v5 public API (legacy symbols, signatures, and a `→ v6` pointer for each) so the `migrate` skill can recognize the code it is replacing.
 - `references/concepts/lottie-animations.md` — covers Purchasely Screen Lottie setup with the iOS `PLYLottieBridge`, Android `PLYLottieInterface` / `Purchasely.lottieView`, cross-platform host-project notes, and troubleshooting for missing bridges, file size, and Console template availability.
 
 ### Changed
 
 - **All skills updated for SDK v6.** `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, the new `migrate` skill, and the `sdk-expert` agent now document the **v6 native API** for iOS & Android. Cross-platform (Flutter / React Native / Cordova) guidance is intentionally kept on v5 until their v6 migrations ship in the final `2.0.0`.
-- **Native iOS and Android references fully aligned with the published SDK v6.0.0-rc1 API.** Reworked `references/ios/*` and `references/android/*` (`api-reference`, `initialization`, `common-patterns`, `migration-v6`) around the fluent init builder, per-action `interceptAction` + `PLYInterceptResult`, the `PLYPresentationBuilder` / `PLYPresentation { }` builder→preload→display model, `PLYPresentationOutcome` (with `closeReason`), `screenId`, SwiftUI `swiftUIView`, `StateFlow<PLYPresentationState>`, Android deeplink auto-interception, `synchronize(onSuccess, onError)`, and the v6 removals — covering Swift, Objective-C, Kotlin and Java.
+- **Native iOS and Android references fully aligned with the published SDK v6.0.0-rc.1 API.** Reworked `references/ios/*` and `references/android/*` (`api-reference`, `initialization`, `common-patterns`, `migration-v6`) around the fluent init builder, per-action `interceptAction` + `PLYInterceptResult`, the `PLYPresentationBuilder` / `PLYPresentation { }` builder→preload→display model, `PLYPresentationOutcome` (with `closeReason`), `screenId`, SwiftUI `swiftUIView`, `StateFlow<PLYPresentationState>`, Android deeplink auto-interception, `synchronize(onSuccess, onError)`, and the v6 removals — covering Swift, Objective-C, Kotlin and Java.
 - `references/concepts/running-modes.md` — documents the v6 default-mode change (Observer) with v6 initialization for iOS (Swift/Obj-C) and Android (Kotlin/Java); cross-platform examples kept on v5.
 - `references/concepts/*` — concept references updated to the v6 native API (paywall-actions, observer-mode-post-purchase, presentation-types/-cache, promotional-offers, campaigns, byos, user identity/attributes, subscription-checks); cross-platform sections kept on v5.
-- `references/sdk-versions.md` — native iOS bumped to `6.0.0-rc1`; iOS pinning snippets updated.
+- `references/sdk-versions.md` — native iOS bumped to `6.0.0-rc.1`; iOS pinning snippets updated.
 - `purchasely-integrate`, `purchasely-review`, and `purchasely-debug` now require a final app build; build failures must be fixed and rechecked before reporting success.
 
 ### Fixed
@@ -74,6 +80,7 @@ Initial release of the Purchasely AI Plugin for Claude Code, GitHub Copilot CLI,
 - Reference documentation for Purchasely SDK setup, paywall display, purchases, subscriptions, privacy/GDPR, promotional offers, campaigns, and troubleshooting across iOS, Android, React Native, Flutter, and Cordova.
 - Installation and marketplace metadata for supported agent environments.
 
+[2.0.0-rc.2]: https://github.com/Purchasely/Purchasely-AI-Plugin/releases/tag/2.0.0-rc.2
 [2.0.0-rc1]: https://github.com/Purchasely/Purchasely-AI-Plugin/releases/tag/2.0.0-rc1
 [1.1.0]: https://github.com/Purchasely/Purchasely-AI-Plugin/releases/tag/1.1.0
 [1.0.1]: https://github.com/Purchasely/Purchasely-AI-Plugin/releases/tag/1.0.1

@@ -8,8 +8,8 @@ _Last updated: 2026-06-15._
 
 | Platform | Latest version | Notes |
 |----------|----------------|-------|
-| **iOS** (native) | **6.0.0-rc1** | Fluent init builder, per-action `interceptAction` + `PLYInterceptResult`, `PLYPresentationBuilder`, `swiftUIView`, `closeAllScreens()`, `PLYPresentationOutcome` (with `closeReason`). **Default running mode is now `.observer`** — set `.runningMode(.full)` for purchase handling. |
-| **Android** (native) | **6.0.0-rc1** | Presentation builder API, `screenId`, typed action interceptors, `PLYPresentationOutcome`. **Default running mode is now `Observer`** — set `PLYRunningMode.Full` for purchase handling. No `presentation-compose` artifact (use `AndroidView { buildView }` for Compose). |
+| **iOS** (native) | **6.0.0-rc.1** | Fluent init builder, per-action `interceptAction` + `PLYInterceptResult`, `PLYPresentationBuilder`, `swiftUIView`, `closeAllScreens()`, `PLYPresentationOutcome` (with `closeReason`). **Default running mode is now `.observer`** — set `.runningMode(.full)` for purchase handling. |
+| **Android** (native) | **6.0.0-rc.1** | Presentation builder API, `screenId`, typed action interceptors, `PLYPresentationOutcome`. **Default running mode is now `Observer`** — set `PLYRunningMode.Full` for purchase handling. No `presentation-compose` artifact (use `AndroidView { buildView }` for Compose). |
 | **React Native** | **5.7.3** | Cross-platform plugin. All three `react-native-purchasely*` packages MUST be the same version. |
 | **Flutter** | **5.7.3** | Cross-platform plugin on the **v5 API** (like React Native / Cordova): `Purchasely.start(...)`, `fetchPresentation` / `presentPresentation[ForPlacement]`, `setPaywallActionInterceptorCallback` + `onProcessAction`. Pulls the 5.7.x native SDKs. The v6 Flutter API ships in the final 2.0.0 release. All three `purchasely_*` packages MUST be the same version. |
 | **Cordova** | **5.7.3** | Cross-platform plugin. All `@purchasely/cordova-plugin-*` packages MUST be the same version. |
@@ -20,41 +20,41 @@ _Last updated: 2026-06-15._
 
 ```ruby
 # Podfile
-pod 'Purchasely', '6.0.0-rc1'
+pod 'Purchasely', '6.0.0-rc.1'
 ```
 
 ### iOS — Swift Package Manager
 
-In Xcode → File → Add Packages → enter `https://github.com/Purchasely/Purchasely-iOS` and select **Exact Version 6.0.0-rc1**.
+In Xcode → File → Add Packages → enter `https://github.com/Purchasely/Purchasely-iOS` and select **Exact Version 6.0.0-rc.1**.
 
 ### iOS — Carthage
 
 ```
 # Cartfile
-binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json" == 6.0.0-rc1
+binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json" == 6.0.0-rc.1
 ```
 
-Then run `carthage update`. Pin **exactly** (`== 6.0.0-rc1`) — a floating constraint will not resolve a pre-release.
+Then run `carthage update`. Pin **exactly** (`== 6.0.0-rc.1`) — a floating constraint will not resolve a pre-release.
 
 ### Android — Gradle (Kotlin DSL)
 
 ```kotlin
 // app/build.gradle.kts
 dependencies {
-    implementation("io.purchasely:core:6.0.0-rc1")
-    implementation("io.purchasely:google-play:6.0.0-rc1")          // if Google Play
-    implementation("io.purchasely:player:6.0.0-rc1")               // optional video support
+    implementation("io.purchasely:core:6.0.0-rc.1")
+    implementation("io.purchasely:google-play:6.0.0-rc.1")          // if Google Play
+    implementation("io.purchasely:player:6.0.0-rc.1")               // optional video support
     // alt stores
-    implementation("io.purchasely:huawei-services:6.0.0-rc1")      // Huawei AppGallery
-    implementation("io.purchasely:amazon:6.0.0-rc1")               // Amazon Appstore
+    implementation("io.purchasely:huawei-services:6.0.0-rc.1")      // Huawei AppGallery
+    implementation("io.purchasely:amazon:6.0.0-rc.1")               // Amazon Appstore
 }
 ```
 
 ### Android — Gradle (Groovy)
 
 ```groovy
-implementation "io.purchasely:core:6.0.0-rc1"
-implementation "io.purchasely:google-play:6.0.0-rc1"
+implementation "io.purchasely:core:6.0.0-rc.1"
+implementation "io.purchasely:google-play:6.0.0-rc.1"
 ```
 
 ### React Native — package.json

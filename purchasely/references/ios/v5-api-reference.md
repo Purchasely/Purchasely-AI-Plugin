@@ -1,6 +1,6 @@
 # iOS SDK v5.x API — reference for MIGRATION ONLY (replaced in v6)
 
-> **Do not write new v5 code.** This is a compact snapshot of the legacy v5.x public API so the `purchasely-migrate` skill can **recognize** existing v5 code in a project and map it forward. Every symbol below is **removed or deprecated in v6.0.0-rc1**. For the v6 surface, see [`api-reference.md`](api-reference.md); for the step-by-step migration, see [`migration-v6.md`](migration-v6.md).
+> **Do not write new v5 code.** This is a compact snapshot of the legacy v5.x public API so the `purchasely-migrate` skill can **recognize** existing v5 code in a project and map it forward. Every symbol below is **removed or deprecated in v6.0.0-rc.1**. For the v6 surface, see [`api-reference.md`](api-reference.md); for the step-by-step migration, see [`migration-v6.md`](migration-v6.md).
 
 ## How to recognize a v5 iOS integration
 

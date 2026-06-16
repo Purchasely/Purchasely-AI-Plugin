@@ -1,6 +1,6 @@
 # iOS SDK Initialization
 
-> Documents the **v6.0.0-rc1** fluent initialization builder. Migrating from v5? See [`migration-v6.md`](migration-v6.md). Universal concepts (running modes, log levels, etc.) also live in [`../concepts/`](../concepts/README.md).
+> Documents the **v6.0.0-rc.1** fluent initialization builder. Migrating from v5? See [`migration-v6.md`](migration-v6.md). Universal concepts (running modes, log levels, etc.) also live in [`../concepts/`](../concepts/README.md).
 
 ## Installation
 
@@ -9,7 +9,7 @@
 Add to your `Podfile`:
 
 ```ruby
-pod 'Purchasely', '6.0.0-rc1'
+pod 'Purchasely', '6.0.0-rc.1'
 ```
 
 Then run:
@@ -30,7 +30,7 @@ Or add to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Purchasely/Purchasely-iOS", exact: "6.0.0-rc1")
+    .package(url: "https://github.com/Purchasely/Purchasely-iOS", exact: "6.0.0-rc.1")
 ]
 ```
 
@@ -39,7 +39,7 @@ dependencies: [
 Add to your `Cartfile`:
 
 ```
-binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json" == 6.0.0-rc1
+binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json" == 6.0.0-rc.1
 ```
 
 Then run:
@@ -48,7 +48,7 @@ Then run:
 carthage update
 ```
 
-Pin **exactly** (`== 6.0.0-rc1`) — a floating constraint will not resolve a pre-release.
+Pin **exactly** (`== 6.0.0-rc.1`) — a floating constraint will not resolve a pre-release.
 
 ## Import
 
