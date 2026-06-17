@@ -31,7 +31,7 @@ Enable both together when investigating "the wrong paywall appears" tickets.
 | iOS (Swift) | `Purchasely.logLevel = .debug` (or pass `logLevel: .debug` to `start`) |
 | Android (Kotlin) | `.logLevel(LogLevel.DEBUG)` on the `Purchasely.Builder` |
 | React Native | `logLevel: Purchasely.LogLevel.DEBUG` on `Purchasely.start({...})` |
-| Flutter | `logLevel: PLYLogLevel.debug` on `Purchasely.start(...)` |
+| Flutter | `.logLevel(LogLevel.debug)` on the `PurchaselyBuilder` |
 | Cordova | `Purchasely.LogLevel.DEBUG` as the 4th argument to `Purchasely.start(...)` |
 
 > **Gate behind a build flag.** Ship `LogLevel.ERROR` (or omit the parameter) in production. Debug logs include placement IDs, audience matches, and presentation IDs — keep them out of production binaries.

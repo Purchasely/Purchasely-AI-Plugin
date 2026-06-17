@@ -39,7 +39,7 @@ Docs:
 
 ## SDK setup — gating campaign display
 
-Trigger-based campaigns can be deferred until your app explicitly authorises display — useful when you have a splash / onboarding / login flow that must finish first. On **native iOS/Android v6** the flag is `allowCampaigns` (a separate flag from `allowDeeplink`); the cross-platform bridges still expose `readyToOpenDeeplink`.
+Trigger-based campaigns can be deferred until your app explicitly authorises display — useful when you have a splash / onboarding / login flow that must finish first. On **native iOS/Android v6 and Flutter v6** the flag is `allowCampaigns` (a separate flag from `allowDeeplink`); the **React Native / Cordova** v5 bridges still expose `readyToOpenDeeplink`.
 
 ### iOS (Swift)
 
@@ -61,18 +61,29 @@ Purchasely.allowCampaigns = true    // queued campaigns display immediately
 
 Or at init via the DSL / Builder: `allowCampaigns(false)`. Defaults to `true`.
 
-### React Native / Flutter / Cordova
+### React Native / Cordova (v5)
 
 ```ts
 Purchasely.readyToOpenDeeplink(true);
 ```
+
+### Flutter (v6)
+
+```dart
+await PurchaselyBuilder.apiKey('<YOUR_API_KEY>')
+    .allowCampaigns(false)   // queue campaigns; flip back when onboarding ends
+    .allowDeeplink(true)     // separate flag from allowCampaigns
+    .start();
+```
+
+`allowCampaigns` is set at init via `PurchaselyBuilder` and is a separate flag from `allowDeeplink`. Both default to `true`.
 
 > **v6 native:** `allowCampaigns` and `allowDeeplink` are **independent** flags (in v5 a single flag governed both). Control campaign display with `allowCampaigns`; control deeplink presentations with `allowDeeplink` (defaults to `true`). Android also **auto-intercepts** deeplinks, so no manual `handleDeeplink` call is required for them.
 > If you implement a [UI Handler](https://docs.purchasely.com/docs/ui-handler-deeplinks) to manage deeplink display yourself, **keep the presentation object returned** and do not refetch it — refetching loses the campaign context.
 
 ## Placement-based campaigns — no extra SDK code
 
-You already fetch the placement (native iOS/Android v6: `PLYPresentationBuilder.forPlacementId("PLACEMENT_ID")` / `PLYPresentation { placementId("PLACEMENT_ID") }`; cross-platform: `fetchPresentation("PLACEMENT_ID")`). When a campaign targets that placement and the user matches the audience, the SDK substitutes the campaign's Screen for the Placement's default rules. Same `PLYPresentationType` handling, same display path. Nothing to change in your code.
+You already fetch the placement (native iOS/Android v6: `PLYPresentationBuilder.forPlacementId("PLACEMENT_ID")` / `PLYPresentation { placementId("PLACEMENT_ID") }`; Flutter v6: `PresentationBuilder.placement("PLACEMENT_ID").build()`; React Native / Cordova v5: `fetchPresentation("PLACEMENT_ID")`). When a campaign targets that placement and the user matches the audience, the SDK substitutes the campaign's Screen for the Placement's default rules. Same `PLYPresentationType` handling, same display path. Nothing to change in your code.
 
 ## Typical use cases
 
@@ -99,8 +110,8 @@ Property bag includes `campaign_id`, `campaign_name`, `screen_id`, `audience_id`
 
 ## Anti-patterns
 
-- ❌ **Leaving campaigns gated.** If you set `allowCampaigns = false` (native v6) / `readyToOpenDeeplink(false)` (cross-platform) and never flip it back, trigger-based campaigns silently never appear.
-- ❌ **Re-enabling campaigns too early.** If your splash screen runs after `start()`, flipping `allowCampaigns = true` (native v6) / `readyToOpenDeeplink(true)` (cross-platform) while it is still up lands the campaign paywall on top of the splash. Wait until your launch routine is complete.
+- ❌ **Leaving campaigns gated.** If you set `allowCampaigns = false` (native iOS/Android v6 and Flutter v6) / `readyToOpenDeeplink(false)` (React Native / Cordova v5) and never flip it back, trigger-based campaigns silently never appear.
+- ❌ **Re-enabling campaigns too early.** If your splash screen runs after `start()`, flipping `allowCampaigns = true` (native iOS/Android v6 and Flutter v6) / `readyToOpenDeeplink(true)` (React Native / Cordova v5) while it is still up lands the campaign paywall on top of the splash. Wait until your launch routine is complete.
 - ❌ **Coupling capping logic to placement-based campaigns.** Capping only applies on triggers — if you need capping on a placement, build the cap into your audience attribute or use a trigger.
 - ❌ **Refetching the presentation returned by the deeplink handler.** You lose the campaign context (audience match, screen variant, exposure tracking).
 - ❌ **Targeting subscribers with promotional offers without eligibility audience.** See [promotional-offers.md](promotional-offers.md#eligibility-is-your-responsibility-promotional-offers--developer-determined-offers).

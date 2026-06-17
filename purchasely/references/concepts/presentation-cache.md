@@ -6,7 +6,7 @@ Applies to: **iOS, Android, React Native, Flutter, Cordova**.
 
 ## The problem
 
-Fetching a presentation on every display hits the network each time. (Native iOS/Android v6 fetch with `PLYPresentationBuilder` / the `PLYPresentation { }` DSL + `preload`; cross-platform bridges call `Purchasely.fetchPresentation(...)`.) If you display the same placement repeatedly (`onAppear` / `onViewWillAppear` firing multiple times, sheet/back navigation, recomposition, etc.), each fetch:
+Fetching a presentation on every display hits the network each time. (Native iOS/Android v6 fetch with `PLYPresentationBuilder` / the `PLYPresentation { }` DSL + `preload`; Flutter v6 builds a request with `PresentationBuilder.placement(id).build()` then `request.preload()`; React Native / Cordova v5 bridges call `Purchasely.fetchPresentation(...)`.) If you display the same placement repeatedly (`onAppear` / `onViewWillAppear` firing multiple times, sheet/back navigation, recomposition, etc.), each fetch:
 
 1. Round-trips to Purchasely servers.
 2. **For flow placements**, accumulates a `flowSteps` entry in the SDK's internal `FlowsManager`.
@@ -125,7 +125,8 @@ fetchOrCached(placementId):
     if cached: return cached
     # native iOS/Android v6: PLYPresentationBuilder.forPlacementId(placementId).build().preload()
     #                        / PLYPresentation { placementId(...) }.preload()
-    # cross-platform bridges: await Purchasely.fetchPresentation(placementId)
+    # Flutter v6:            await PresentationBuilder.placement(placementId).build().preload()
+    # React Native / Cordova v5 bridges: await Purchasely.fetchPresentation(placementId)
     fresh = await preload(placementId)
     cache.set(placementId, fresh)
     return fresh

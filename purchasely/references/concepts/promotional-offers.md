@@ -110,7 +110,7 @@ Purchasely.interceptAction<PLYPresentationAction.Purchase> { info, purchase ->
 }
 ```
 
-#### React Native / Flutter / Cordova — `subscriptionOffer` in interceptor parameters
+#### React Native / Cordova — `subscriptionOffer` in interceptor parameters
 
 ```ts
 Purchasely.setPaywallActionInterceptorCallback((result) => {
@@ -134,6 +134,35 @@ Purchasely.setPaywallActionInterceptorCallback((result) => {
   } else {
     Purchasely.onProcessAction(true);
   }
+});
+```
+
+#### Flutter (Dart) — `PurchasePayload` from the per-action interceptor
+
+In v6 Flutter mirrors the native per-action model: register `Purchasely.interceptAction` for the purchase kind and return an `InterceptResult`.
+
+```dart
+Purchasely.interceptAction(PresentationActionKind.purchase, (info, payload) async {
+  final purchase = payload as PurchasePayload;
+
+  // Cross-store generic fields
+  final storeProductId = purchase.plan?.productId;
+  final storeOfferId   = purchase.offer?.storeOfferId;
+
+  // Google specifics
+  final productId  = purchase.subscriptionOffer?.subscriptionId;
+  final basePlanId = purchase.subscriptionOffer?.basePlanId;
+  final offerId    = purchase.subscriptionOffer?.offerId;
+  final offerToken = purchase.subscriptionOffer?.offerToken;
+
+  // Apple specifics — call Purchasely.signPromotionalOffer(...) to get the signature
+  // and pass it to your own purchase flow, then synchronize:
+  await Purchasely.synchronize();
+
+  // After your own purchase flow resolves, dismiss the presentation:
+  // await presentation.close();
+
+  return InterceptResult.success; // app handled the purchase
 });
 ```
 

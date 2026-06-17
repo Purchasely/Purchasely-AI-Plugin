@@ -4,6 +4,22 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+## [2.0.0-rc.3] — 2026-06-17
+
+Flutter joins the **v6 line**. Flutter guidance moves off v5 to match native iOS & Android — the published Flutter SDK now targets **Purchasely v6.0.0-rc.1** with the builder API. **React Native and Cordova stay on v5 (`5.7.3`).**
+
+### Changed
+
+- **All skills updated for Flutter v6.** `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, `purchasely-migrate`, and the `sdk-expert` agent now document the **Flutter v6 builder API**: `PurchaselyBuilder` fluent init (default `RunningMode.observer`), `PresentationBuilder` / `PresentationRequest` (replacing `fetchPresentation` / `presentPresentation[ForPlacement]`), per-action `Purchasely.interceptAction` + `InterceptResult` (replacing `setPaywallActionInterceptorCallback` + `onProcessAction`), `presentation.close()` to dismiss (there is no `closePresentation()` / `closeAllScreens()` in Flutter v6), `allowDeeplink` / `handleDeeplink`, and awaitable `synchronize()`. Flutter is carved out of the former "v5 cross-platform" grouping; React Native and Cordova keep their v5 guidance.
+- **`references/flutter/integration.md` and `references/flutter/migration-v6.md`** rewritten as shippable v6 docs (dropped the "preview / not published / use 5.7.3 today" framing); pin `purchasely_flutter` / `purchasely_google` / `purchasely_android_player` to `6.0.0-rc.1`.
+- **`references/sdk-versions.md`** — the Flutter row, pubspec pins, and transitive-version notes move to the v6 generation (`6.0.0-rc.1`, which pulls the `6.0.0-rc.1` native SDKs). React Native / Cordova rows kept on `5.7.3`.
+- **`purchasely-migrate`** now migrates Flutter v5.x → `6.0.0-rc.1` (alongside native iOS & Android), with a dedicated Flutter workflow and `flutter analyze` / `flutter test` / `flutter build` verification. React Native and Cordova remain out of scope.
+- Concept references (running modes, observer-mode post-purchase, paywall actions, presentation types/cache, promotional offers, campaigns, architecture, troubleshooting) updated so Flutter examples use the v6 API.
+
+### Removed
+
+- Flutter docs no longer present `Purchasely.presentSubscriptions()` — it is **removed** in Flutter v6 (the native subscriptions screen was dropped on both platforms; build your own from `userSubscriptions()` / `userSubscriptionsHistory()`). `displaySubscriptionCancellationInstruction()` is a no-op.
+
 ## [2.0.0-rc.2] — 2026-06-16
 
 ### Changed
@@ -80,6 +96,7 @@ Initial release of the Purchasely AI Plugin for Claude Code, GitHub Copilot CLI,
 - Reference documentation for Purchasely SDK setup, paywall display, purchases, subscriptions, privacy/GDPR, promotional offers, campaigns, and troubleshooting across iOS, Android, React Native, Flutter, and Cordova.
 - Installation and marketplace metadata for supported agent environments.
 
+[2.0.0-rc.3]: https://github.com/Purchasely/Purchasely-AI-Plugin/releases/tag/2.0.0-rc.3
 [2.0.0-rc.2]: https://github.com/Purchasely/Purchasely-AI-Plugin/releases/tag/2.0.0-rc.2
 [2.0.0-rc1]: https://github.com/Purchasely/Purchasely-AI-Plugin/releases/tag/2.0.0-rc1
 [1.1.0]: https://github.com/Purchasely/Purchasely-AI-Plugin/releases/tag/1.1.0
