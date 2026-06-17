@@ -20,6 +20,7 @@ All notable changes to this project are documented here. The format is based on 
 - Corrected login action interceptor examples so successful app-owned login returns `.success` / `InterceptResult.success` (or `onProcessAction(false)` on v5 bridges), not `.notHandled`.
 - Updated troubleshooting guidance for frozen paywalls to show v6 return-value interceptors alongside v5 bridge callbacks.
 - Aligned marketplace and plugin manifest versions to `2.0.0-rc.3`.
+- Made the Flutter promotional-offer Observer-mode snippet safe to copy by running app-side billing before `synchronize()` and returning `InterceptResult.failed` when no purchase occurred.
 
 ### Removed
 

@@ -143,25 +143,37 @@ In v6 Flutter mirrors the native per-action model: register `Purchasely.intercep
 
 ```dart
 Purchasely.interceptAction(PresentationActionKind.purchase, (info, payload) async {
-  final purchase = payload as PurchasePayload;
+  if (payload is! PurchasePayload) return InterceptResult.notHandled;
 
   // Cross-store generic fields
-  final storeProductId = purchase.plan?.productId;
-  final storeOfferId   = purchase.offer?.storeOfferId;
+  final storeProductId = payload.plan?.productId;
+  final storeOfferId = payload.offer?.storeOfferId;
 
   // Google specifics
-  final productId  = purchase.subscriptionOffer?.subscriptionId;
-  final basePlanId = purchase.subscriptionOffer?.basePlanId;
-  final offerId    = purchase.subscriptionOffer?.offerId;
-  final offerToken = purchase.subscriptionOffer?.offerToken;
+  final googleProductId = payload.subscriptionOffer?.subscriptionId;
+  final googleBasePlanId = payload.subscriptionOffer?.basePlanId;
+  final googleOfferId = payload.subscriptionOffer?.offerId;
+  final googleOfferToken = payload.subscriptionOffer?.offerToken;
 
-  // Apple specifics — call Purchasely.signPromotionalOffer(...) to get the signature
-  // and pass it to your own purchase flow, then synchronize:
+  // Apple specifics — call Purchasely.signPromotionalOffer(...) to get the signature,
+  // then pass storeProductId / storeOfferId (+ signature for Apple) to your own
+  // billing system here:
+  final ok = await yourBillingSystem.purchase(
+    productId: storeProductId,
+    offerId: storeOfferId,
+    googleProductId: googleProductId,
+    googleBasePlanId: googleBasePlanId,
+    googleOfferId: googleOfferId,
+    googleOfferToken: googleOfferToken,
+    // appleSignature: ...,
+  );
+  if (!ok) return InterceptResult.failed;
+
+  // Upload the new receipt to Purchasely only after a successful purchase:
   await Purchasely.synchronize();
 
-  // After your own purchase flow resolves, dismiss the presentation:
-  // await presentation.close();
-
+  // Observer mode does not auto-close; dismiss after the handler resolves.
+  // Call presentation.close() from your post-resolution success callback.
   return InterceptResult.success; // app handled the purchase
 });
 ```
