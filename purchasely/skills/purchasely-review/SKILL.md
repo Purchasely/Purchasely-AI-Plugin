@@ -119,7 +119,7 @@ Search the entire codebase using these patterns to build a map of all Purchasely
 **Deeplink patterns:**
 - Native v6 + Flutter v6: `handleDeeplink` / `allowDeeplink`
 - v5 (RN / Cordova) / deprecated alias (flag if used as the primary name on native or Flutter v6): `isDeeplinkHandled` / `readyToOpenDeeplink`
-- `setDefaultPresentationResultHandler`
+- `setDefaultPresentationDismissHandler` (v6; renamed from v5 `setDefaultPresentationResultHandler`)
 
 **User management patterns:**
 - `userLogin` / `userLogout` / `setUserAttribute`
@@ -179,7 +179,7 @@ For each item below, search the code, analyze the context, and report one of:
 
 - [ ] **handleDeeplink() called** — `Purchasely.handleDeeplink(...)` must be called when the app receives a URL. On v6 (native + Flutter) this is the rename of v5 `isDeeplinkHandled(...)` — WARNING if the deprecated `isDeeplinkHandled` is still used (removal in v7). On **iOS** the SDK does NOT auto-intercept, so `handleDeeplink(url)` must be wired from AppDelegate/SceneDelegate. On **Android v6** deeplinks are auto-intercepted (zero code) by reading the foreground activity intent; if the activity is `singleTask`/`singleTop`, verify `setIntent(intent)` is called in `onNewIntent` (otherwise the URI is hidden) or that a manual `handleDeeplink(uri, activity)` call exists. On **Flutter v6** the app should forward incoming links from its deeplink handling (e.g. `uni_links` / `app_links` / router) to `Purchasely.handleDeeplink(uri)` for iOS; Android still benefits from the native auto-interception. SKIP if the app doesn't support deeplinks.
 - [ ] **allowDeeplink enabled** — v6 (native + Flutter) renamed `readyToOpenDeeplink` → `allowDeeplink` (set via the init builder modifier `.allowDeeplink(true)` or the runtime flag `Purchasely.allowDeeplink(bool)`). It defaults to **true** on v6, so usually no action is needed; WARNING only if the app explicitly sets `allowDeeplink(false)` while also relying on campaign/deeplink display. On cross-platform RN / Cordova (v5) the old `readyToOpenDeeplink(true)` is still required after the UI is initialized. WARNING if the deprecated `readyToOpenDeeplink` name is used as the primary call in v6 native or Flutter v6 code.
-- [ ] **setDefaultPresentationResultHandler configured** — A default result handler should be set so deeplink-triggered paywalls can report their outcome. WARNING if missing.
+- [ ] **setDefaultPresentationDismissHandler configured** — A default dismiss handler should be set so deeplink-triggered paywalls can report their outcome. WARNING if missing. (v6 renamed v5's `setDefaultPresentationResultHandler` and its closure now receives a single `PLYPresentationOutcome`.)
 
 ### 3.5 User Management
 
