@@ -15,7 +15,7 @@ The bundled references are intentionally curated, not a full copy of the public 
 
 - `../../references/concepts/running-modes.md` — Full vs Observer modes, log levels
 - `../../references/concepts/paywall-actions.md` — `PLYPresentationAction` enum, interceptor `proceed/processAction` rules
-- `../../references/concepts/presentation-types.md` — `PLYPresentationType` guard (NORMAL / FALLBACK / DEACTIVATED / CLIENT)
+- `../../references/concepts/presentation-types.md` — presentation type guard (NORMAL / FALLBACK / DEACTIVATED / CLIENT)
 - `../../references/concepts/presentation-cache.md` — App-side cache + **preload pattern** (fetch ahead, display instantly)
 - `../../references/concepts/observer-mode-post-purchase.md` — `proceed/processAction → dismiss` ordering, chaining follow-up placements
 - `../../references/concepts/programmatic-purchases.md` — Exact app-side purchase APIs by platform
@@ -1048,13 +1048,17 @@ await Purchasely.interceptAction(
       await Purchasely.synchronize();  // upload the receipt to Purchasely
     } on PlatformException {
       // surface failure
+      return InterceptResult.failed;
     }
-    // Observer mode does not auto-close. Dismiss the loaded presentation after
-    // this handler returns, or wire a `close` action on the button in the Console.
-    presentation.close();
     return InterceptResult.success;    // v6 equivalent of processAction(false)
   },
 );
+
+// Called after the interceptor has resolved (Observer mode does not auto-close).
+// Skip this if a `close` action is configured on the button in the Console.
+Future<void> onPurchaseSuccess(Presentation presentation) async {
+  await presentation.close();
+}
 ```
 
 ### React Native / Cordova Observer-mode post-purchase (v5)

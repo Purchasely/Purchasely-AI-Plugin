@@ -175,7 +175,7 @@ final request = PresentationBuilder
     .placement('YOUR_POST_PURCHASE_PLACEMENT_ID')
     .build();
 final p = await request.preload();
-if (p.type == PLYPresentationType.normal || p.type == PLYPresentationType.fallback) {
+if (p.type == PresentationType.normal || p.type == PresentationType.fallback) {
   await p.display(const Transition.fullScreen());
 }
 ```

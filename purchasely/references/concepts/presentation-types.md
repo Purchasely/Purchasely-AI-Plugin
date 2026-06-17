@@ -1,8 +1,8 @@
-# `PLYPresentationType` — Universal Type Guard
+# Presentation Type — Universal Type Guard
 
 Applies to: **iOS, Android, React Native, Flutter, Cordova**.
 
-Every fetched/preloaded `PLYPresentation` carries a `type` field telling you what the dashboard returned. **You must check the type before displaying** — calling `display(...)` on a `DEACTIVATED` presentation is undefined behaviour and a `CLIENT` presentation isn't a real paywall at all. Native iOS/Android and Flutter v6 obtain the presentation with `PLYPresentationBuilder` / the `PLYPresentation { }` DSL / `PresentationBuilder` + `preload`; the v5 cross-platform bridges (React Native, Cordova) still call `Purchasely.fetchPresentation(...)`.
+Every fetched/preloaded presentation carries a `type` field telling you what the dashboard returned. **You must check the type before displaying** — calling `display(...)` on a `DEACTIVATED` presentation is undefined behaviour and a `CLIENT` presentation isn't a real paywall at all. Native iOS/Android and Flutter v6 obtain the presentation with `PLYPresentationBuilder` / the `PLYPresentation { }` DSL / `PresentationBuilder` + `preload`; the v5 cross-platform bridges (React Native, Cordova) still call `Purchasely.fetchPresentation(...)`.
 
 ## The four types
 
@@ -22,7 +22,7 @@ Every fetched/preloaded `PLYPresentation` carries a `type` field telling you wha
 | iOS | `PLYPresentationType.normal` / `.fallback` / `.deactivated` / `.client` |
 | Android | `PLYPresentationType.NORMAL` / `.FALLBACK` / `.DEACTIVATED` / `.CLIENT` |
 | React Native | `PLYPresentationType.NORMAL` / `.FALLBACK` / `.DEACTIVATED` / `.CLIENT` |
-| Flutter | `PLYPresentationType.normal` / `.fallback` / `.deactivated` / `.client` |
+| Flutter | `PresentationType.normal` / `.fallback` / `.deactivated` / `.client` |
 | Cordova | String values: `'NORMAL'`, `'FALLBACK'`, `'DEACTIVATED'`, `'CLIENT'` |
 
 ## Fetch + guard pattern
@@ -106,15 +106,15 @@ if (presentation == null) {
 }
 
 switch (presentation.type) {
-  case PLYPresentationType.normal:
-  case PLYPresentationType.fallback:
+  case PresentationType.normal:
+  case PresentationType.fallback:
     // display(...) resolves at dismiss with a PresentationOutcome (required for Flows).
-    final outcome = await request.display([const Transition.fullScreen()]);
+    final outcome = await request.display(const Transition.fullScreen());
     handleResult(outcome);
     break;
-  case PLYPresentationType.deactivated:
+  case PresentationType.deactivated:
     return;
-  case PLYPresentationType.client:
+  case PresentationType.client:
     showCustomPaywall(presentation.plans);
     break;
 }
@@ -166,7 +166,7 @@ Use `display()` / bridge `presentPresentation(...)` by default. Switch to contai
 | iOS | `presentation.display(from:)` | `presentation.controller` (UIKit) / `presentation.swiftUIView` (SwiftUI) |
 | Android | `loaded.display(activity)` | `loaded.buildView(context) { outcome -> }` or `loaded.getFragment { outcome -> }` |
 | React Native | `Purchasely.presentPresentation({ presentation })` | native view / inline component integration |
-| Flutter | `request.display([const Transition.fullScreen()])` | `PLYPresentationView(request: ...)` widget |
+| Flutter | `request.display(const Transition.fullScreen())` | `PLYPresentationView(request: ...)` widget |
 | Cordova | `Purchasely.presentPresentation(presentation, isFullscreen, backgroundColor, success, error)` | no general-purpose inline bridge in the public JS API |
 
 ## See also

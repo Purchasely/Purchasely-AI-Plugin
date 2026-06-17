@@ -14,6 +14,10 @@ All notable changes to this project are documented here. The format is based on 
 - README now presents Claude Code as the recommended full-plugin install path and documents `npx skills add` as a skills-only installation that installs five portable skills (`purchasely-sdk-expert`, `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, `purchasely-migrate`) but not the Claude Code subagent, hooks, or slash commands.
 - `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, and `purchasely-migrate` now use `purchasely:purchasely-sdk-expert` when the Claude Code subagent is available and fall back to an inline expert checkpoint in skills-only environments.
 
+### Fixed
+
+- Corrected Flutter v6 snippets to use `PresentationType`, pass `Transition.fullScreen()` directly to `display(...)`, and avoid calling `presentation.close()` inside the purchase interceptor before returning `InterceptResult.success`.
+
 ### Removed
 
 - Removed the `/purchasely:question` slash command. Free-form Purchasely SDK questions should be asked naturally and routed to `purchasely-sdk-expert` guidance when available.
