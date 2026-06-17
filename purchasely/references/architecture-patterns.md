@@ -22,7 +22,7 @@ Recommended architecture patterns for production-grade Purchasely SDK integratio
 
 ### What the wrapper typically owns
 
-> The APIs below are the **native v6** entry points (iOS Swift / Android Kotlin). Cross-platform SDKs use their own v5 method names.
+> The APIs below are the **native v6** entry points (iOS Swift / Android Kotlin). Flutter is also on **v6** and follows the same model with its own Dart API (`PurchaselyBuilder`, `PresentationBuilder` / `PresentationRequest`, `Purchasely.interceptAction(...)` returning `InterceptResult`, `presentation.close()`). React Native and Cordova remain on v5 and use their own v5 method names.
 
 | Category | Purchasely APIs it encapsulates |
 |----------|--------------------------------|

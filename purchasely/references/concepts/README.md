@@ -11,7 +11,7 @@ When a topic also has a deeper platform-specific take (e.g. SwiftUI lifecycle, J
 | File | Topic |
 |------|-------|
 | [running-modes.md](running-modes.md) | Full vs Observer modes, log levels |
-| [paywall-actions.md](paywall-actions.md) | `PLYPresentationAction` + per-action `interceptAction` / `PLYInterceptResult` (native v6) vs `proceed/processAction` (cross-platform) + chaining multiple actions on a single button (purchase + open_screen / open_placement / deeplink) |
+| [paywall-actions.md](paywall-actions.md) | `PLYPresentationAction` + per-action `interceptAction` / `PLYInterceptResult` (native iOS/Android + Flutter v6) vs `proceed/processAction` (React Native / Cordova v5) + chaining multiple actions on a single button (purchase + open_screen / open_placement / deeplink) |
 | [presentation-types.md](presentation-types.md) | `PLYPresentationType` enum (NORMAL / FALLBACK / DEACTIVATED / CLIENT) guard |
 | [byos.md](byos.md) | Bring Your Own Screen — embed native screens (login, custom forms, legacy paywall) inside a Flow; iOS + Android only, SDK ≥ 5.6.0 |
 | [lottie-animations.md](lottie-animations.md) | Lottie animations in Purchasely Screens — weak dependency bridge for iOS / Android native rendering |
@@ -24,7 +24,7 @@ When a topic also has a deeper platform-specific take (e.g. SwiftUI lifecycle, J
 | [subscription-checks.md](subscription-checks.md) | Gating content via `userSubscriptions`, restoring purchases (with Purchasely-paywall caveat) |
 | [subscription-management.md](subscription-management.md) | Opening the native Manage Subscription page (App Store / Play Store) |
 | [promotional-offers.md](promotional-offers.md) | Offer types, Apple promo offers, Google developer-determined offers, offer codes, win-back |
-| [campaigns.md](campaigns.md) | No-code Console automations (trigger / placement-based), `allowCampaigns` (native v6) / `readyToOpenDeeplink` (cross-platform), SDK ≥ 5.1.0 |
+| [campaigns.md](campaigns.md) | No-code Console automations (trigger / placement-based), `allowCampaigns` (native iOS/Android + Flutter v6) / `readyToOpenDeeplink` (React Native / Cordova v5), SDK ≥ 5.1.0 |
 | [analytics-integration.md](analytics-integration.md) | Forwarding UI events to Firebase / Amplitude / AppsFlyer + analytics wrapper pattern |
 
 ## When to load

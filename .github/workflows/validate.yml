@@ -75,10 +75,11 @@ jobs:
       - name: Check plugin folder links
         run: |
           for f in \
+            purchasely/skills/purchasely-sdk-expert/SKILL.md \
             purchasely/skills/purchasely-integrate/SKILL.md \
             purchasely/references/android/initialization.md \
             purchasely/commands/integrate.md \
-            purchasely/agents/sdk-expert.md \
+            purchasely/agents/purchasely-sdk-expert.md \
             purchasely/hooks/hooks.json
           do
             test -f "$f" || { echo "::error file=$f::Missing plugin folder link"; exit 1; }

@@ -1,6 +1,14 @@
 # Flutter — Migrating to the Purchasely 6.0 API
 
-> ⚠️ **Preview — the Flutter v6 API ships in the final 2.0.0 release.** The currently published Flutter SDK is **5.7.3 (v5 API)**; for production today use the v5 API and `purchasely_flutter: 5.7.3`. The v5 Dart surface is `Purchasely.start(...)`, `fetchPresentation` / `presentPresentation[ForPlacement]`, `setPaywallActionInterceptorCallback` + `onProcessAction`, and `closePresentation()`. The builder-based API documented below (`PurchaselyBuilder`, `PresentationBuilder`, `Purchasely.interceptAction`) is **not published yet** — keep it for reference for when the final release lands.
+> **Published as a pre-release.** The Flutter v6 API ships in
+> `purchasely_flutter: 6.0.0-rc.1` (and the matching `purchasely_google` /
+> `purchasely_android_player` packages), live on pub.dev alongside the native
+> iOS `Purchasely 6.0.0-rc.1` and Android `io.purchasely:core 6.0.0-rc.1`
+> pre-releases. The builder-based API documented below (`PurchaselyBuilder`,
+> `PresentationBuilder`, `Purchasely.interceptAction`) is the current published
+> surface — the v5 API (`Purchasely.start(...)`, `fetchPresentation` /
+> `presentPresentation[ForPlacement]`, `setPaywallActionInterceptorCallback` +
+> `onProcessAction`, `closePresentation()`) is gone.
 
 > **In-repo migration guide.** This is the Flutter-specific old→new mapping for the
 > Purchasely 6.0 plugin. The companion integration reference is
@@ -8,7 +16,7 @@
 > [`../concepts/`](../concepts/).
 
 This release **adapts the Purchasely Flutter plugin to the Purchasely 6.0 native
-SDKs** (iOS `Purchasely 6.0.0`, Android `io.purchasely:core 6.0.0`). There is
+SDKs** (iOS `Purchasely 6.0.0-rc.1`, Android `io.purchasely:core 6.0.0-rc.1`). There is
 **no "v6" naming in the Dart API** — the public symbols keep their plain names
 (`PurchaselyBuilder`, `PresentationBuilder`, `PresentationOutcome`, `Transition`,
 …). No `v6` / `V6` symbols exist.
@@ -341,8 +349,7 @@ name, signature and behaviour:
 - **Catalog**: `allProducts`, `productWithIdentifier`, `planWithIdentifier`,
   `isEligibleForIntroOffer`.
 - **Subscriptions data**: `userSubscriptions`, `userSubscriptionsHistory`,
-  `presentSubscriptions` (see callout below),
-  `displaySubscriptionCancellationInstruction`.
+  `displaySubscriptionCancellationInstruction` (see callout below).
 - **User attributes**: `setUserAttributeWithString` / `WithInt` / `WithDouble` /
   `WithBoolean` / `WithDate` / `WithStringArray` / `WithIntArray` /
   `WithDoubleArray` / `WithBooleanArray`, `incrementUserAttribute`,
@@ -357,13 +364,16 @@ name, signature and behaviour:
 - **Config / misc**: `setLanguage`, `setThemeMode`, `setLogLevel`, `synchronize`,
   `readyToOpenDeeplink`, `isDeeplinkHandled`, `setDebugMode`.
 
-> **`presentSubscriptions` is a no-op on Android in 6.0.** The native
-> subscriptions screen was removed from the Android SDK, so
-> `Purchasely.presentSubscriptions()` does nothing on Android. It still works on
-> iOS. Build your own subscriptions screen with `userSubscriptions()` if you need
-> cross-platform parity.
+> **`presentSubscriptions` is REMOVED in 6.0 (breaking).** The native
+> subscriptions screen was removed from **both** the iOS and Android SDKs, so
+> `Purchasely.presentSubscriptions()` no longer exists in Flutter v6 — it is not a
+> no-op, the method is gone entirely. Build your own subscriptions screen from
+> `userSubscriptions()` / `userSubscriptionsHistory()`.
+> `Purchasely.displaySubscriptionCancellationInstruction()` is kept for
+> source-compatibility but is a **no-op** on both platforms.
 
-> **Native dependency.** This (upcoming) Flutter release targets the Purchasely v6 native SDKs
+> **Native dependency.** This Flutter release targets the Purchasely v6 native SDKs
 > (iOS `Purchasely 6.0.0-rc.1`, Android `io.purchasely:core 6.0.0-rc.1`), published as pre-releases
 > on CocoaPods / Maven Central — see [`../sdk-versions.md`](../sdk-versions.md) for the canonical
-> pins. The published **Flutter** package is still `5.7.3` (v5); this guide is a preview.
+> pins. The published **Flutter** package is `purchasely_flutter: 6.0.0-rc.1`, pinned exactly
+> to those native versions.

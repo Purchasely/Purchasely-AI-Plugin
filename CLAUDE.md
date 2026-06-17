@@ -30,7 +30,7 @@ When in doubt, lean on the language: "recommended", "optional pattern", "conside
 
 ## Publishing / refreshing on agentskill.sh
 
-The three skills are published on [agentskill.sh](https://agentskill.sh) as `@purchasely/purchasely-integrate`, `@purchasely/purchasely-review`, `@purchasely/purchasely-debug`.
+The five skills are published on [agentskill.sh](https://agentskill.sh) as `@purchasely/purchasely-sdk-expert`, `@purchasely/purchasely-integrate`, `@purchasely/purchasely-review`, `@purchasely/purchasely-debug`, and `@purchasely/purchasely-migrate`.
 
 **Force a re-scan** (after a push, a skill rename, or a description change) — agentskill.sh runs a daily background sync, but you can trigger it on demand by POSTing the GitHub repo URL to the public submit endpoint:
 
@@ -54,11 +54,13 @@ The call is idempotent: first import returns `status: imported`, subsequent call
     "owner": "Purchasely",
     "repo": "Purchasely-AI-Plugin",
     "skills": [
-      { "slug": "purchasely/purchasely-debug",     "status": "updated", "securityScore": 95 },
-      { "slug": "purchasely/purchasely-integrate", "status": "updated", "securityScore": 100 },
-      { "slug": "purchasely/purchasely-review",    "status": "updated", "securityScore": 100 }
+      { "slug": "purchasely/purchasely-sdk-expert", "status": "updated", "securityScore": 100 },
+      { "slug": "purchasely/purchasely-debug",      "status": "updated", "securityScore": 95 },
+      { "slug": "purchasely/purchasely-integrate",  "status": "updated", "securityScore": 100 },
+      { "slug": "purchasely/purchasely-migrate",    "status": "updated", "securityScore": 100 },
+      { "slug": "purchasely/purchasely-review",     "status": "updated", "securityScore": 100 }
     ],
-    "summary": { "found": 3, "imported": 0, "updated": 3, "failed": 0 }
+    "summary": { "found": 5, "imported": 0, "updated": 5, "failed": 0 }
   }
 }
 ```
@@ -73,13 +75,15 @@ The endpoint only accepts the key `url` — not `githubUrl`, `repo`, or `owner+r
 For push-time sync without manual calls, set up a GitHub webhook → `https://agentskill.sh/api/webhooks/github`, content type `application/json`, events `push` only (Settings → Webhooks → Add webhook on the GitHub repo).
 
 **Public pages** — verify after a re-scan:
+- https://agentskill.sh/@purchasely/purchasely-sdk-expert
 - https://agentskill.sh/@purchasely/purchasely-integrate
 - https://agentskill.sh/@purchasely/purchasely-review
 - https://agentskill.sh/@purchasely/purchasely-debug
+- https://agentskill.sh/@purchasely/purchasely-migrate
 
 ## Publishing / refreshing on skills.sh
 
-The same three skills are also installable through the [`skills` CLI](https://www.skills.sh/docs):
+The same five skills are also installable through the [`skills` CLI](https://www.skills.sh/docs):
 
 ```bash
 npx skills add Purchasely/Purchasely-AI-Plugin
@@ -93,7 +97,7 @@ To **validate the repo layout** locally before pushing (catches frontmatter / di
 npx --yes skills add . --list
 ```
 
-Should report `Found 4 skills` with names `purchasely-debug`, `purchasely-integrate`, `purchasely-migrate`, `purchasely-review`. The CLI auto-discovers `skills/` and the `.claude-plugin/` manifests — no extra config needed.
+Should report `Found 5 skills` with names `purchasely-debug`, `purchasely-integrate`, `purchasely-migrate`, `purchasely-review`, `purchasely-sdk-expert`. The CLI auto-discovers `skills/` and the `.claude-plugin/` manifests — no extra config needed.
 
 # context-mode — MANDATORY routing rules
 
