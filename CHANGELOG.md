@@ -4,12 +4,21 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+## [2.0.0-rc.3] — 2026-06-17
+
+Flutter joins the **v6 line**, and skills-only installs gain first-class expert Q&A. Flutter guidance moves off v5 to match native iOS & Android — the published Flutter SDK now targets **Purchasely v6.0.0-rc.1** with the builder API. A new portable `purchasely-sdk-expert` skill brings free-form SDK Q&A to harnesses without the Claude Code subagent. **React Native and Cordova stay on v5 (`5.7.3`).**
+
 ### Added
 
 - Added the portable `purchasely-sdk-expert` skill for free-form Purchasely SDK questions. Skills-only installs now get expert Q&A guidance without requiring the Claude Code subagent.
 
 ### Changed
 
+- **All skills updated for Flutter v6.** `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, `purchasely-migrate`, and the `purchasely-sdk-expert` agent now document the **Flutter v6 builder API**: `PurchaselyBuilder` fluent init (default `RunningMode.observer`), `PresentationBuilder` / `PresentationRequest` (replacing `fetchPresentation` / `presentPresentation[ForPlacement]`), per-action `Purchasely.interceptAction` + `InterceptResult` (replacing `setPaywallActionInterceptorCallback` + `onProcessAction`), `presentation.close()` to dismiss (there is no `closePresentation()` / `closeAllScreens()` in Flutter v6), `allowDeeplink` / `handleDeeplink`, and awaitable `synchronize()`. Flutter is carved out of the former "v5 cross-platform" grouping; React Native and Cordova keep their v5 guidance.
+- **`references/flutter/integration.md` and `references/flutter/migration-v6.md`** rewritten as shippable v6 docs (dropped the "preview / not published / use 5.7.3 today" framing); pin `purchasely_flutter` / `purchasely_google` / `purchasely_android_player` to `6.0.0-rc.1`.
+- **`references/sdk-versions.md`** — the Flutter row, pubspec pins, and transitive-version notes move to the v6 generation (`6.0.0-rc.1`, which pulls the `6.0.0-rc.1` native SDKs). React Native / Cordova rows kept on `5.7.3`.
+- **`purchasely-migrate`** now migrates Flutter v5.x → `6.0.0-rc.1` (alongside native iOS & Android), with a dedicated Flutter workflow and `flutter analyze` / `flutter test` / `flutter build` verification. React Native and Cordova remain out of scope.
+- Concept references (running modes, observer-mode post-purchase, paywall actions, presentation types/cache, promotional offers, campaigns, architecture, troubleshooting) updated so Flutter examples use the v6 API.
 - Renamed the Claude Code expert agent from `sdk-expert` to `purchasely-sdk-expert` and made it a wrapper around the portable skill to avoid duplicate guidance.
 - README now presents Claude Code as the recommended full-plugin install path and documents `npx skills add` as a skills-only installation that installs five portable skills (`purchasely-sdk-expert`, `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, `purchasely-migrate`) but not the Claude Code subagent, hooks, or slash commands.
 - `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, and `purchasely-migrate` now use `purchasely:purchasely-sdk-expert` when the Claude Code subagent is available and fall back to an inline expert checkpoint in skills-only environments.
@@ -24,23 +33,8 @@ All notable changes to this project are documented here. The format is based on 
 
 ### Removed
 
-- Removed the `/purchasely:question` slash command. Free-form Purchasely SDK questions should be asked naturally and routed to `purchasely-sdk-expert` guidance when available.
-
-## [2.0.0-rc.3] — 2026-06-17
-
-Flutter joins the **v6 line**. Flutter guidance moves off v5 to match native iOS & Android — the published Flutter SDK now targets **Purchasely v6.0.0-rc.1** with the builder API. **React Native and Cordova stay on v5 (`5.7.3`).**
-
-### Changed
-
-- **All skills updated for Flutter v6.** `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, `purchasely-migrate`, and the `sdk-expert` agent now document the **Flutter v6 builder API**: `PurchaselyBuilder` fluent init (default `RunningMode.observer`), `PresentationBuilder` / `PresentationRequest` (replacing `fetchPresentation` / `presentPresentation[ForPlacement]`), per-action `Purchasely.interceptAction` + `InterceptResult` (replacing `setPaywallActionInterceptorCallback` + `onProcessAction`), `presentation.close()` to dismiss (there is no `closePresentation()` / `closeAllScreens()` in Flutter v6), `allowDeeplink` / `handleDeeplink`, and awaitable `synchronize()`. Flutter is carved out of the former "v5 cross-platform" grouping; React Native and Cordova keep their v5 guidance.
-- **`references/flutter/integration.md` and `references/flutter/migration-v6.md`** rewritten as shippable v6 docs (dropped the "preview / not published / use 5.7.3 today" framing); pin `purchasely_flutter` / `purchasely_google` / `purchasely_android_player` to `6.0.0-rc.1`.
-- **`references/sdk-versions.md`** — the Flutter row, pubspec pins, and transitive-version notes move to the v6 generation (`6.0.0-rc.1`, which pulls the `6.0.0-rc.1` native SDKs). React Native / Cordova rows kept on `5.7.3`.
-- **`purchasely-migrate`** now migrates Flutter v5.x → `6.0.0-rc.1` (alongside native iOS & Android), with a dedicated Flutter workflow and `flutter analyze` / `flutter test` / `flutter build` verification. React Native and Cordova remain out of scope.
-- Concept references (running modes, observer-mode post-purchase, paywall actions, presentation types/cache, promotional offers, campaigns, architecture, troubleshooting) updated so Flutter examples use the v6 API.
-
-### Removed
-
 - Flutter docs no longer present `Purchasely.presentSubscriptions()` — it is **removed** in Flutter v6 (the native subscriptions screen was dropped on both platforms; build your own from `userSubscriptions()` / `userSubscriptionsHistory()`). `displaySubscriptionCancellationInstruction()` is a no-op.
+- Removed the `/purchasely:question` slash command. Free-form Purchasely SDK questions should be asked naturally and routed to `purchasely-sdk-expert` guidance when available.
 
 ## [2.0.0-rc.2] — 2026-06-16
 
