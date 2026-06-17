@@ -4,6 +4,20 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Added
+
+- Added the portable `purchasely-sdk-expert` skill for free-form Purchasely SDK questions. Skills-only installs now get expert Q&A guidance without requiring the Claude Code subagent.
+
+### Changed
+
+- Renamed the Claude Code expert agent from `sdk-expert` to `purchasely-sdk-expert` and made it a wrapper around the portable skill to avoid duplicate guidance.
+- README now presents Claude Code as the recommended full-plugin install path and documents `npx skills add` as a skills-only installation that installs five portable skills (`purchasely-sdk-expert`, `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, `purchasely-migrate`) but not the Claude Code subagent, hooks, or slash commands.
+- `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, and `purchasely-migrate` now use `purchasely:purchasely-sdk-expert` when the Claude Code subagent is available and fall back to an inline expert checkpoint in skills-only environments.
+
+### Removed
+
+- Removed the `/purchasely:question` slash command. Free-form Purchasely SDK questions should be asked naturally and routed to `purchasely-sdk-expert` guidance when available.
+
 ## [2.0.0-rc.3] — 2026-06-17
 
 Flutter joins the **v6 line**. Flutter guidance moves off v5 to match native iOS & Android — the published Flutter SDK now targets **Purchasely v6.0.0-rc.1** with the builder API. **React Native and Cordova stay on v5 (`5.7.3`).**

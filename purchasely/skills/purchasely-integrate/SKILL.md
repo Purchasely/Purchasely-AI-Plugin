@@ -52,7 +52,20 @@ The bundled references are intentionally curated, not a full copy of the public 
 
 ## Expert checkpoint
 
-Before writing integration code, invoke the `Task` tool with `subagent_type: "purchasely:sdk-expert"` and ask it to validate the intended implementation. Pass the detected platform, running mode, target store(s), SDK version, placement/display approach, purchase handling plan, privacy/consent requirements if any, and any uncertainty from the local project. Incorporate the expert's corrections before editing files.
+Before writing integration code, run a Purchasely expert checkpoint. If the harness exposes the Claude Code subagent `purchasely:purchasely-sdk-expert`, invoke it and pass the detected platform, running mode, target store(s), SDK version, placement/display approach, purchase handling plan, privacy/consent requirements if any, and any uncertainty from the local project.
+
+If that subagent is not available, do the checkpoint inline using the `purchasely-sdk-expert` guidance when available, or this fallback checklist:
+
+- Confirm the SDK generation: native iOS / native Android / Flutter use v6 (`6.0.0-rc.1`); React Native / Cordova use v5 (`5.7.3`).
+- Confirm versions are pinned from `../../references/sdk-versions.md` and no floating ranges are introduced.
+- Confirm Full mode is explicit when Purchasely must process and validate purchases.
+- Confirm the presentation path matches the platform generation and handles `DEACTIVATED` / `FALLBACK` where relevant.
+- Confirm every interceptor branch resolves exactly once (`PLYInterceptResult`, `InterceptResult`, or `onProcessAction`).
+- Confirm Observer-mode purchases call `synchronize()` and use the right dismissal API for the platform.
+- Confirm user identity and audience attributes are set before audience-dependent presentation loading.
+- Confirm any exact API signature was checked in the matching platform reference.
+
+Incorporate corrections before editing files.
 
 ## Completion Build Gate
 

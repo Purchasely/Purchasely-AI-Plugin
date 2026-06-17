@@ -12,7 +12,7 @@
   "skills": "./skills/",
   "commands": "./commands/",
   "agents": [
-    "./agents/sdk-expert.md"
+    "./agents/purchasely-sdk-expert.md"
   ],
   "hooks": "./hooks/hooks.json",
   "keywords": [

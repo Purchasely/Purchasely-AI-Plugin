@@ -54,7 +54,20 @@ The bundled references are intentionally curated, not a full copy of the public 
 
 ## Expert checkpoint
 
-Before patching code or declaring a root cause, invoke the `Task` tool with `subagent_type: "purchasely:sdk-expert"` and ask it to validate the diagnosis and fix plan. Pass the platform, SDK version, running mode, logs or symptoms, relevant code paths, suspected root cause, and the smallest proposed fix. Incorporate corrections before editing files or reporting the diagnosis.
+Before patching code or declaring a root cause, run a Purchasely expert checkpoint. If the harness exposes the Claude Code subagent `purchasely:purchasely-sdk-expert`, invoke it and pass the platform, SDK version, running mode, logs or symptoms, relevant code paths, suspected root cause, and the smallest proposed fix.
+
+If that subagent is not available, do the checkpoint inline using the `purchasely-sdk-expert` guidance when available, or this fallback checklist:
+
+- Confirm the SDK generation: native iOS / native Android / Flutter use v6 (`6.0.0-rc.1`); React Native / Cordova use v5 (`5.7.3`).
+- Confirm the suspected root cause matches the SDK logs, not just symptoms.
+- Confirm the fix uses current platform APIs and does not introduce removed v6 symbols or invented signatures.
+- Confirm running mode is explicit when Full purchase handling is expected.
+- Confirm presentation loading/display and dismissal use the correct API for the platform and rendering mode.
+- Confirm every interceptor branch resolves exactly once.
+- Confirm Observer-mode purchases call `synchronize()` and use the right dismissal API.
+- Confirm any Console-driven, campaign, BYOS, Lottie, or privacy claim was checked against the relevant reference.
+
+Incorporate corrections before editing files or reporting the diagnosis.
 
 ## Step 0: Enable Debug Logging — Always Do This First
 

@@ -45,6 +45,23 @@ Determine the project's intended mode before rewriting init: if the v5 code did 
 
 Never invent a signature: if the references and the official docs disagree, the official docs win; if neither is conclusive, say so rather than guessing.
 
+## Expert checkpoint
+
+Before rewriting code, run a Purchasely expert checkpoint. If the harness exposes the Claude Code subagent `purchasely:purchasely-sdk-expert`, invoke it and pass the detected platform, source SDK version, target SDK version, current running mode, legacy symbols found, intended mode after migration, and any uncertainty from the local project.
+
+If that subagent is not available, do the checkpoint inline using the `purchasely-sdk-expert` guidance when available, or this fallback checklist:
+
+- Confirm the migration is in scope: native iOS, native Android, or Flutter v5.x → `6.0.0-rc.1`; React Native and Cordova migrations are out of scope.
+- Confirm the current v5 running mode and whether v6 must set Full explicitly.
+- Confirm every package / pod / Gradle artifact is pinned exactly to the target version.
+- Confirm legacy presentation APIs are replaced by the v6 builder / preload / display path for the platform.
+- Confirm global v5 interceptors are replaced by per-action v6 interceptors returning the right result type.
+- Confirm Observer-mode purchase flows call `synchronize()` and use the right dismissal API.
+- Confirm removed subscription UI and history APIs are replaced with supported v6 APIs.
+- Confirm any uncertain signature was checked in the platform migration and API references.
+
+Incorporate corrections before editing files.
+
 ## Arguments
 
 `$ARGUMENTS` may contain:

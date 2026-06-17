@@ -7,12 +7,11 @@
 
 > AI-powered assistant for integrating, reviewing, and debugging the [Purchasely](https://www.purchasely.com) SDK across **iOS**, **Android**, **React Native**, **Flutter**, and **Cordova**.
 
-A cross-harness plugin that bundles:
+A cross-harness plugin with the richest experience on **Claude Code**, plus portable skills for other agents:
 
-- **4 slash commands** — `/purchasely:integrate`, `/purchasely:review`, `/purchasely:debug`, `/purchasely:question`
-- **3 auto-invoked skills** — `purchasely-integrate`, `purchasely-review`, `purchasely-debug`
-- **1 expert agent** — `sdk-expert`
-- **Cross-vendor manifests** — `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/`, `purchasely/.claude-plugin/`, `purchasely/.codex-plugin/`, `purchasely/.cursor-plugin/`, `AGENTS.md`, `GEMINI.md`, `gemini-extension.json`
+- **Claude Code full plugin** — 4 slash commands (`/purchasely:integrate`, `/purchasely:review`, `/purchasely:debug`, `/purchasely:migrate`), 5 auto-invoked skills, hooks, references, and the `purchasely-sdk-expert` agent for free-form Purchasely SDK questions.
+- **5 portable skills** — `purchasely-sdk-expert`, `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, `purchasely-migrate` (installable with `npx skills add ...`; skills-only installs do **not** include slash commands, hooks, or the Claude Code subagent).
+- **Cross-vendor manifests** — `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/`, `purchasely/.claude-plugin/`, `purchasely/.codex-plugin/`, `purchasely/.cursor-plugin/`, `AGENTS.md`, `GEMINI.md`, `gemini-extension.json`.
 
 Works with **Claude Code**, **Codex CLI**, **Codex App**, **Cursor**, **Gemini CLI**, **OpenCode**, **GitHub Copilot CLI**, and **AGENTS.md-compatible harnesses**.
 
@@ -22,9 +21,22 @@ Works with **Claude Code**, **Codex CLI**, **Codex App**, **Cursor**, **Gemini C
 
 Pick the block matching your harness. Each one is copy-paste-able as is.
 
-### Skills CLI (skills.sh) — works with every supported agent
+### Claude Code — recommended full experience
 
-The [`skills` CLI](https://www.skills.sh/docs) installs the three Purchasely skills (`purchasely-integrate`, `purchasely-review`, `purchasely-debug`) into any AGENTS.md-compatible harness, Claude Code, Cursor, Codex, OpenCode, and 50+ others — pick where they go interactively, no marketplace setup required:
+Claude Code is the best-supported installation path. It installs the complete Purchasely plugin: skills, slash commands, hooks, bundled references, and the `purchasely-sdk-expert` agent. Use this if you want the strongest guidance and free-form Purchasely SDK questions to route to the expert automatically when relevant.
+
+```text
+/plugin marketplace add Purchasely/Purchasely-AI-Plugin
+/plugin install purchasely@Purchasely-AI-Plugin
+```
+
+Claude reads `.claude-plugin/marketplace.json`, which points at the self-contained `purchasely/` plugin folder.
+
+### Skills CLI (skills.sh) — portable skills only
+
+The [`skills` CLI](https://www.skills.sh/docs) installs the five Purchasely skills (`purchasely-sdk-expert`, `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, `purchasely-migrate`) into any AGENTS.md-compatible harness, Claude Code, Cursor, Codex, OpenCode, and 50+ others — pick where they go interactively, no marketplace setup required.
+
+This is a **skills-only** installation path: it installs the portable `purchasely-sdk-expert` skill, but not the Claude Code `purchasely-sdk-expert` subagent, slash commands, hooks, or plugin manifests. Claude Code users should prefer the full plugin install above.
 
 ```bash
 npx skills add Purchasely/Purchasely-AI-Plugin
@@ -39,14 +51,14 @@ npx skills add Purchasely/Purchasely-AI-Plugin --list
 # Install one skill only (e.g. just the debug playbook)
 npx skills add Purchasely/Purchasely-AI-Plugin --skill purchasely-debug
 
-# Non-interactive — install everything to Claude Code, globally
+# Non-interactive — install all portable skills to Claude Code, globally
 npx skills add Purchasely/Purchasely-AI-Plugin -g -a claude-code -y
 
 # Update later (updates are not automatic)
 npx skills update
 ```
 
-The CLI discovers skills at [`skills/`](./skills) (a compatibility link to [`purchasely/skills/`](./purchasely/skills)) and respects the manifests in [`.claude-plugin/`](./.claude-plugin). Skill names match their directory names — `purchasely-integrate`, `purchasely-review`, `purchasely-debug`.
+The CLI discovers skills at [`skills/`](./skills) (a compatibility link to [`purchasely/skills/`](./purchasely/skills)). Skill names match their directory names — `purchasely-sdk-expert`, `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, `purchasely-migrate`.
 
 #### Updating Skills CLI installations
 
@@ -63,22 +75,13 @@ npx skills update -g
 npx skills update -p
 
 # Update only the Purchasely skills by name
-npx skills update purchasely-integrate purchasely-review purchasely-debug
+npx skills update purchasely-sdk-expert purchasely-integrate purchasely-review purchasely-debug purchasely-migrate
 
 # Non-interactive global update
 npx skills update -g -y
 ```
 
 To know when an update is available, watch this repository's [GitHub releases](https://github.com/Purchasely/Purchasely-AI-Plugin/releases) or [`CHANGELOG.md`](./CHANGELOG.md). We intentionally do not make the Purchasely skills check GitHub on every invocation: many agent environments run offline or with restricted network access, and automatic version checks would add latency and noise to normal SDK integration tasks. If you need an explicit check, run `npx skills update`.
-
-### Claude Code
-
-```text
-/plugin marketplace add Purchasely/Purchasely-AI-Plugin
-/plugin install purchasely@Purchasely-AI-Plugin
-```
-
-Claude reads `.claude-plugin/marketplace.json`, which points at the self-contained `purchasely/` plugin folder.
 
 ### Codex CLI
 
@@ -146,12 +149,13 @@ Tools that read the repository-level `AGENTS.md` should use this repository dire
 
 ## What It Does
 
-| Command | Description |
+| Trigger | Description |
 |---------|-------------|
+| Natural Purchasely SDK question | Free-form API / paywall / purchase / campaign guidance via `purchasely-sdk-expert` |
 | `/purchasely:integrate` | Step-by-step SDK integration from scratch — installation, initialization, paywall display, action interceptor, user management |
-| `/purchasely:review` | Automated 24-point checklist review of your existing integration — finds bugs, deprecated APIs, and missing best practices |
+| `/purchasely:review` | Automated checklist review of your existing integration — finds bugs, deprecated APIs, and missing best practices |
 | `/purchasely:debug` | Diagnostic trees for common issues — blank paywalls, frozen UI, purchase failures, deeplink problems |
-| `/purchasely:question` | Ask any question about the Purchasely SDK |
+| `/purchasely:migrate` | Upgrade an existing native iOS, native Android, or Flutter integration from SDK v5 to v6 |
 
 ## Usage Examples
 
@@ -185,11 +189,12 @@ AI: Searches for the presentation display code, identifies missing strong
     reference to the view controller, provides the fix.
 ```
 
-### Ask a question
+### Ask a Purchasely SDK question
 
 ```
-You: /purchasely:question how do I display a paywall in SwiftUI?
-AI: Provides a complete SwiftUI example with fetchPresentation + display,
+You: How do I display a Purchasely paywall in SwiftUI?
+AI: Routes the question to the Purchasely SDK expertise when available and
+    provides a complete SwiftUI example with presentation loading/display,
     presentation type handling, and action interceptor setup.
 ```
 
@@ -221,16 +226,18 @@ Purchasely-AI-Plugin/
 │   ├── .cursor-plugin/
 │   │   └── plugin.json          # Cursor plugin manifest
 │   ├── skills/                  # AI-invoked skills (automatic)
+│   │   ├── purchasely-sdk-expert/SKILL.md
 │   │   ├── purchasely-integrate/SKILL.md
 │   │   ├── purchasely-review/SKILL.md
-│   │   └── purchasely-debug/SKILL.md
+│   │   ├── purchasely-debug/SKILL.md
+│   │   └── purchasely-migrate/SKILL.md
 │   ├── agents/
-│   │   └── sdk-expert.md        # Purchasely SDK expert agent
+│   │   └── purchasely-sdk-expert.md  # Claude Code subagent wrapper
 │   ├── commands/                # User-invoked slash commands
 │   │   ├── integrate.md
 │   │   ├── review.md
 │   │   ├── debug.md
-│   │   └── question.md
+│   │   └── migrate.md
 │   ├── hooks/
 │   └── references/              # SDK documentation (used by skills)
 │       ├── concepts/            # Universal SDK concepts (all 5 platforms)
@@ -258,17 +265,18 @@ Purchasely-AI-Plugin/
 | `/purchasely:integrate` | Slash command + matching `purchasely-integrate` skill | The command launches the skill; the skill is also auto-invoked when Claude detects an SDK integration task |
 | `/purchasely:review` | Slash command + matching `purchasely-review` skill | Same as above |
 | `/purchasely:debug` | Slash command + matching `purchasely-debug` skill | Same as above |
-| `/purchasely:question` | **Slash command → agent** | Free-form SDK Q&A — the command explicitly delegates to the `purchasely:sdk-expert` agent via the `Task` tool. No matching auto-invoked skill (use the command explicitly) |
+| `/purchasely:migrate` | Slash command + matching `purchasely-migrate` skill | Migrates native iOS, native Android, and Flutter integrations from SDK v5 to v6 |
+| Natural Purchasely SDK question | Portable `purchasely-sdk-expert` skill + Claude Code `purchasely-sdk-expert` agent when available | No slash command needed — ask normally and the expert guidance can be used directly for free-form Purchasely SDK Q&A |
 
 ## Supported Platforms
 
-| Platform | Install | Init | Paywalls | Interceptor | Deeplinks | User Mgmt |
-|----------|---------|------|----------|-------------|-----------|-----------|
-| iOS (Swift) | CocoaPods / SPM | `Purchasely.start()` | `fetchPresentation` | `setPaywallActionsInterceptor` | `handleDeeplink` | `userLogin` / `userLogout` |
-| Android (Kotlin) | Gradle (Maven) | `Purchasely.Builder()` | `fetchPresentation` | `setPaywallActionInterceptor` | `handleDeeplink` | `userLogin` / `userLogout` |
-| React Native | yarn / npm | `Purchasely.start()` | `fetchPresentation` + `presentPresentation` | `setPaywallActionInterceptorCallback` | `isDeeplinkHandled` | `userLogin` / `userLogout` |
-| Flutter | pub.dev | `Purchasely.start()` | `fetchPresentation` + `presentPresentation` | `setPaywallActionInterceptorCallback` | `isDeeplinkHandled` | `userLogin` / `userLogout` |
-| Cordova | cordova plugin | `Purchasely.start()` | `presentPresentationForPlacement` | `onPurchaselyEvent` | `isDeeplinkHandled` | `userLogin` / `userLogout` |
+| Platform | SDK line | Init | Paywalls | Interceptor | Deeplinks | User Mgmt |
+|----------|----------|------|----------|-------------|-----------|-----------|
+| iOS (Swift / Obj-C) | v6 (`6.0.0-rc.1`) | `Purchasely.apiKey(...).runningMode(...).start()` | `PLYPresentationBuilder...build().preload()` → `display(from:)` | per-action `interceptAction` returning `PLYInterceptResult` | `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
+| Android (Kotlin / Java) | v6 (`6.0.0-rc.1`) | `Purchasely { ... }` or `Purchasely.Builder(...)` | `PLYPresentation { ... }.preload()` → `display(context)` | per-action `interceptAction` returning `PLYInterceptResult` | auto-intercept + `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
+| Flutter | v6 (`6.0.0-rc.1`) | `PurchaselyBuilder.apiKey(...).start()` | `PresentationBuilder...build()` → `preload()` / `display(...)` | per-action `interceptAction` returning `InterceptResult` | `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
+| React Native | v5 (`5.7.3`) | `Purchasely.start(...)` | `fetchPresentation` + `presentPresentation` | `setPaywallActionInterceptor` + `onProcessAction` | `handleDeeplink` + `readyToOpenDeeplink` | `userLogin` / `userLogout` |
+| Cordova | v5 (`5.7.3`) | `Purchasely.start(...)` | `fetchPresentationForPlacement` + `presentPresentation` | `setPaywallActionInterceptor` + `onProcessAction` | `handleDeeplink` + `readyToOpenDeeplink` | `userLogin` / `userLogout` |
 
 ## Requirements
 
@@ -281,10 +289,12 @@ Purchasely-AI-Plugin/
 This plugin is also published on:
 
 - 🧠 **[skills.sh](https://skills.sh/Purchasely/Purchasely-AI-Plugin)** — open agent skills leaderboard powered by the `skills` CLI (`npx skills add Purchasely/Purchasely-AI-Plugin`)
-- 🤖 **agentskill.sh** — three individual skill pages, installable from any agent running the `/learn` command:
+- 🤖 **agentskill.sh** — individual skill pages, installable from any agent running the `/learn` command:
+  - [`@purchasely/purchasely-sdk-expert`](https://agentskill.sh/@purchasely/purchasely-sdk-expert)
   - [`@purchasely/purchasely-integrate`](https://agentskill.sh/@purchasely/purchasely-integrate)
   - [`@purchasely/purchasely-review`](https://agentskill.sh/@purchasely/purchasely-review)
   - [`@purchasely/purchasely-debug`](https://agentskill.sh/@purchasely/purchasely-debug)
+  - [`@purchasely/purchasely-migrate`](https://agentskill.sh/@purchasely/purchasely-migrate)
 - 📦 **Claude Code marketplace** — `/plugin marketplace add Purchasely/Purchasely-AI-Plugin`
 
 See [`docs/distribution.md`](docs/distribution.md) for the public roadmap of every official marketplace we're targeting (Anthropic, OpenAI Codex, Factory Droid, GitHub Copilot CLI, …) and how to help land each one.

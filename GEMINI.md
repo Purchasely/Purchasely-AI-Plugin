@@ -2,9 +2,11 @@
 
 Use the canonical Purchasely skills instead of duplicating SDK guidance in this file. Load the matching skill whenever the user asks for that workflow.
 
+- Free-form SDK questions: @./skills/purchasely-sdk-expert/SKILL.md
 - Integration from scratch or step-by-step: @./skills/purchasely-integrate/SKILL.md
 - Review an existing integration: @./skills/purchasely-review/SKILL.md
 - Debug a runtime issue: @./skills/purchasely-debug/SKILL.md
+- Migrate native iOS, native Android, or Flutter from SDK v5 to v6: @./skills/purchasely-migrate/SKILL.md
 
 ## References
 

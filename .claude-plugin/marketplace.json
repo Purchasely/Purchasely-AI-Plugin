@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "purchasely",
-      "description": "Purchasely SDK integration assistant — guides implementation, reviews code, and debugs issues across iOS, Android, React Native, Flutter, and Cordova. Includes 3 skills, 1 agent, and 4 slash commands.",
+      "description": "Purchasely SDK integration assistant — answers SDK questions, guides implementation, reviews code, debugs issues, and migrates SDK v5 integrations across iOS, Android, React Native, Flutter, and Cordova. Includes 5 skills, 1 agent, and 4 slash commands.",
       "version": "1.1.0",
       "author": {
         "name": "Purchasely",

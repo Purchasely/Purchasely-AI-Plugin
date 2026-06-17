@@ -69,7 +69,20 @@ These hold the canonical install/init snippets, full API signatures, and platfor
 
 ## Expert checkpoint
 
-Before returning review findings, invoke the `Task` tool with `subagent_type: "purchasely:sdk-expert"` and ask it to sanity-check the review reasoning. Pass the detected platform(s), SDK versions, running mode, key code paths inspected, candidate findings, and the evidence for each finding. Only keep findings that remain supported after this expert check, unless you explicitly document a reasoned disagreement.
+Before returning review findings, run a Purchasely expert checkpoint. If the harness exposes the Claude Code subagent `purchasely:purchasely-sdk-expert`, invoke it and pass the detected platform(s), SDK versions, running mode, key code paths inspected, candidate findings, and the evidence for each finding.
+
+If that subagent is not available, do the checkpoint inline using the `purchasely-sdk-expert` guidance when available, or this fallback checklist:
+
+- Confirm the SDK generation used for each finding: native iOS / native Android / Flutter use v6 (`6.0.0-rc.1`); React Native / Cordova use v5 (`5.7.3`).
+- Confirm version findings compare against `../../references/sdk-versions.md`.
+- Confirm Full-vs-Observer findings account for the v6 default running mode change.
+- Confirm removed/deprecated API findings are platform-specific and do not flag valid v5 React Native / Cordova APIs.
+- Confirm presentation findings distinguish full-screen display from explicit embedded/nested rendering.
+- Confirm interceptor findings prove every branch resolves exactly once.
+- Confirm Observer-mode findings include `synchronize()` and the correct platform dismissal API.
+- Confirm each finding cites file/line evidence and is not based on a guessed signature.
+
+Only keep findings that remain supported after this expert check, unless you explicitly document a reasoned disagreement.
 
 ---
 
