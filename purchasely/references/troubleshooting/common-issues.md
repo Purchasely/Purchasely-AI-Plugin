@@ -212,33 +212,40 @@ Purchasely.start(withAPIKey: "KEY", storekitSettings: .storeKit2) { success, err
 
 **Symptoms:** Paywall buttons stop responding, spinner never dismisses, app appears frozen.
 
-**Cause:** the action was not acknowledged in all code paths of the interceptor — `processAction` on native iOS/Android, `onProcessAction` on React Native / Cordova, or a returned `InterceptResult` (`success` / `failed` / `notHandled`) from `Purchasely.interceptAction(...)` on Flutter v6.
+**Cause:** the action was not acknowledged in all code paths of the interceptor — a returned `PLYInterceptResult` on native iOS/Android v6, a returned `InterceptResult` (`success` / `failed` / `notHandled`) on Flutter v6, or `onProcessAction(true/false)` on React Native / Cordova v5.
 
-**Solution:** Ensure every branch in your interceptor calls `processAction(true/false)`:
+**Solution:** Ensure every branch resolves exactly once. Native iOS/Android v6 and Flutter v6 return a result; React Native / Cordova v5 call `onProcessAction(true/false)`.
+
+**Native iOS v6:**
 
 ```swift
-// BAD: Missing processAction in error path
-Purchasely.setPaywallActionsInterceptor { action, parameters, info, proceed in
-    if action == .login {
-        showLogin { success in
-            if success {
-                proceed(true)
-            }
-            // BUG: proceed() never called when success == false
-        }
-    }
+Purchasely.interceptAction(.login) { _, _ in
+    let loggedIn = await showLogin()
+    return loggedIn ? .success : .notHandled
 }
+```
 
-// GOOD: All paths call proceed()
-Purchasely.setPaywallActionsInterceptor { action, parameters, info, proceed in
-    if action == .login {
-        showLogin { success in
-            proceed(success)  // Always called
-        }
-    } else {
-        proceed(true)  // Default path covered
-    }
-}
+**Flutter v6:**
+
+```dart
+await Purchasely.interceptAction(PresentationActionKind.login, (info, payload) async {
+  final ok = await showLogin();
+  return ok ? InterceptResult.success : InterceptResult.notHandled;
+});
+```
+
+**React Native / Cordova v5:**
+
+```ts
+Purchasely.setPaywallActionInterceptor(result => {
+  switch (result.action) {
+    case PLYPaywallAction.LOGIN:
+      showLogin().then(ok => Purchasely.onProcessAction(!ok));
+      return;
+    default:
+      Purchasely.onProcessAction(true);
+  }
+});
 ```
 
 ## 3. Purchases Fail

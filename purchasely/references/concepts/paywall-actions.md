@@ -30,7 +30,7 @@ The mapping between the v6 `PLYInterceptResult` / `InterceptResult` and the lega
 |--------|---------------|------------------------------|
 | `purchase` | User tapped a purchase button | Full mode → `.notHandled`. Observer mode → run your own billing flow, then `.success` (or `.failed`). |
 | `restore` | User tapped Restore | Full mode → `.notHandled`. Observer mode → run your own restore, then `.success` (or `.failed`). |
-| `login` | User tapped a login link | Show your login UI; on success `.notHandled` (let the SDK re-fetch) or `.success`, on cancel `.success`. |
+| `login` | User tapped a login link | Show your login UI; on success `.success` (the app handled login and the action chain may continue). Use `.notHandled` only if you intentionally skip app login and let the SDK continue without it. |
 | `close` | User tapped Close | `.notHandled` to let the SDK dismiss, or handle it and `.success`. |
 | `navigate` | User tapped a custom navigation link | Handle the link (push a screen, open a URL), then `.success`. |
 | `open_presentation` | User tapped a link to another presentation | Either let the SDK handle (`.notHandled`) or build it yourself and `.success`. |
@@ -57,7 +57,7 @@ In v6 the global `setPaywallActionsInterceptor` is removed; register per action 
 ```swift
 Purchasely.interceptAction(.login) { info, params in
     let loggedIn = await self.showLogin()
-    return loggedIn ? .notHandled : .success   // .notHandled lets the SDK re-fetch with the new user
+    return loggedIn ? .success : .notHandled   // success = app handled login; notHandled = continue without login
 }
 
 Purchasely.interceptAction(.purchase) { info, params in
@@ -69,7 +69,7 @@ Completion-handler form (Objective-C-compatible):
 
 ```swift
 Purchasely.interceptAction(.login) { info, params, completion in
-    self.showLogin { loggedIn in completion(loggedIn ? .notHandled : .success) }
+    self.showLogin { loggedIn in completion(loggedIn ? .success : .notHandled) }
 }
 ```
 
@@ -81,8 +81,8 @@ Remove with `Purchasely.removeActionInterceptor(.login)` / `Purchasely.removeAll
 
 ```kotlin
 Purchasely.interceptAction<PLYPresentationAction.Login> { info, _ ->
-    showLogin()
-    PLYInterceptResult.NOT_HANDLED   // let the SDK re-fetch with the new user
+    val loggedIn = showLogin()
+    if (loggedIn) PLYInterceptResult.SUCCESS else PLYInterceptResult.NOT_HANDLED
 }
 
 Purchasely.interceptAction<PLYPresentationAction.Purchase> { info, purchase ->
@@ -103,8 +103,8 @@ Purchasely.interceptAction(PLYPresentationAction.Purchase.class, (info, action, 
 });
 
 Purchasely.interceptAction(PLYPresentationAction.Login.class, (info, action, result) -> {
-    showLogin();
-    result.invoke(PLYInterceptResult.NOT_HANDLED);
+    boolean loggedIn = showLogin();
+    result.invoke(loggedIn ? PLYInterceptResult.SUCCESS : PLYInterceptResult.NOT_HANDLED);
 });
 ```
 
@@ -117,7 +117,7 @@ Purchasely.setPaywallActionInterceptorCallback(result => {
   const { action } = result;
   switch (action) {
     case PLYPaywallAction.LOGIN:
-      showLogin().then(ok => Purchasely.onProcessAction(ok));
+      showLogin().then(ok => Purchasely.onProcessAction(!ok)); // false = handled; true = not handled
       return;
     case PLYPaywallAction.PURCHASE:
       Purchasely.onProcessAction(true);
@@ -135,7 +135,7 @@ In v6 Flutter registers one interceptor **per action** and returns a `InterceptR
 ```dart
 Purchasely.interceptAction(PresentationActionKind.login, (info, payload) async {
   final ok = await showLogin();
-  return ok ? InterceptResult.notHandled : InterceptResult.success; // notHandled lets the SDK re-fetch with the new user
+  return ok ? InterceptResult.success : InterceptResult.notHandled;
 });
 
 Purchasely.interceptAction(PresentationActionKind.purchase, (info, payload) async {
@@ -151,7 +151,7 @@ Remove with `Purchasely.removeInterceptor(PresentationActionKind.login)` / `Purc
 Purchasely.setPaywallActionInterceptor(result => {
   switch (result.action) {
     case 'login':
-      showLogin().then(ok => Purchasely.onProcessAction(ok));
+      showLogin().then(ok => Purchasely.onProcessAction(!ok)); // false = handled; true = not handled
       return;
     case 'purchase':
       Purchasely.onProcessAction(true);
@@ -185,13 +185,13 @@ Typical chains:
 | `purchase` | `open_placement` | After successful purchase, the SDK fetches & displays the configured placement (e.g. an upsell, a thank-you screen). |
 | `purchase` | `navigate` (deeplink) | After successful purchase, the SDK fires the deeplink. The app handles it via the interceptor (`navigate` action) or the deeplink listener. |
 | `purchase` | `close` | Forces the dismiss even if the default would be to stay open (Observer). |
-| `login` | `purchase` | After login completes (your `.notHandled` / `proceed(true)`), the SDK runs the purchase. |
+| `login` | `purchase` | After login completes (your `.success` / `proceed(false)`), the SDK runs the purchase. |
 
 Key points:
 
 - **Default after `purchase` is intentional.** In Full mode the SDK closes the paywall on success so the user lands back in the app. In Observer mode the SDK has no opinion — it doesn't know what the app's purchase flow returned — and presentations **no longer auto-close** after a purchase/restore in v6 (in v5 the implicit Full default appended a `close_all`). If you want a different behaviour, **add a second action in the Composer**, don't try to coerce it from the interceptor.
 - **The interceptor sees only the action being executed at this moment.** For a `purchase + open_placement` chain, you receive `purchase` first (return `.notHandled` / call `proceed(true)`); the SDK then triggers the second action on its own and you receive it as a separate interceptor call (e.g. `open_presentation`).
-- **`.failed` / `proceed(false)` short-circuits the chain.** If your purchase branch ends with `.failed` (or `proceed(false)` on a React Native / Cordova bridge — cancelled / failed / Observer-mode declined), the second action is **not** executed.
+- **`.failed` short-circuits the chain.** If your v6 purchase branch returns `.failed`, the second action is **not** executed. In React Native / Cordova, call `processAction(false)` only when the app handled the action successfully and the chain may continue; use the bridge's error/cancel handling to avoid continuing after a failed app-side purchase.
 - **Configuration is a Console concern.** Mobile engineers cannot add a "second action" from the SDK — ask the team running the Screen Composer to wire it in the button's Actions list.
 
 ## Anti-patterns

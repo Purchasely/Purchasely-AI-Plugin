@@ -17,6 +17,9 @@ All notable changes to this project are documented here. The format is based on 
 ### Fixed
 
 - Corrected Flutter v6 snippets to use `PresentationType`, pass `Transition.fullScreen()` directly to `display(...)`, and avoid calling `presentation.close()` inside the purchase interceptor before returning `InterceptResult.success`.
+- Corrected login action interceptor examples so successful app-owned login returns `.success` / `InterceptResult.success` (or `onProcessAction(false)` on v5 bridges), not `.notHandled`.
+- Updated troubleshooting guidance for frozen paywalls to show v6 return-value interceptors alongside v5 bridge callbacks.
+- Aligned marketplace and plugin manifest versions to `2.0.0-rc.3`.
 
 ### Removed
 
