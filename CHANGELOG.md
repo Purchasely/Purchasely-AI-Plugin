@@ -8,6 +8,10 @@ All notable changes to this project are documented here. The format is based on 
 
 - **iOS v6 references and skills track the latest `PLYPresentationBuilder` cleanup.** Documented two breaking removals that landed in the iOS SDK: the SwiftUI embedded-view factories (`Purchasely.productView(...)` / `planView(...)` / `presentationView(...)`, the SwiftUI counterpart to the removed UIKit `*Controller` factories) and the `ply/products/*` / `ply/plans/*` deeplink formats (→ `ply/presentations/<id>` or `ply/placements/<id>`). Updated `references/ios/migration-v6.md`, `references/ios/v5-api-reference.md`, and the `purchasely-migrate`, `purchasely-review`, and `purchasely-sdk-expert` skills (recognition tokens, removed-API checks, and replacement guidance).
 
+### Fixed
+
+- **Corrected the iOS default presentation handler across the v6 references and skills.** iOS v6 **renamed** `setDefaultPresentationResultHandler { result, plan in }` to `setDefaultPresentationDismissHandler { outcome in }` (now delivers `PLYPresentationOutcome`, mutually exclusive with per-presentation `onDismissed`). `references/ios/api-reference.md` documented the old name as a valid v6 API and `references/ios/v5-api-reference.md` listed it as "unchanged in v6"; fixed both, plus the `purchasely-migrate`, `purchasely-review`, and `purchasely-debug` skills. The fix is **platform-aware**: Android v6 keeps the `setDefaultPresentationResultHandler` name and only changes the callback to a single `outcome`, so the cross-platform skills no longer imply the iOS rename applies to Android.
+
 ## [2.0.0-rc.3] — 2026-06-17
 
 Flutter joins the **v6 line**, and skills-only installs gain first-class expert Q&A. Flutter guidance moves off v5 to match native iOS & Android — the published Flutter SDK now targets **Purchasely v6.0.0-rc.1** with the builder API. A new portable `purchasely-sdk-expert` skill brings free-form SDK Q&A to harnesses without the Claude Code subagent. **React Native and Cordova stay on v5 (`5.7.3`).**

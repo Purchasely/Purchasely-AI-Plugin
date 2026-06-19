@@ -320,22 +320,27 @@ Purchasely.allowDeeplink(true)    // any queued deeplink displays immediately
 Purchasely.allowCampaigns(false)  // independent flag for campaigns
 ```
 
-## Presentation Result Handler
+## Presentation Dismiss Handler
 
-### `Purchasely.setDefaultPresentationResultHandler(handler:)`
+### `Purchasely.setDefaultPresentationDismissHandler(_:)`
 
-A default handler for paywalls you do **not** instantiate yourself — chiefly deeplink- and campaign-opened screens, where no `onDismissed` closure was supplied.
+A default handler for paywalls you do **not** instantiate yourself — chiefly deeplink- and campaign-opened screens, where no `onDismissed` closure was supplied. It takes a `PLYPresentationOutcomeHandler` and delivers the full `PLYPresentationOutcome` (the same payload as `PLYPresentationBuilder.onDismissed`), replacing the v5 `setDefaultPresentationResultHandler { result, plan in }` block.
 
 ```swift
-Purchasely.setDefaultPresentationResultHandler { result, plan in
-    switch result {
-    case .purchased: print("Purchased: \(plan?.vendorId ?? "")")
+Purchasely.setDefaultPresentationDismissHandler { outcome in
+    switch outcome.purchaseResult {
+    case .purchased: print("Purchased: \(outcome.plan?.vendorId ?? "")")
     case .restored:  print("Restored")
-    case .cancelled: print("Cancelled")
+    case .cancelled: print("Cancelled (\(outcome.closeReason))")
+    case .none:      break
     @unknown default: break
     }
+    // The app didn't instantiate this presentation, so the outcome carries it:
+    print("from presentation \(outcome.presentation?.id ?? "?")")
 }
 ```
+
+> It is **mutually exclusive** with per-presentation callbacks — it fires only for presentations that have neither an inline `onDismissed` (set via `PLYPresentationBuilder`) nor a per-call completion block.
 
 ## User Management
 
