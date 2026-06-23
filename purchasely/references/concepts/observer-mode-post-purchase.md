@@ -6,27 +6,27 @@ When the SDK runs in [Observer mode](running-modes.md), your app owns the billin
 
 The ordering and the exact API names matter. Get them wrong and you'll see frozen paywalls, double purchase attempts, or stale audience targeting on follow-up screens.
 
-> **Full vs Observer — who closes the paywall.** The SDK appends an implicit `close_all` after a lone `purchase` / `restore` **only in Full mode** (verified in the SDK source: Android `Components.kt` gates it on `Purchasely.runningMode == PLYRunningMode.Full`; iOS `DefaultActionExecutor.appendCloseIfNeeded` early-returns unless `runningMode.validatesTransactions`). **In Observer mode the SDK does NOT auto-close after a purchase/restore.** The post-purchase interceptor flow is an Observer-mode flow (your app runs its own billing), so after you resolve the interceptor with a successful result you **must dismiss the paywall yourself with `Purchasely.closeAllScreens()`** — unless you wire a `close` / `close_all` action on the button in the Console. Call `closeAllScreens()` **after** the interceptor has resolved (from your async billing-result handler), not inside the interceptor closure before returning the result — that races the SDK. **Flutter v6** mirrors native: there is no `closeAllScreens()`/`closePresentation()` — dismiss with `presentation.close()` on the loaded `Presentation`, or a `close` action wired in the Composer. The remaining **cross-platform bridges** (React Native / Cordova) are on the v5 surface and dismiss with an explicit `closePresentation()`, or a `close` action wired in the Composer.
+> **Full vs Observer — who closes the paywall.** The SDK appends an implicit `close_all` after a lone `purchase` / `restore` **only in Full mode** (verified in the SDK source: Android `Components.kt` gates it on `Purchasely.runningMode == PLYRunningMode.Full`; iOS `DefaultActionExecutor.appendCloseIfNeeded` early-returns unless `runningMode.validatesTransactions`). **In Observer mode the SDK does NOT auto-close after a purchase/restore.** The post-purchase interceptor flow is an Observer-mode flow (your app runs its own billing), so after you resolve the interceptor with a successful result you **must dismiss the paywall yourself with `Purchasely.closeAllScreens()`** — unless you wire a `close` / `close_all` action on the button in the Console. Call `closeAllScreens()` **after** the interceptor has resolved (from your async billing-result handler), not inside the interceptor closure before returning the result — that races the SDK. **React Native v6 and Flutter v6** mirror native: dismiss the v6 presentation request you built — React Native calls `request.close()` on the `PresentationRequest`, Flutter calls `presentation.close()` on the loaded `Presentation` — or wire a `close` action in the Composer. The remaining **cross-platform bridge** (Cordova) is on the v5 surface and dismisses with an explicit `closePresentation()`, or a `close` action wired in the Composer.
 
 ## The recommended sequence
 
 After a successful Observer-mode purchase:
 
-1. **`Purchasely.synchronize()`** — tells Purchasely to re-pull receipt state from the store servers. In v6 both native SDKs accept optional callbacks (iOS `success:/failure:`, Android `onSuccess = { plan -> } / onError = { error -> }`); the cache is refreshed before `onSuccess`/`success` fires.
-2. **Resolve the interceptor** — tell the SDK's action interceptor that **you** handled the purchase. Native iOS/Android v6: return `PLYInterceptResult.success` / `PLYInterceptResult.SUCCESS`. Flutter v6: return `InterceptResult.success`. React Native / Cordova bridges: `proceed(false)` / `processAction(false)`. This means "do not run the SDK's own purchase flow on top of mine." In Observer mode the SDK does **not** auto-close on a successful result — you dismiss in step 3.
-3. **Dismiss the paywall** — Observer mode does not auto-close after a purchase/restore (that implicit `close_all` is Full-only). After resolving the interceptor, dismiss the paywall yourself: native iOS/Android v6 call `Purchasely.closeAllScreens()`; Flutter v6 calls `presentation.close()` on the loaded `Presentation`; React Native / Cordova bridges call `closePresentation()`. You can skip this step if a `close` / `close_all` action is wired on the button in the Console — then the SDK closes on that action.
+1. **`Purchasely.synchronize()`** — tells Purchasely to re-pull receipt state from the store servers. In v6 both native SDKs accept optional callbacks (iOS `success:/failure:`, Android `onSuccess = { plan -> } / onError = { error -> }`); the cache is refreshed before `onSuccess`/`success` fires. React Native v6 returns `Promise<boolean>` — `await Purchasely.synchronize()` resolves once the native bridge confirms.
+2. **Resolve the interceptor** — tell the SDK's action interceptor that **you** handled the purchase. Native iOS/Android v6: return `PLYInterceptResult.success` / `PLYInterceptResult.SUCCESS`. React Native v6: return `'success'`. Flutter v6: return `InterceptResult.success`. Cordova bridge: `proceed(false)` / `processAction(false)`. This means "do not run the SDK's own purchase flow on top of mine." In Observer mode the SDK does **not** auto-close on a successful result — you dismiss in step 3.
+3. **Dismiss the paywall** — Observer mode does not auto-close after a purchase/restore (that implicit `close_all` is Full-only). After resolving the interceptor, dismiss the paywall yourself: native iOS/Android v6 call `Purchasely.closeAllScreens()`; React Native v6 calls `request.close()` on the `PresentationRequest`; Flutter v6 calls `presentation.close()` on the loaded `Presentation`; the Cordova bridge calls `closePresentation()`. You can skip this step if a `close` / `close_all` action is wired on the button in the Console — then the SDK closes on that action.
 
-> **Resolve first, then dismiss — never inside the closure.** Do not call `closeAllScreens()` / `closePresentation()` inside the interceptor closure *before* returning the result — that races the SDK. On native v6, dismiss **after** the interceptor closure has resolved its `PLYInterceptResult`, i.e. from your async billing-result handler (e.g. `onBillingSuccess()`), which runs once the suspended interceptor has resolved. On the cross-platform bridges, resolve the action with `processAction`/`proceed` **before** calling `closePresentation()`: the interceptor must learn the action was handled before the paywall tears down, or you get frozen UIs and double-action bugs.
+> **Resolve first, then dismiss — never inside the closure.** Do not call `closeAllScreens()` / `request.close()` / `closePresentation()` inside the interceptor closure *before* returning the result — that races the SDK. On native v6 and React Native v6, dismiss **after** the interceptor handler has resolved its result (`PLYInterceptResult` / the returned string), i.e. from your async billing-result handler (e.g. `onBillingSuccess()`), which runs once the suspended interceptor has resolved. On the Cordova bridge, resolve the action with `processAction`/`proceed` **before** calling `closePresentation()`: the interceptor must learn the action was handled before the paywall tears down, or you get frozen UIs and double-action bugs.
 
 ## Dismissal API per platform
 
-On **native v6 in Observer mode** the SDK does **not** dismiss after a successful purchase/restore (the implicit `close_all` is Full-only), so you call `Purchasely.closeAllScreens()` yourself after resolving the interceptor — unless a `close` / `close_all` action is configured on the button in the Console. `closeAllScreens()` is the native v6 dismissal method (it replaces v5's `closeDisplayedPresentation()` and tears down multi-step Flow paywalls correctly). Flutter v6 has no `closeAllScreens()`/`closePresentation()` — dismiss with `presentation.close()` on the loaded `Presentation`. The remaining cross-platform bridges (React Native / Cordova) expose `closePresentation()` and likewise require an explicit call after resolving; do not generate RN/Cordova code that calls `closeAllScreens()` unless the project has added its own native bridge.
+On **native v6 in Observer mode** the SDK does **not** dismiss after a successful purchase/restore (the implicit `close_all` is Full-only), so you call `Purchasely.closeAllScreens()` yourself after resolving the interceptor — unless a `close` / `close_all` action is configured on the button in the Console. `closeAllScreens()` is the native v6 dismissal method (it replaces v5's `closeDisplayedPresentation()` and tears down multi-step Flow paywalls correctly). React Native v6 has no `closeAllScreens()` — dismiss with `request.close()` on the `PresentationRequest` you built. Flutter v6 dismisses with `presentation.close()` on the loaded `Presentation`. The remaining cross-platform bridge (Cordova) exposes `closePresentation()` and likewise requires an explicit call after resolving; do not generate React Native / Cordova code that calls `closeAllScreens()` unless the project has added its own native bridge.
 
 | Platform | Post-purchase dismissal (Observer mode) |
 |----------|-------------------------|
 | iOS | Resolve with `.success`, then call `Purchasely.closeAllScreens()` (from your billing-result handler, after the interceptor resolves) — or wire a `close` action in the Console. It is `@MainActor`-isolated; from a non-isolated context wrap in `Task { @MainActor in Purchasely.closeAllScreens() }`. |
 | Android | Resolve with `PLYInterceptResult.SUCCESS`, then call `Purchasely.closeAllScreens()` (from your billing-result handler, after the interceptor resolves) — or wire a `close` action in the Console. No threading constraint. |
-| React Native | Resolve, then call `Purchasely.closePresentation()` in the public JS bridge. |
+| React Native | Resolve with `'success'`, then call `request.close()` on the `PresentationRequest` — or wire a `close` action in the Console. |
 | Flutter | Resolve with `InterceptResult.success`, then call `presentation.close()` on the loaded `Presentation` — or wire a `close` action in the Console. |
 | Cordova | Resolve, then call `Purchasely.closePresentation()` in the public JS bridge. |
 
@@ -95,13 +95,27 @@ Purchasely.interceptAction<PLYPresentationAction.Purchase> { info, purchase ->
 }
 ```
 
-### React Native (TypeScript)
+### React Native (TypeScript) — async interceptor returns the result directly
+
+In v6 the `purchase` interceptor is an async handler that **returns** a string result. Run your billing flow, `await synchronize()`, then return `'success'`. In Observer mode the SDK does not auto-close, so dismiss the paywall with `request.close()` on the `PresentationRequest` you built **after** the interceptor has returned — or wire a `close` action in the Console.
 
 ```ts
+// `request` is the PresentationRequest you built and displayed:
+//   const request = Purchasely.presentation.placement('PREMIUM').build();
+//   request.display();
+
+Purchasely.interceptAction('purchase', async (info, payload) => {
+  const purchased = await myBilling.purchase(payload?.plan?.productId);
+  if (!purchased) return 'failed';
+
+  await Purchasely.synchronize(); // resolves once the native bridge confirms
+  return 'success';               // app handled it; do NOT close here — that races the SDK
+});
+
+// Called after the interceptor has resolved (Observer mode does not auto-close).
+// Skip this if a `close` action is configured on the button in the Console.
 async function onPurchaseSuccess() {
-  Purchasely.synchronize();
-  Purchasely.onProcessAction(false);
-  Purchasely.closePresentation();
+  request.close(); // dismiss the paywall ourselves in Observer mode
 }
 ```
 
@@ -139,7 +153,7 @@ function onPurchaseSuccess() {
 
 ## Optional: chaining a follow-up placement
 
-Some apps display a follow-up paywall after a successful purchase — a thank-you screen, a premium feature tour, a one-tap upsell, etc. **This is not part of the SDK contract**: it's just another presentation fetch with whatever placement ID you've configured on the Console (e.g. `"post_purchase"`, `"thank_you"`, `"premium_welcome"` — name it whatever you want, just match it in the dashboard). Native iOS/Android v6 build it with `PLYPresentationBuilder` / the `PLYPresentation { }` DSL; Flutter v6 builds it with `PresentationBuilder` → `PresentationRequest` (`.preload()` / `.display(...)`); the React Native / Cordova bridges still call `fetchPresentation`.
+Some apps display a follow-up paywall after a successful purchase — a thank-you screen, a premium feature tour, a one-tap upsell, etc. **This is not part of the SDK contract**: it's just another presentation fetch with whatever placement ID you've configured on the Console (e.g. `"post_purchase"`, `"thank_you"`, `"premium_welcome"` — name it whatever you want, just match it in the dashboard). Native iOS/Android v6 build it with `PLYPresentationBuilder` / the `PLYPresentation { }` DSL; React Native v6 and Flutter v6 build it with `Purchasely.presentation.placement(...)` / `PresentationBuilder` → `PresentationRequest` (`.preload()` / `.display(...)`); the Cordova bridge still calls `fetchPresentation`.
 
 ### The audience-targeting gotcha
 
@@ -147,7 +161,7 @@ If the chained placement's audience targets users based on subscription state, *
 
 - On iOS, this is why the `synchronizeReceipt()` `await` matters.
 - On Android v6, `synchronize(onSuccess = { … }, onError = { … })` refreshes the subscriptions cache before `onSuccess` — kick off the follow-up fetch from `onSuccess` so it resolves against fresh state.
-- On React Native, `synchronize()` is fire-and-forget in the public JS bridge.
+- On React Native v6, `await Purchasely.synchronize()` (returns `Promise<boolean>`) resolves once the native bridge confirms — `await` it before the follow-up `preload()`.
 - On Flutter, `await synchronize()` resolves once the native bridge confirms; same trade-off as native.
 - On Cordova, `synchronize()` is fire-and-forget in the public JS bridge.
 
@@ -180,7 +194,7 @@ if (p.type == PresentationType.normal || p.type == PresentationType.fallback) {
 }
 ```
 
-The same pattern applies on React Native and Cordova — fetch, [type-guard](presentation-types.md), display.
+The same pattern applies on React Native (build the request, `preload()`, [type-guard](presentation-types.md), `display()`) and Cordova (fetch, type-guard, display).
 
 ## See also
 

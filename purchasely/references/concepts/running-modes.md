@@ -10,8 +10,8 @@ This is the single most impactful change of SDK v6 and it is **silent** — the 
 
 | SDK version | Default running mode |
 |-------------|----------------------|
-| v5.x (and current React Native / Cordova plugins) | **Full** |
-| **v6.0.0-rc.1+ (native iOS & Android, and Flutter)** | **Observer** ⚠️ |
+| v5.x (and current Cordova plugin) | **Full** |
+| **v6.0.0-rc.1+ (native iOS & Android, React Native, and Flutter)** | **Observer** ⚠️ |
 
 > 🚧 In v6, if your app relies on Purchasely to process purchases and validate receipts, you **must set the running mode to Full explicitly**. If you forget, the SDK still compiles and runs but **stops validating transactions**. In Observer mode, presentations also **no longer auto-close** after a purchase/restore (v5 Full auto-appended a `close_all`).
 
@@ -35,7 +35,7 @@ Purchasely {
 | Mode | Description | When to use |
 |------|-------------|-------------|
 | **Full** | Purchasely owns the entire purchase flow: it talks to StoreKit / Google Play Billing / Huawei IAP, validates the receipt, and reports the result. | Most apps. Use it unless you already have a custom billing stack. **Default in v5; must be set explicitly in v6.** |
-| **Observer** (was `PaywallObserver` on Android in v5) | Your app owns the purchase flow. Purchasely only *displays* paywalls and *observes* the resulting transactions for analytics and SDK-level state. | You have an existing billing system (custom StoreKit 2 / Google Play Billing, another subscription platform, in-house IAP layer) and want Purchasely only for paywall presentation, A/B testing and analytics. **Default in v6 (native iOS & Android).** |
+| **Observer** (was `PaywallObserver` on Android in v5) | Your app owns the purchase flow. Purchasely only *displays* paywalls and *observes* the resulting transactions for analytics and SDK-level state. | You have an existing billing system (custom StoreKit 2 / Google Play Billing, another subscription platform, in-house IAP layer) and want Purchasely only for paywall presentation, A/B testing and analytics. **Default in v6 (native iOS & Android, React Native, Flutter).** |
 
 **Important:** in Observer mode, the [action interceptor](paywall-actions.md) **must** be wired up — otherwise nothing happens when the user taps a purchase button.
 
@@ -94,17 +94,17 @@ new Purchasely.Builder(getApplicationContext())
     .start(error -> { });
 ```
 
-### React Native (TypeScript) — v5 plugin
+### React Native (TypeScript) — v6
 
 ```ts
-import Purchasely, { LogLevels, RunningMode } from 'react-native-purchasely';
+import Purchasely from 'react-native-purchasely';
 
-await Purchasely.start({
-  apiKey: 'YOUR_API_KEY',
-  storeKit1: false,
-  logLevel: LogLevels.WARNING,
-  runningMode: RunningMode.FULL,        // or RunningMode.PAYWALL_OBSERVER
-});
+await Purchasely.builder('YOUR_API_KEY')
+  .runningMode('full')             // or 'observer' — default is 'observer' in v6
+  .storekitVersion('storeKit2')    // iOS: 'storeKit1' | 'storeKit2'
+  .logLevel('warn')                // 'debug' | 'info' | 'warn' | 'error'
+  .stores(['google'])              // Android: 'google' | 'huawei' | 'amazon'
+  .start();
 ```
 
 ### Flutter (Dart) — v6
@@ -135,7 +135,7 @@ Purchasely.start(
 );
 ```
 
-> **Cross-platform note.** Flutter is on the v6 API (default Observer, `PurchaselyBuilder.apiKey(...)....start()`), in the same v6 group as native iOS & Android. React Native and Cordova plugins are still on the v5 API (default Full, `start({...})` / positional `start(...)`); their v6 migrations are pending — keep their existing initialization. Always confirm the exact plugin signature in that platform's integration reference and in [`sdk-versions.md`](../sdk-versions.md).
+> **Cross-platform note.** React Native and Flutter are on the v6 API (default Observer; React Native `Purchasely.builder('key')....start()`, Flutter `PurchaselyBuilder.apiKey(...)....start()`), in the same v6 group as native iOS & Android. React Native passes the running mode as a string (`'full'` / `'observer'`); Flutter uses the `RunningMode` enum. The Cordova plugin is still on the v5 API (default Full, positional `start(...)`); its v6 migration is pending — keep its existing initialization. Always confirm the exact plugin signature in that platform's integration reference and in [`sdk-versions.md`](../sdk-versions.md).
 
 ## Log Levels
 
@@ -152,7 +152,7 @@ Enum names vary slightly by platform:
 |----------|------|
 | iOS | `LogLevel.debug` / `.info` / `.warn` / `.error` |
 | Android | `LogLevel.DEBUG` / `.INFO` / `.WARN` / `.ERROR` |
-| React Native | `LogLevels.DEBUG` / `.INFO` / `.WARNING` / `.ERROR` |
+| React Native | `.logLevel('debug')` / `'info'` / `'warn'` / `'error'` (string on the v6 builder) |
 | Flutter | `LogLevel.debug` / `.info` / `.warn` / `.error` |
 | Cordova | `Purchasely.LogLevel.DEBUG` / `.INFO` / `.WARN` / `.ERROR` |
 

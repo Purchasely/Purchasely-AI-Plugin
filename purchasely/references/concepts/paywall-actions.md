@@ -6,23 +6,23 @@ The **action interceptor** is a callback the SDK invokes when the user interacts
 
 ## The golden rule
 
-**Every code path through the interceptor MUST resolve exactly once** — return a `PLYInterceptResult` / `InterceptResult` (native iOS/Android v6 and Flutter v6) or call the `proceed`/`processAction` callback (React Native / Cordova bridges).
+**Every code path through the interceptor MUST resolve exactly once** — return a `PLYInterceptResult` / `InterceptResult` / string result (native iOS/Android v6, React Native v6, Flutter v6) or call the `proceed`/`processAction` callback (Cordova bridge).
 
 If a branch (early return, error catch, `switch default`, `try/catch`, etc.) skips it, the paywall UI freezes permanently — this is the #1 most common Purchasely bug across all platforms. If a branch resolves twice, behavior is undefined.
 
-When in doubt, wrap the handler in a `try/finally` (or equivalent) that resolves the result on every path (native iOS/Android & Flutter v6 returns `.notHandled` / `PLYInterceptResult.NOT_HANDLED` / `InterceptResult.notHandled`; React Native / Cordova calls `proceed(false)` / `processAction(false)`).
+When in doubt, wrap the handler in a `try/finally` (or equivalent) that resolves the result on every path (native iOS/Android & Flutter v6 returns `.notHandled` / `PLYInterceptResult.NOT_HANDLED` / `InterceptResult.notHandled`; React Native v6 returns `'notHandled'`; Cordova calls `processAction(false)`).
 
 ## `PLYPresentationAction`
 
-Same set of actions on every platform; on **native iOS/Android v6 and Flutter v6** each action gets its own interceptor and you return a `PLYInterceptResult` / `InterceptResult`; on the React Native / Cordova bridges you handle one callback and call `proceed`/`processAction`.
+Same set of actions on every platform; on **native iOS/Android v6, React Native v6 and Flutter v6** each action gets its own interceptor and you return a result (`PLYInterceptResult` / `InterceptResult` / a string); on the Cordova bridge you handle one callback and call `proceed`/`processAction`.
 
-The mapping between the v6 `PLYInterceptResult` / `InterceptResult` and the legacy `proceed`/`processAction` boolean is:
+The mapping between the v6 `PLYInterceptResult` / `InterceptResult` / string result and the legacy `proceed`/`processAction` boolean is:
 
-| `PLYInterceptResult` | Meaning | SDK behavior | Legacy boolean |
+| Result (native / RN string) | Meaning | SDK behavior | Legacy boolean (Cordova) |
 |----------------------|---------|--------------|----------------|
-| `.success` / `SUCCESS` | App handled the action successfully | Chain advances to the next action | `proceed(false)` / `processAction(false)` |
-| `.failed` / `FAILED` | App tried but failed | Remaining actions from this interaction are skipped | — |
-| `.notHandled` / `NOT_HANDLED` | App doesn't want to handle it | SDK executes the action itself | `proceed(true)` / `processAction(true)` |
+| `.success` / `SUCCESS` / `'success'` | App handled the action successfully | Chain advances to the next action | `proceed(false)` / `processAction(false)` |
+| `.failed` / `FAILED` / `'failed'` | App tried but failed | Remaining actions from this interaction are skipped | — |
+| `.notHandled` / `NOT_HANDLED` / `'notHandled'` | App doesn't want to handle it | SDK executes the action itself | `proceed(true)` / `processAction(true)` |
 
 > 📘 `.notHandled` / `NOT_HANDLED` for `purchase` / `restore` in **Observer mode** logs a warning and skips — the SDK cannot execute purchases in Observer mode.
 
@@ -42,13 +42,13 @@ Casing / type reference per platform:
 |----------|--------------------|
 | iOS | `Purchasely.interceptAction(.purchase)` / `.restore` / `.login` / `.close` / `.navigate` / `.openPresentation` / `.promoCode` |
 | Android | Sealed class: `PLYPresentationAction.Purchase` / `.Restore` / `.Login` / `.Close` / `.Navigate` / `.OpenPresentation` / `.OpenPlacement` / `.PromoCode` |
-| React Native | `PLYPaywallAction.PURCHASE` etc. (string constants) |
+| React Native | String kinds passed to `interceptAction(kind, …)`: `'close'` / `'closeAll'` / `'login'` / `'navigate'` / `'purchase'` / `'restore'` / `'openPresentation'` / `'openPlacement'` / `'promoCode'` / `'webCheckout'` |
 | Flutter | `PresentationActionKind.purchase` / `.restore` / `.login` / `.close` / `.navigate` / `.openPresentation` / `.promoCode` |
 | Cordova | String values: `'purchase'`, `'restore'`, `'login'`, `'close'`, `'navigate'`, `'open_presentation'`, `'promo_code'` |
 
 ## Registering the interceptor
 
-Register **once** at initialization, ideally right after `start()`. On native iOS/Android v6 and Flutter v6 you register one interceptor **per action**; re-registering the same action replaces the previous handler. The React Native / Cordova bridges still register a single global callback.
+Register **once** at initialization, ideally right after `start()`. On native iOS/Android v6, React Native v6 and Flutter v6 you register one interceptor **per action**; re-registering the same action replaces the previous handler. The Cordova bridge still registers a single global callback.
 
 ### iOS (Swift)
 
@@ -112,21 +112,20 @@ Remove with `Purchasely.removeActionInterceptor(PLYPresentationAction.Purchase.c
 
 ### React Native (TypeScript)
 
+In v6 the global `setPaywallActionInterceptorCallback` / `onProcessAction` are removed; register one async handler **per action kind** and return a string result (`'success'` / `'failed'` / `'notHandled'`):
+
 ```ts
-Purchasely.setPaywallActionInterceptorCallback(result => {
-  const { action } = result;
-  switch (action) {
-    case PLYPaywallAction.LOGIN:
-      showLogin().then(ok => Purchasely.onProcessAction(!ok)); // false = handled; true = not handled
-      return;
-    case PLYPaywallAction.PURCHASE:
-      Purchasely.onProcessAction(true);
-      return;
-    default:
-      Purchasely.onProcessAction(true);
-  }
+Purchasely.interceptAction('login', async (info, payload) => {
+  const loggedIn = await showLogin();
+  return loggedIn ? 'success' : 'notHandled'; // success = app handled login; notHandled = continue without login
+});
+
+Purchasely.interceptAction('purchase', async (info, payload) => {
+  return 'notHandled'; // Full mode lets the SDK run the purchase
 });
 ```
+
+Remove with `Purchasely.removeActionInterceptor('login')` / `Purchasely.removeAllActionInterceptors()`.
 
 ### Flutter (Dart)
 
@@ -164,12 +163,12 @@ Purchasely.setPaywallActionInterceptor(result => {
 
 ## Mode-dependent behaviour
 
-Native iOS/Android v6 and Flutter v6 return a `PLYInterceptResult` / `InterceptResult`; the React Native / Cordova bridges call `proceed`/`processAction` with the equivalent boolean (see the mapping table above).
+Native iOS/Android v6, React Native v6 and Flutter v6 return a result (`PLYInterceptResult` / `InterceptResult` / a string); the Cordova bridge calls `proceed`/`processAction` with the equivalent boolean (see the mapping table above).
 
 | Action | Full mode | Observer mode |
 |--------|-----------|---------------|
-| `purchase` | `.notHandled` (`proceed(true)`) — SDK runs the purchase. | Run your own billing flow, call `Purchasely.synchronize()` on success, then `.success` (`proceed(false)`) so the SDK doesn't re-run a purchase. |
-| `restore` | `.notHandled` (`proceed(true)`) — SDK restores. | Run your own restore, then `.success` / `.failed` (`proceed(success)`). |
+| `purchase` | `.notHandled` / `'notHandled'` (`proceed(true)`) — SDK runs the purchase. | Run your own billing flow, call `Purchasely.synchronize()` on success, then `.success` / `'success'` (`proceed(false)`) so the SDK doesn't re-run a purchase. |
+| `restore` | `.notHandled` / `'notHandled'` (`proceed(true)`) — SDK restores. | Run your own restore, then `.success` / `.failed` / `'success'` / `'failed'` (`proceed(success)`). |
 | `login` | App handles. SDK then re-fetches with the new user. | Same. |
 
 ## Chaining multiple actions on a single button
@@ -190,14 +189,14 @@ Typical chains:
 Key points:
 
 - **Default after `purchase` is intentional.** In Full mode the SDK closes the paywall on success so the user lands back in the app. In Observer mode the SDK has no opinion — it doesn't know what the app's purchase flow returned — and presentations **no longer auto-close** after a purchase/restore in v6 (in v5 the implicit Full default appended a `close_all`). If you want a different behaviour, **add a second action in the Composer**, don't try to coerce it from the interceptor.
-- **The interceptor sees only the action being executed at this moment.** For a `purchase + open_placement` chain, you receive `purchase` first (return `.notHandled` / call `proceed(true)`); the SDK then triggers the second action on its own and you receive it as a separate interceptor call (e.g. `open_presentation`).
-- **`.failed` short-circuits the chain.** If your v6 purchase branch returns `.failed`, the second action is **not** executed. In React Native / Cordova, call `processAction(false)` only when the app handled the action successfully and the chain may continue; use the bridge's error/cancel handling to avoid continuing after a failed app-side purchase.
+- **The interceptor sees only the action being executed at this moment.** For a `purchase + open_placement` chain, you receive `purchase` first (return `.notHandled` / `'notHandled'` / call `proceed(true)`); the SDK then triggers the second action on its own and you receive it as a separate interceptor call (e.g. `openPlacement` / `open_presentation`).
+- **`.failed` short-circuits the chain.** If your v6 purchase branch returns `.failed` / `'failed'`, the second action is **not** executed. In Cordova, call `processAction(false)` only when the app handled the action successfully and the chain may continue; use the bridge's error/cancel handling to avoid continuing after a failed app-side purchase.
 - **Configuration is a Console concern.** Mobile engineers cannot add a "second action" from the SDK — ask the team running the Screen Composer to wire it in the button's Actions list.
 
 ## Anti-patterns
 
-- ❌ Resolving the result inside an async block whose error path never returns / calls back (native iOS/Android & Flutter v6: return a `PLYInterceptResult` / `InterceptResult`; React Native / Cordova: call `proceed` / `processAction`).
-- ❌ Returning from the interceptor without resolving (e.g. `if (cond) return;` on a React Native / Cordova callback).
+- ❌ Resolving the result inside an async block whose error path never returns / calls back (native iOS/Android, React Native & Flutter v6: return a `PLYInterceptResult` / `InterceptResult` / string; Cordova: call `proceed` / `processAction`).
+- ❌ Returning from the interceptor without resolving (e.g. `if (cond) return;` on a Cordova callback, or omitting the `return` on a React Native / Flutter async handler).
 - ❌ Resolving twice (e.g. once in the happy path, once in `finally`).
 - ❌ Doing heavy synchronous work in the interceptor — the paywall is waiting on you.
 - ❌ Trying to "stay on the paywall after purchase" by holding the interceptor open or skipping the result — instead, configure the button with no second action (Observer mode) or add an explicit `open_screen` / `open_placement` step.

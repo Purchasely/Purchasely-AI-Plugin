@@ -26,21 +26,22 @@ For workflow tasks, use the dedicated skills instead:
 
 ### SDK generation rules
 
-- **Native iOS, native Android, and Flutter use SDK v6 (`6.0.0-rc.1`).**
-- **React Native and Cordova stay on v5 (`5.7.3`).**
-- Always answer iOS / Android / Flutter with v6 APIs.
-- Always answer React Native / Cordova with v5 APIs.
+- **Native iOS, native Android, Flutter, and React Native use SDK v6 (`6.0.0-rc.1`).**
+- **Cordova stays on v5 (`5.7.3`).**
+- Always answer iOS / Android / Flutter / React Native with v6 APIs.
+- Always answer Cordova with v5 APIs.
 - Never invent signatures. If exact syntax matters, load the matching reference file before answering.
 
 ### Running mode warning
 
-On native iOS, native Android, and Flutter v6, the default running mode is **Observer**, not Full. If the app expects Purchasely to process and validate purchases, it must set Full explicitly:
+On native iOS, native Android, Flutter, and React Native v6, the default running mode is **Observer**, not Full. If the app expects Purchasely to process and validate purchases, it must set Full explicitly:
 
 - iOS: `.runningMode(.full)`
 - Android: `runningMode(PLYRunningMode.Full)`
 - Flutter: `.runningMode(RunningMode.full)`
+- React Native: `.runningMode('full')` (string)
 
-Observer mode means the app owns billing and must call `Purchasely.synchronize()` after successful purchases. Native iOS/Android Observer presentations do not auto-close after purchase/restore; dismiss explicitly with `closeAllScreens()`. Flutter v6 dismisses via `presentation.close()`.
+Observer mode means the app owns billing and must call `Purchasely.synchronize()` after successful purchases. Native iOS/Android Observer presentations do not auto-close after purchase/restore; dismiss explicitly with `closeAllScreens()`. Flutter v6 dismisses via `presentation.close()`. React Native v6 dismisses via `request.close()`.
 
 ## Answering workflow
 
@@ -105,25 +106,27 @@ Load the matching platform before giving exact setup or API signatures:
 - iOS v6: `PLYPresentationBuilder.forPlacementId("id").build().preload()` then `presentation.display(from:)`.
 - Android v6: `PLYPresentation { placementId("id") }.preload()` then `loaded.display(context)`.
 - Flutter v6: `PresentationBuilder.placement("id").build()` → `PresentationRequest`, then `request.preload()` and/or `request.display([Transition])`.
-- React Native v5: `fetchPresentation(...)` then `presentPresentation({ presentation })`.
+- React Native v6: `Purchasely.presentation.placement("id").build()` → `PresentationRequest`, then `request.preload()` and/or `request.display(transition?)`.
 - Cordova v5: `fetchPresentationForPlacement(...)` then `presentPresentation(...)`.
 - For Flows, prefer build/fetch → type guard → display. Avoid placement shorthand when Flow behavior matters.
 - For embedded / nested rendering, only use container APIs when the user explicitly wants to own the container.
 
 ### Interceptors
 
-- Native iOS/Android v6 and Flutter v6 use **per-action** interceptors.
+- Native iOS/Android v6, Flutter v6 and React Native v6 use **per-action** interceptors.
 - Every native v6 handler must return `PLYInterceptResult` on every path.
 - Every Flutter v6 handler must return `InterceptResult` on every path.
-- React Native / Cordova v5 must call `onProcessAction(true/false)` on every path.
+- Every React Native v6 handler must return the string `'success' | 'failed' | 'notHandled'` on every path.
+- Cordova v5 must call `onProcessAction(true/false)` on every path.
 - Missing completion freezes the paywall.
 
 ### Removed / wrong APIs
 
-Do not generate these for v6 native or Flutter:
+Do not generate these for v6 native, Flutter or React Native:
 
 - native `fetchPresentation`, `setPaywallActionsInterceptor`, `presentationView` / `presentationController`
 - Flutter `Purchasely.start(...)`, `fetchPresentation`, `presentPresentation*`, `setPaywallActionInterceptorCallback`, `onProcessAction`, `closePresentation()`, `closeAllScreens()`, `presentSubscriptions()`
+- React Native `Purchasely.start({...})`, `fetchPresentation`, `presentPresentation*`, `setPaywallActionInterceptor`, `onProcessAction`, `closePresentation()`, `closeAllScreens()`, `presentSubscriptions()`, `readyToOpenDeeplink`, `setDefaultPresentationResultCallback`/`Handler`. ⚠️ **`Purchasely.isDeeplinkHandled(uri)` is KEPT on React Native** (NOT renamed to `handleDeeplink`) — generate it as-is.
 - Do not generate `purchase(planId:)`, `Purchasely.purchase({ planId })`, or generic `Purchasely.purchase(...)`
 
 Use `purchaseWithPlanVendorId(...)` for React Native / Flutter / Cordova programmatic purchases; use native `PLYPlan` purchase APIs on iOS / Android.
@@ -134,7 +137,7 @@ For any campaign / trigger / `APP_STARTED` / launch display question, load `../.
 
 - Trigger-based campaigns are SDK-managed. The app does not manually build or fetch the campaign paywall.
 - Placement-based campaigns override the placement when the app displays that placement.
-- Mention deeplink display readiness: v6 native / Flutter use `allowDeeplink` (default true); React Native / Cordova v5 use `readyToOpenDeeplink(true)` after the app UI is ready.
+- Mention deeplink display readiness: v6 native / Flutter use `allowDeeplink` (default true); React Native v6 also uses `.allowDeeplink(true)` but it defaults to **false** (set it on the `Purchasely.builder(...)` chain); Cordova v5 uses `readyToOpenDeeplink(true)` after the app UI is ready.
 
 ### BYOS
 
@@ -158,7 +161,7 @@ For Lottie / animation questions, load `../../references/concepts/lottie-animati
 
 Use this checklist when another Purchasely workflow asks for expert validation and no Claude Code subagent is available:
 
-1. Platform and SDK generation are correct: iOS / Android / Flutter v6, React Native / Cordova v5.
+1. Platform and SDK generation are correct: iOS / Android / Flutter / React Native v6, Cordova v5.
 2. SDK version is pinned from `../../references/sdk-versions.md`.
 3. Running mode is explicit when Purchasely must process purchases.
 4. Presentation path matches the platform generation and handles `DEACTIVATED` / `FALLBACK` where relevant.
