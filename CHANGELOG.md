@@ -4,6 +4,23 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+## [2.0.0-rc.4] — 2026-06-23
+
+React Native joins the **v6 line**. React Native guidance moves off v5 to match native iOS, Android & Flutter — the published `react-native-purchasely` now targets **Purchasely v6.0.0-rc.1** with the builder API. **Cordova stays on v5 (`5.7.3`).**
+
+### Changed
+
+- **All skills updated for React Native v6.** `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, `purchasely-migrate`, and the `purchasely-sdk-expert` skill now document the **React Native v6 API**: `Purchasely.builder('key')` fluent init with string options (default running mode `'observer'`), `Purchasely.presentation` builder / `PresentationRequest` (`build().preload()` / `.display()`, replacing `fetchPresentation` / `presentPresentation[ForPlacement]`), per-action `Purchasely.interceptAction(kind, handler)` returning `'success' | 'failed' | 'notHandled'` (replacing `setPaywallActionInterceptorCallback` + `onProcessAction`), `request.close()` to dismiss, `Purchasely.setDefaultPresentationDismissHandler`, and awaitable `synchronize()`. React Native keeps `isDeeplinkHandled` (not renamed) and uses `.allowDeeplink(true)` on the builder. React Native is carved out of the former "v5 cross-platform" grouping; Cordova keeps its v5 guidance.
+- **`references/react-native/integration.md` rewritten as a shippable v6 doc**, plus new **`references/react-native/migration-v6.md`** and **`references/react-native/v5-api-reference.md`**; pin `react-native-purchasely` and the `@purchasely/react-native-purchasely-*` store packages to `6.0.0-rc.1`.
+- **`references/sdk-versions.md`** — the React Native row, npm pins, and transitive-version notes move to the v6 generation (`6.0.0-rc.1`, which pulls the `6.0.0-rc.1` native SDKs). Cordova row kept on `5.7.3`.
+- **`purchasely-migrate`** now migrates React Native v5.x → `6.0.0-rc.1` (alongside native iOS, Android & Flutter), with a dedicated React Native workflow and `yarn typecheck` / `yarn lint` / `yarn test` + example-app build verification.
+- Concept and troubleshooting references (running modes, observer-mode post-purchase, paywall actions, presentation types/cache, promotional offers, campaigns, architecture, common issues, debug mode) updated so React Native examples use the v6 API.
+- **`scripts/guard-known-bad-snippets.mjs`** — React Native is exempted from the v5 `allowDeeplink` guard (it now documents the v6 builder API); Cordova stays guarded on v5.
+
+### Removed
+
+- React Native docs no longer present `Purchasely.presentSubscriptions()` — it is **removed** in React Native v6 (the native subscription-list UI was dropped on both platforms; build your own from `userSubscriptions()` / `userSubscriptionsHistory()`).
+
 ## [2.0.0-rc.3] — 2026-06-17
 
 Flutter joins the **v6 line**, and skills-only installs gain first-class expert Q&A. Flutter guidance moves off v5 to match native iOS & Android — the published Flutter SDK now targets **Purchasely v6.0.0-rc.1** with the builder API. A new portable `purchasely-sdk-expert` skill brings free-form SDK Q&A to harnesses without the Claude Code subagent. **React Native and Cordova stay on v5 (`5.7.3`).**
@@ -112,6 +129,7 @@ Initial release of the Purchasely AI Plugin for Claude Code, GitHub Copilot CLI,
 - Reference documentation for Purchasely SDK setup, paywall display, purchases, subscriptions, privacy/GDPR, promotional offers, campaigns, and troubleshooting across iOS, Android, React Native, Flutter, and Cordova.
 - Installation and marketplace metadata for supported agent environments.
 
+[2.0.0-rc.4]: https://github.com/Purchasely/Purchasely-AI-Plugin/releases/tag/2.0.0-rc.4
 [2.0.0-rc.3]: https://github.com/Purchasely/Purchasely-AI-Plugin/releases/tag/2.0.0-rc.3
 [2.0.0-rc.2]: https://github.com/Purchasely/Purchasely-AI-Plugin/releases/tag/2.0.0-rc.2
 [2.0.0-rc1]: https://github.com/Purchasely/Purchasely-AI-Plugin/releases/tag/2.0.0-rc1
