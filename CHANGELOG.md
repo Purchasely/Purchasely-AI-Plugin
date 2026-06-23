@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Added
+
+- `references/concepts/user-attributes-targeting.md` — new "When an attribute change takes effect (timing)" section: `setUserAttribute` saves the value (persisted across sessions) but does not re-evaluate placements/campaigns; the value is applied only on the next placement fetch or campaign trigger.
+- `references/concepts/campaigns.md` — new "Custom-attribute audiences: set the attribute before campaigns are evaluated" section explaining why a custom-attribute campaign misses on first launch (matches from the next session once the value is persisted) and the `allowCampaigns(false)` → set attribute → `allowCampaigns(true)` recipe for reliable first-launch matching.
+
+### Changed
+
+- `purchasely-sdk-expert` and `purchasely-debug` now state the user-attribute → campaign timing rule: setting an attribute does not re-trigger targeting, and custom-attribute audiences are gated with `allowCampaigns` (ordering: start → set attributes → allow campaigns).
+- `references/troubleshooting/common-issues.md` §7 now covers the "campaign on a custom-attribute audience is hit-or-miss on first launch" symptom and its fix.
+
 ## [2.0.0-rc.3] — 2026-06-17
 
 Flutter joins the **v6 line**, and skills-only installs gain first-class expert Q&A. Flutter guidance moves off v5 to match native iOS & Android — the published Flutter SDK now targets **Purchasely v6.0.0-rc.1** with the builder API. A new portable `purchasely-sdk-expert` skill brings free-form SDK Q&A to harnesses without the Claude Code subagent. **React Native and Cordova stay on v5 (`5.7.3`).**

@@ -81,6 +81,27 @@ await PurchaselyBuilder.apiKey('<YOUR_API_KEY>')
 > **v6 native:** `allowCampaigns` and `allowDeeplink` are **independent** flags (in v5 a single flag governed both). Control campaign display with `allowCampaigns`; control deeplink presentations with `allowDeeplink` (defaults to `true`). Android also **auto-intercepts** deeplinks, so no manual `handleDeeplink` call is required for them.
 > If you implement a [UI Handler](https://docs.purchasely.com/docs/ui-handler-deeplinks) to manage deeplink display yourself, **keep the presentation object returned** and do not refetch it — refetching loses the campaign context.
 
+### Custom-attribute audiences: set the attribute before campaigns are evaluated
+
+A trigger-based campaign's audience is evaluated **when the trigger resolves** — for the default `APP_STARTED` trigger, shortly after SDK start. The attributes used are whatever the SDK holds **at that moment**. Setting a [user attribute](user-attributes-targeting.md#when-an-attribute-change-takes-effect-timing) does **not** re-trigger or re-evaluate a campaign; it is saved (and persisted across sessions) and only applied on the *next* trigger resolution or placement fetch.
+
+So if your audience is built on a custom attribute (e.g. an AppsFlyer campaign id) that the app sets after start, the campaign **won't match on the first launch**. Since the value is persisted in the SDK's disk cache, it is present at the next cold start, so the campaign matches **from the next session** — which makes the symptom look intermittent.
+
+Two ways to handle it:
+
+1. **Accept the first-launch miss.** Do nothing special; the campaign matches from the next session once the attribute is persisted.
+2. **Gate campaigns until attributes are set (reliable on first launch).** Initialize with `allowCampaigns(false)`, set your attributes, then flip `allowCampaigns(true)` — the queued trigger resolves with the attribute present. Ordering: **start → set user attributes → `allowCampaigns(true)`**.
+
+```swift
+// iOS — make a custom-attribute audience match on the very first launch
+Purchasely.apiKey("YOUR_API_KEY").allowCampaigns(false).start { _ in }
+// once the AppsFlyer (or other) value is known:
+Purchasely.setUserAttribute(withStringValue: campaignId, forKey: "appsflyer_last_campaign_id")
+Purchasely.allowCampaigns(true)   // queued campaign now resolves its audience with the attribute set
+```
+
+> Add a safety timeout: if the attribute source (e.g. an AppsFlyer conversion callback) never returns, call `allowCampaigns(true)` anyway after a few seconds so users without that attribute still get the normal campaign flow.
+
 ## Placement-based campaigns — no extra SDK code
 
 You already fetch the placement (native iOS/Android v6: `PLYPresentationBuilder.forPlacementId("PLACEMENT_ID")` / `PLYPresentation { placementId("PLACEMENT_ID") }`; Flutter v6: `PresentationBuilder.placement("PLACEMENT_ID").build()`; React Native / Cordova v5: `fetchPresentation("PLACEMENT_ID")`). When a campaign targets that placement and the user matches the audience, the SDK substitutes the campaign's Screen for the Placement's default rules. Same `PLYPresentationType` handling, same display path. Nothing to change in your code.
@@ -113,6 +134,7 @@ Property bag includes `campaign_id`, `campaign_name`, `screen_id`, `audience_id`
 - ❌ **Leaving campaigns gated.** If you set `allowCampaigns = false` (native iOS/Android v6 and Flutter v6) / `readyToOpenDeeplink(false)` (React Native / Cordova v5) and never flip it back, trigger-based campaigns silently never appear.
 - ❌ **Re-enabling campaigns too early.** If your splash screen runs after `start()`, flipping `allowCampaigns = true` (native iOS/Android v6 and Flutter v6) / `readyToOpenDeeplink(true)` (React Native / Cordova v5) while it is still up lands the campaign paywall on top of the splash. Wait until your launch routine is complete.
 - ❌ **Coupling capping logic to placement-based campaigns.** Capping only applies on triggers — if you need capping on a placement, build the cap into your audience attribute or use a trigger.
+- ❌ **Assuming `setUserAttribute` re-launches campaign targeting.** It does not. The attribute is saved but no campaign/placement is re-evaluated — only the next trigger resolution or placement fetch uses it. For a custom-attribute audience, set the attribute *before* campaigns are evaluated (see [above](#custom-attribute-audiences-set-the-attribute-before-campaigns-are-evaluated)).
 - ❌ **Refetching the presentation returned by the deeplink handler.** You lose the campaign context (audience match, screen variant, exposure tracking).
 - ❌ **Targeting subscribers with promotional offers without eligibility audience.** See [promotional-offers.md](promotional-offers.md#eligibility-is-your-responsibility-promotional-offers--developer-determined-offers).
 

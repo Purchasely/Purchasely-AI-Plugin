@@ -338,6 +338,8 @@ Purchasely.Builder(applicationContext)
     }
 ```
 
+**Related — campaign on a custom-attribute audience is hit-or-miss on the first launch:** `setUserAttribute(...)` saves the value but does **not** re-evaluate any campaign. A trigger-based campaign evaluates its audience when the trigger resolves (default `APP_STARTED` → shortly after start), using the attributes held at that moment. If the attribute is set after that, the audience won't match on the **first** launch; because the value is persisted in the SDK's disk cache, it matches **from the next session** (hence the "it worked once" symptom). To make it reliable on first launch, gate campaigns until attributes are set — `allowCampaigns(false)` → `setUserAttribute(...)` → `allowCampaigns(true)` (ordering: start → set attributes → allow campaigns). See [campaigns.md](../concepts/campaigns.md#custom-attribute-audiences-set-the-attribute-before-campaigns-are-evaluated).
+
 ## 8. Paywall Disappears Immediately
 
 **Symptoms:** Paywall flashes on screen and then vanishes.
