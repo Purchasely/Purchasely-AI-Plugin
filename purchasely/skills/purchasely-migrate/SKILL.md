@@ -1,11 +1,11 @@
 ---
 name: purchasely-migrate
-description: "Use when migrating an existing Purchasely SDK integration between major SDK versions. Supports native Android (Kotlin & Java), native iOS (Swift & Objective-C), and Flutter v5.x to v6.0.0-rc.1 — handles every v5→v6 breaking change so a project can be upgraded in a single prompt."
+description: "Use when migrating an existing Purchasely SDK integration between major SDK versions. Supports native Android (Kotlin & Java), native iOS (Swift & Objective-C), Flutter, and Cordova v5.x to v6.0.0-rc.1 — handles every v5→v6 breaking change so a project can be upgraded in a single prompt."
 ---
 
 # Purchasely SDK Migration Guide
 
-You are migrating an existing Purchasely SDK integration. You must edit the user's project and verify each migration phase with the platform build/test commands. **Native Android (Kotlin & Java), native iOS (Swift & Objective-C), and Flutter v5.x → v6.0.0-rc.1 are supported.** React Native and Cordova v6 migrations are not ready — stop and explain if asked.
+You are migrating an existing Purchasely SDK integration. You must edit the user's project and verify each migration phase with the platform build/test commands. **Native Android (Kotlin & Java), native iOS (Swift & Objective-C), Flutter, and Cordova v5.x → v6.0.0-rc.1 are supported.** React Native v6 migration is not ready — stop and explain if asked.
 
 The goal is a **one-prompt upgrade**: detect the platform and call-site language, rewrite every v5 API to its v6 form, and leave the project building with no v5-only symbols remaining.
 
@@ -34,6 +34,8 @@ Determine the project's intended mode before rewriting init: if the v5 code did 
 - `../../references/android/migration-v6.md` — authoritative Android v5.x → v6.0.0-rc.1 migration checklist and API mapping.
 - `../../references/ios/migration-v6.md` — authoritative iOS v5.x → v6.0.0-rc.1 migration checklist and API mapping.
 - `../../references/flutter/migration-v6.md` — authoritative Flutter v5.x → v6.0.0-rc.1 migration checklist and API mapping.
+- `../../references/cordova/migration-v6.md` — authoritative Cordova v5.x → v6.0.0-rc.1 migration checklist and API mapping.
+- `../../references/cordova/v5-api-reference.md` — the **v5** Cordova API surface (renamed-in-v6 tokens), used to recognize the legacy code you are replacing.
 - `../../references/android/v5-api-reference.md` / `../../references/ios/v5-api-reference.md` — the **v5** API surface, used to recognize the legacy code you are replacing.
 - `../../references/android/api-reference.md` / `../../references/ios/api-reference.md` — the **v6** API surface to migrate to.
 - `../../references/concepts/running-modes.md` — running modes and the default-mode change.
@@ -51,7 +53,7 @@ Before rewriting code, run a Purchasely expert checkpoint. If the harness expose
 
 If that subagent is not available, do the checkpoint inline using the `purchasely-sdk-expert` guidance when available, or this fallback checklist:
 
-- Confirm the migration is in scope: native iOS, native Android, or Flutter v5.x → `6.0.0-rc.1`; React Native and Cordova migrations are out of scope.
+- Confirm the migration is in scope: native iOS, native Android, Flutter, or Cordova v5.x → `6.0.0-rc.1`; React Native migration is out of scope.
 - Confirm the current v5 running mode and whether v6 must set Full explicitly.
 - Confirm every package / pod / Gradle artifact is pinned exactly to the target version.
 - Confirm legacy presentation APIs are replaced by the v6 builder / preload / display path for the platform.
@@ -65,7 +67,7 @@ Incorporate corrections before editing files.
 ## Arguments
 
 `$ARGUMENTS` may contain:
-- `android` / `ios` / `flutter` — target platform. If omitted, detect it from the project files. If the project is React Native or Cordova, stop and explain that only native Android, native iOS, and Flutter v5 → v6 are supported by this migration skill right now.
+- `android` / `ios` / `flutter` / `cordova` — target platform. If omitted, detect it from the project files. If the project is React Native, stop and explain that native Android, native iOS, Flutter, and Cordova v5 → v6 are supported by this migration skill, but React Native is not ready right now.
 - `from:5.x` / `from:5.7.4` — optional source version.
 - `to:6.0.0-rc.1` — optional target version. Default to `6.0.0-rc.1`.
 - `mavenLocal` — Android only. Add `mavenLocal()` when the SDK 6.0.0-rc.1 artifact is only available locally.
@@ -113,7 +115,7 @@ Incorporate corrections before editing files.
 
 The Flutter plugin migration **adapts the integration to the Purchasely 6.0 native SDKs** (iOS `Purchasely 6.0.0-rc.1`, Android `io.purchasely:core 6.0.0-rc.1`). The Dart public symbols keep their plain names (`PurchaselyBuilder`, `PresentationBuilder`, `PresentationOutcome`, `Transition`, …) — there is **no `v6`/`V6` naming** in the Dart API. Three areas are breaking: **starting the SDK**, **displaying / preloading / closing a presentation**, and the **action interceptor**. Everything else on the `Purchasely` class is source-compatible.
 
-1. Detect the Flutter project: a `pubspec.yaml` that depends on `purchasely_flutter` (and optionally `purchasely_google` / `purchasely_android_player`). The Dart call sites under `lib/` (and the example app) drive the rewrite; the iOS host lives in `ios/` (a `Podfile` pulling the `Purchasely` pod via the plugin podspec) and the Android host in `android/` (Gradle pulling `io.purchasely:core`). Do **not** treat a React Native or Cordova project as Flutter — those stay on v5 (5.7.3) and are not ready.
+1. Detect the Flutter project: a `pubspec.yaml` that depends on `purchasely_flutter` (and optionally `purchasely_google` / `purchasely_android_player`). The Dart call sites under `lib/` (and the example app) drive the rewrite; the iOS host lives in `ios/` (a `Podfile` pulling the `Purchasely` pod via the plugin podspec) and the Android host in `android/` (Gradle pulling `io.purchasely:core`). Do **not** treat a React Native or Cordova project as Flutter — a Cordova project has its own dedicated workflow below (it keeps a method-based JS API rather than a builder), and React Native stays on v5 (5.7.3) and is not ready.
 2. Read `../../references/flutter/migration-v6.md` — the authoritative Flutter v5.x → v6.0.0-rc.1 checklist and old→new API mapping. Use it as the source of truth for every rewrite below.
 3. Find current v5 Purchasely usages with ripgrep (these are the symbols to replace): `Purchasely.start(`, `fetchPresentation`, `presentPresentation`, `presentPresentationForPlacement`, `presentPresentationWithIdentifier`, `presentProductWithIdentifier`, `presentPlanWithIdentifier`, `setPaywallActionInterceptorCallback`, `onProcessAction`, `PLYPaywallAction`, `closePresentation`, `hidePresentation`, `showPresentation`, `getPresentationView`, `setDefaultPresentationResultHandler`, `setDefaultPresentationResultCallback`, `readyToOpenDeeplink`, `isDeeplinkHandled`, `presentSubscriptions`, `PLYRunningMode`, `PLYLogLevel`, `PLYPurchaseResult`.
 4. **Bump the package pins first.** In every `pubspec.yaml`, pin all three Purchasely packages **exactly** to `6.0.0-rc.1` (never a floating `^`/range — a caret would not resolve a pre-release and could silently drift): `purchasely_flutter: 6.0.0-rc.1`, and where present `purchasely_google: 6.0.0-rc.1` and `purchasely_android_player: 6.0.0-rc.1`. Run `flutter pub get` in each package. The plugin pulls iOS `Purchasely 6.0.0-rc.1` (CocoaPods trunk) and Android `io.purchasely:core 6.0.0-rc.1` (Maven Central) from the public repos — no `mavenLocal()` and no development pod required.
@@ -130,9 +132,33 @@ The Flutter plugin migration **adapts the integration to the Purchasely 6.0 nati
 15. **Unchanged (do not rewrite).** Everything outside the paywall surface keeps source-compatible `Purchasely.*` signatures: `purchaseWithPlanVendorId`, `signPromotionalOffer`, `restoreAllProducts`, `userLogin` / `userLogout` / `isAnonymous`, `allProducts` / `productWithIdentifier` / `planWithIdentifier` / `isEligibleForIntroOffer`, `userSubscriptions` / `userSubscriptionsHistory`, user attributes, `listenToEvents` / `listenToPurchases`, dynamic offerings, consent, `setLanguage` / `setThemeMode` / `setLogLevel` / `setDebugMode`. The bridge is still MethodChannel/EventChannel — do not touch it.
 16. Update Dart tests to the v6 API. **Verify before reporting completion:** run `flutter analyze` (0 issues), `flutter test` (all pass), then `flutter build ios --simulator` and `flutter build apk --debug` (build the example app if the package itself is plugin-only) — fix every failure and re-run until all are clean. Do not declare the migration done from edits or reasoning alone; include the exact commands and outcomes.
 
+## Mandatory Workflow — Cordova
+
+The Cordova plugin migration **adapts the integration to the Purchasely 6.0 native SDKs** (iOS `Purchasely 6.0.0-rc.1`, Android `io.purchasely:core 6.0.0-rc.1`). Unlike native iOS/Android and the Flutter v6 plugin — which introduced a builder API — the **Cordova JavaScript surface stays method-based and almost unchanged**: the native bridges were rewired to the v6 SDKs behind the same `cordova.exec` actions, so only a handful of breaking renames apply. There is **no v5 source-compatibility shim** — the renamed methods below were renamed, not aliased.
+
+1. Detect the Cordova project: a `config.xml` plus a `package.json` that lists `@purchasely/cordova-plugin-purchasely` (and optionally `@purchasely/cordova-plugin-purchasely-google`). The JavaScript call sites under `www/` (or `src/`) drive the rewrite; the native hosts are generated under `platforms/ios` and `platforms/android`. Do **not** treat a React Native or Flutter project as Cordova.
+2. Read `../../references/cordova/migration-v6.md` — the authoritative Cordova v5.x → v6.0.0-rc.1 checklist and old→new API mapping — and skim `../../references/cordova/v5-api-reference.md` so you recognize every legacy symbol. Use them as the source of truth for every rewrite below.
+3. Find current v5 Purchasely usages with ripgrep (these are the renamed symbols to replace): `startWithAPIKey`, `RunningMode.paywallObserver`, `readyToOpenDeeplink`, `isDeeplinkHandled`, `Purchasely.handle(`, `setDefaultPresentationResultHandler`, `closePaywall`, `presentSubscriptions`. **Do NOT flag the unchanged method-based APIs** (`Purchasely.start(...)` positional, `fetchPresentation` / `fetchPresentationForPlacement`, `presentPresentation` / `presentPresentationForPlacement`, `setPaywallActionInterceptor` + `onProcessAction`, `closePresentation`, `userLogin` / `userLogout`, `purchaseWithPlanVendorId`, `restoreAllProducts`, `userSubscriptions` / `userSubscriptionsHistory`, every `setUserAttributeWith*`, `setThemeMode`, `revokeDataProcessingConsent`, `addEventsListener`) — they keep the same name and signature in v6.
+4. **Bump the plugin pins first.** Update both plugins **exactly** to `6.0.0-rc.1` (never floating — a pre-release does not resolve from a range): `cordova plugin add @purchasely/cordova-plugin-purchasely@6.0.0-rc.1` and `cordova plugin add @purchasely/cordova-plugin-purchasely-google@6.0.0-rc.1`. Pin the same `6.0.0-rc.1` in `package.json`. The plugin pulls iOS `Purchasely 6.0.0-rc.1` and Android `io.purchasely:core 6.0.0-rc.1` from the public repos. A stray `6.0.0` (release) outranks `6.0.0-rc.1` in Gradle and silently upgrades the native SDK.
+5. **Bump the Android host build config.** Set `minSdkVersion = 23`, `compileSdkVersion = 36`, `targetSdkVersion = 35` in `android/build.gradle` (raise from the v5 `compileSdk 33`). iOS deployment target is `13.4`. There is **no video player plugin on Cordova**.
+6. **Rewrite initialization — and surface the running-mode change.** `Purchasely.start(...)` keeps its v5 **positional** signature (apiKey, stores, storeKit1, userId, logLevel, runningMode, success, error) — it is **never** an object. **The default running mode is now Observer (was Full).** If the app relies on Purchasely to handle and validate purchases, you **must** pass `Purchasely.RunningMode.full` in the running-mode argument (this silent default change is the single most impactful v6 break; see the warning at the top). Map `Purchasely.RunningMode.paywallObserver` → `Purchasely.RunningMode.observer` (same value `2`). Rename `Purchasely.startWithAPIKey(...)` → `Purchasely.start(...)`. In Observer mode, presentations no longer auto-close after purchase/restore — close them yourself with `Purchasely.closePresentation()`.
+7. **Action interceptor — unchanged.** Cordova v6 keeps the single `Purchasely.setPaywallActionInterceptor(function(result){ … })` + `Purchasely.onProcessAction(true/false)` model. **Do NOT** rewrite it to a per-action `interceptAction` form or to `setPaywallActionInterceptorCallback` (those are the native/Flutter APIs, not Cordova). Every code path through the interceptor must still call `onProcessAction(...)` or the paywall freezes.
+8. **Presentation API — unchanged.** Keep `fetchPresentation` / `fetchPresentationForPlacement`, `presentPresentation` / `presentPresentationForPlacement`, and the presentation `type` guard (`'NORMAL'` / `'FALLBACK'` / `'DEACTIVATED'` / `'CLIENT'`). Dismiss with `Purchasely.closePresentation()` — rename any v5 `Purchasely.closePaywall()` → `Purchasely.closePresentation()`. There is **no `closeAllScreens()` on the Cordova JS side** (that is the native method); do not introduce it unless the app added a custom bridge.
+9. **Deeplinks.** Rename `Purchasely.readyToOpenDeeplink(bool)` → `Purchasely.allowDeeplink(bool)` and `Purchasely.isDeeplinkHandled(url, s, e)` / `Purchasely.handle(...)` → `Purchasely.handleDeeplink(url, s, e)`. These were **renamed, not aliased** — the old names no longer resolve. v6 displays deeplinks/campaigns immediately by default (`allowDeeplink` defaults to true); pass `allowDeeplink(false)` to defer.
+10. **Default dismiss handler.** Rename `Purchasely.setDefaultPresentationResultHandler(cb)` → `Purchasely.setDefaultPresentationDismissHandler(cb)`. The callback now receives a single rich outcome object; the legacy `result` and `plan` fields are kept, and `purchaseResult`, `closeReason` and `presentation` are added.
+11. **`synchronize()` now reports completion.** `Purchasely.synchronize()` gains optional `(success, error)` callbacks and resolves on completion (was fire-and-forget). The no-argument `Purchasely.synchronize()` still works — pass callbacks only if you need to sequence the receipt upload before chaining a subscriber-targeted presentation.
+12. **`presentSubscriptions()` is a no-op (not removed).** `Purchasely.presentSubscriptions()` still exists on the JS surface but logs a warning and does nothing (the native subscriptions UI was removed). It is **not** a breaking removal — but it no longer shows anything, so build your own subscriptions screen from `Purchasely.userSubscriptions()` / `Purchasely.userSubscriptionsHistory()` where the app relied on it.
+13. **Verify before reporting completion:** build the example app for **both** platforms and resolve every failure first:
+    ```bash
+    cd purchasely/example
+    ./android.sh
+    ./ios.sh
+    ```
+    If the build fails, fix the integration and rerun the build until it passes. Do not declare the migration done from edits or reasoning alone; include the exact commands and outcomes.
+
 ## Completion Build Gate
 
-Before declaring the migration complete, build the user's app with the project's canonical command (Android: `./gradlew :app:assembleDebug` then `:app:testDebugUnitTest`; iOS: `xcodebuild build` then `xcodebuild test` on the `.xcworkspace`; Flutter: `flutter analyze` then `flutter test` then `flutter build ios --simulator` and `flutter build apk --debug`). If the build fails, fix the error, rerun the build, and run the tests again until the app builds successfully with no v5-only Purchasely symbols left. Do not report the migration as done from edits or reasoning alone; include the exact build/test commands and their outcomes in the final response.
+Before declaring the migration complete, build the user's app with the project's canonical command (Android: `./gradlew :app:assembleDebug` then `:app:testDebugUnitTest`; iOS: `xcodebuild build` then `xcodebuild test` on the `.xcworkspace`; Flutter: `flutter analyze` then `flutter test` then `flutter build ios --simulator` and `flutter build apk --debug`; Cordova: build the example app for both platforms with `cd purchasely/example && ./android.sh` and `./ios.sh`). If the build fails, fix the error, rerun the build, and run the tests again until the app builds successfully with no v5-only Purchasely symbols left. Do not report the migration as done from edits or reasoning alone; include the exact build/test commands and their outcomes in the final response.
 
 ## Output Requirements
 

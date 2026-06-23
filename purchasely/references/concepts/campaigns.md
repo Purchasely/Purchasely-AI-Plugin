@@ -39,7 +39,7 @@ Docs:
 
 ## SDK setup — gating campaign display
 
-Trigger-based campaigns can be deferred until your app explicitly authorises display — useful when you have a splash / onboarding / login flow that must finish first. On **native iOS/Android v6 and Flutter v6** the flag is `allowCampaigns` (a separate flag from `allowDeeplink`); the **React Native / Cordova** v5 bridges still expose `readyToOpenDeeplink`.
+Trigger-based campaigns can be deferred until your app explicitly authorises display — useful when you have a splash / onboarding / login flow that must finish first. On **native iOS/Android v6, Flutter v6, and Cordova v6** the deeplink-readiness flag is `allowDeeplink` (on native/Flutter `allowCampaigns` is a separate flag from `allowDeeplink`); the **React Native** v5 bridge still exposes `readyToOpenDeeplink`.
 
 ### iOS (Swift)
 
@@ -61,10 +61,19 @@ Purchasely.allowCampaigns = true    // queued campaigns display immediately
 
 Or at init via the DSL / Builder: `allowCampaigns(false)`. Defaults to `true`.
 
-### React Native / Cordova (v5)
+### React Native (v5)
 
 ```ts
 Purchasely.readyToOpenDeeplink(true);
+```
+
+### Cordova (v6)
+
+```js
+// v6 renamed readyToOpenDeeplink → allowDeeplink (default true)
+Purchasely.allowDeeplink(false);   // defer campaign/deeplink display during onboarding
+// …later, when the launch routine is complete:
+Purchasely.allowDeeplink(true);    // queued campaigns/deeplinks display immediately
 ```
 
 ### Flutter (v6)
@@ -83,7 +92,7 @@ await PurchaselyBuilder.apiKey('<YOUR_API_KEY>')
 
 ## Placement-based campaigns — no extra SDK code
 
-You already fetch the placement (native iOS/Android v6: `PLYPresentationBuilder.forPlacementId("PLACEMENT_ID")` / `PLYPresentation { placementId("PLACEMENT_ID") }`; Flutter v6: `PresentationBuilder.placement("PLACEMENT_ID").build()`; React Native / Cordova v5: `fetchPresentation("PLACEMENT_ID")`). When a campaign targets that placement and the user matches the audience, the SDK substitutes the campaign's Screen for the Placement's default rules. Same `PLYPresentationType` handling, same display path. Nothing to change in your code.
+You already fetch the placement (native iOS/Android v6: `PLYPresentationBuilder.forPlacementId("PLACEMENT_ID")` / `PLYPresentation { placementId("PLACEMENT_ID") }`; Flutter v6: `PresentationBuilder.placement("PLACEMENT_ID").build()`; method-based React Native v5 / Cordova v6: `fetchPresentation("PLACEMENT_ID")`). When a campaign targets that placement and the user matches the audience, the SDK substitutes the campaign's Screen for the Placement's default rules. Same `PLYPresentationType` handling, same display path. Nothing to change in your code.
 
 ## Typical use cases
 
@@ -110,8 +119,8 @@ Property bag includes `campaign_id`, `campaign_name`, `screen_id`, `audience_id`
 
 ## Anti-patterns
 
-- ❌ **Leaving campaigns gated.** If you set `allowCampaigns = false` (native iOS/Android v6 and Flutter v6) / `readyToOpenDeeplink(false)` (React Native / Cordova v5) and never flip it back, trigger-based campaigns silently never appear.
-- ❌ **Re-enabling campaigns too early.** If your splash screen runs after `start()`, flipping `allowCampaigns = true` (native iOS/Android v6 and Flutter v6) / `readyToOpenDeeplink(true)` (React Native / Cordova v5) while it is still up lands the campaign paywall on top of the splash. Wait until your launch routine is complete.
+- ❌ **Leaving campaigns gated.** If you set `allowCampaigns = false` (native iOS/Android v6 and Flutter v6) / `allowDeeplink(false)` (Cordova v6) / `readyToOpenDeeplink(false)` (React Native v5) and never flip it back, trigger-based campaigns silently never appear.
+- ❌ **Re-enabling campaigns too early.** If your splash screen runs after `start()`, flipping `allowCampaigns = true` (native iOS/Android v6 and Flutter v6) / `allowDeeplink(true)` (Cordova v6) / `readyToOpenDeeplink(true)` (React Native v5) while it is still up lands the campaign paywall on top of the splash. Wait until your launch routine is complete.
 - ❌ **Coupling capping logic to placement-based campaigns.** Capping only applies on triggers — if you need capping on a placement, build the cap into your audience attribute or use a trigger.
 - ❌ **Refetching the presentation returned by the deeplink handler.** You lose the campaign context (audience match, screen variant, exposure tracking).
 - ❌ **Targeting subscribers with promotional offers without eligibility audience.** See [promotional-offers.md](promotional-offers.md#eligibility-is-your-responsibility-promotional-offers--developer-determined-offers).

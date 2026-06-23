@@ -4,6 +4,23 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+## [2.0.0-rc.1] — 2026-06-23
+
+Cordova joins the **v6 line**, mirroring the native iOS/Android & Flutter work. Cordova is carved out of the former "v5 cross-platform" grouping and documented for **Purchasely v6.0.0-rc.1**. Unlike the Flutter / React Native v6 plugins, the Cordova plugin keeps its **method-based JS API** (it bridges the v6 native SDKs behind the same `cordova.exec` actions), so only the breaking renames change. **React Native stays on v5 (`5.7.3`).**
+
+### Added
+
+- **`references/cordova/migration-v6.md`** — Cordova v5 → v6 migration mapping (running mode Observer default, `allowDeeplink` / `handleDeeplink`, `setDefaultPresentationDismissHandler`, `synchronize(success, error)`, `presentSubscriptions` no-op).
+- **`references/cordova/v5-api-reference.md`** — legacy v5 Cordova tokens so `purchasely-migrate` can recognize and map them forward.
+
+### Changed
+
+- **`references/cordova/integration.md` rewritten as a v6 reference** — pins `6.0.0-rc.1` (iOS 13.4 / Android minSdk 23 / compileSdk 36), default running mode Observer, real method names (dropped the invented `startWithAPIKey` / `setPaywallActionInterceptorCallback`), v6 deeplinks (`allowDeeplink` / `handleDeeplink`), `setDefaultPresentationDismissHandler`, `synchronize(success, error)`, `presentSubscriptions` no-op.
+- **`references/sdk-versions.md`** — the Cordova row, package.json pins and the transitive-version table move to the v6 generation (`6.0.0-rc.1`). React Native stays `5.7.3`.
+- **Skills updated for Cordova v6.** `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, `purchasely-migrate`, the `purchasely-sdk-expert` agent and `commands/integrate` now document Cordova on v6 (positional `Purchasely.start(...)` with default Observer, `allowDeeplink` / `handleDeeplink`, `setDefaultPresentationDismissHandler`, `synchronize(success, error)`, `presentSubscriptions` no-op) while keeping its method-based JS surface. Cordova is carved out of the "v5 cross-platform" grouping; React Native keeps its v5 guidance.
+- **`purchasely-migrate`** now migrates Cordova v5.x → `6.0.0-rc.1` (alongside native iOS & Android and Flutter), with a dedicated Cordova workflow.
+- **`scripts/guard-known-bad-snippets.mjs`** — `allowDeeplink` is no longer flagged as a v5 mistake for Cordova (it is the correct v6 deeplink-readiness name).
+
 ## [2.0.0-rc.3] — 2026-06-17
 
 Flutter joins the **v6 line**, and skills-only installs gain first-class expert Q&A. Flutter guidance moves off v5 to match native iOS & Android — the published Flutter SDK now targets **Purchasely v6.0.0-rc.1** with the builder API. A new portable `purchasely-sdk-expert` skill brings free-form SDK Q&A to harnesses without the Claude Code subagent. **React Native and Cordova stay on v5 (`5.7.3`).**

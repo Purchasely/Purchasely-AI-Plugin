@@ -10,8 +10,8 @@ This is the single most impactful change of SDK v6 and it is **silent** — the 
 
 | SDK version | Default running mode |
 |-------------|----------------------|
-| v5.x (and current React Native / Cordova plugins) | **Full** |
-| **v6.0.0-rc.1+ (native iOS & Android, and Flutter)** | **Observer** ⚠️ |
+| v5.x (and the current React Native plugin) | **Full** |
+| **v6.0.0-rc.1+ (native iOS & Android, Flutter, and Cordova)** | **Observer** ⚠️ |
 
 > 🚧 In v6, if your app relies on Purchasely to process purchases and validate receipts, you **must set the running mode to Full explicitly**. If you forget, the SDK still compiles and runs but **stops validating transactions**. In Observer mode, presentations also **no longer auto-close** after a purchase/restore (v5 Full auto-appended a `close_all`).
 
@@ -120,7 +120,9 @@ await PurchaselyBuilder.apiKey('YOUR_API_KEY')
     .start();
 ```
 
-### Cordova (JavaScript) — v5 plugin
+### Cordova (JavaScript) — v6 plugin
+
+Cordova v6 keeps the method-based `Purchasely.start(...)` with **positional** args (never an object). The default running mode is now **Observer** — pass `Purchasely.RunningMode.full` to handle purchases.
 
 ```js
 Purchasely.start(
@@ -129,13 +131,13 @@ Purchasely.start(
   false,
   null,
   Purchasely.LogLevel.WARN,
-  Purchasely.RunningMode.full, // or paywallObserver
+  Purchasely.RunningMode.full, // ⚠️ v6 default is observer — set full to handle purchases
   success => {},
   error => {},
 );
 ```
 
-> **Cross-platform note.** Flutter is on the v6 API (default Observer, `PurchaselyBuilder.apiKey(...)....start()`), in the same v6 group as native iOS & Android. React Native and Cordova plugins are still on the v5 API (default Full, `start({...})` / positional `start(...)`); their v6 migrations are pending — keep their existing initialization. Always confirm the exact plugin signature in that platform's integration reference and in [`sdk-versions.md`](../sdk-versions.md).
+> **Cross-platform note.** Flutter and Cordova are on the v6 API (default Observer), in the same v6 group as native iOS & Android. Flutter uses the builder (`PurchaselyBuilder.apiKey(...)....start()`); **Cordova keeps its method-based positional `start(...)`** (the v5 `Purchasely.RunningMode.paywallObserver` was renamed to `.observer`). React Native is still on the v5 API (default Full, `start({...})`); its v6 migration is pending — keep its existing initialization. Always confirm the exact plugin signature in that platform's integration reference and in [`sdk-versions.md`](../sdk-versions.md).
 
 ## Log Levels
 
