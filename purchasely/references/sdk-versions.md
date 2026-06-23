@@ -12,7 +12,7 @@ _Last updated: 2026-06-15._
 | **Android** (native) | **6.0.0-rc.1** | Presentation builder API, `screenId`, typed action interceptors, `PLYPresentationOutcome`. **Default running mode is now `Observer`** — set `PLYRunningMode.Full` for purchase handling. No `presentation-compose` artifact (use `AndroidView { buildView }` for Compose). |
 | **React Native** | **5.7.3** | Cross-platform plugin. All three `react-native-purchasely*` packages MUST be the same version. |
 | **Flutter** | **6.0.0-rc.1** | v6 builder API: `PurchaselyBuilder` fluent init, `PresentationBuilder` / `PresentationRequest`, per-action `interceptAction` + `InterceptResult`, `PresentationOutcome` (with `closeReason`). Pulls the **6.0.0-rc.1 native SDKs** (iOS `Purchasely` + Android `io.purchasely:core`). **Default running mode is now `RunningMode.observer`** — set `.runningMode(RunningMode.full)` for purchase handling. All three `purchasely_*` packages MUST be the same version. |
-| **Cordova** | **5.7.3** | Cross-platform plugin. All `@purchasely/cordova-plugin-*` packages MUST be the same version. |
+| **Cordova** | **6.0.0-rc.1** | Method-based JS plugin (no builder API — it bridges the v6 native SDKs behind the same `cordova.exec` actions). **Default running mode is now Observer** — pass `Purchasely.RunningMode.full` for purchase handling. Deeplinks use `allowDeeplink` / `handleDeeplink`; dismiss handler is `setDefaultPresentationDismissHandler`; `presentSubscriptions` is a no-op. All `@purchasely/cordova-plugin-*` packages MUST be the same version. |
 
 ## How to pin
 
@@ -85,25 +85,27 @@ Pin **exactly** (`6.0.0-rc.1`) — a floating constraint will not resolve a pre-
 ```json
 {
   "dependencies": {
-    "@purchasely/cordova-plugin-purchasely": "5.7.3",
-    "@purchasely/cordova-plugin-purchasely-google": "5.7.3"
+    "@purchasely/cordova-plugin-purchasely": "6.0.0-rc.1",
+    "@purchasely/cordova-plugin-purchasely-google": "6.0.0-rc.1"
   }
 }
 ```
 
 ## Cross-platform plugin → native dependency mapping
 
-When you install `react-native-purchasely@5.7.3` (or the Cordova equivalent), the cross-platform plugin internally pulls a specific native SDK version. Flutter is now on the v6 generation and pulls the 6.0.0-rc.1 native SDKs:
+When you install `react-native-purchasely@5.7.3`, the cross-platform plugin internally pulls a specific native SDK version. Flutter and Cordova are now on the v6 generation and pull the 6.0.0-rc.1 native SDKs:
 
 | Cross-platform plugin | Pulls iOS native | Pulls Android native |
 |-----------------------|------------------|----------------------|
 | `react-native-purchasely 5.7.3` | iOS SDK 5.7.x | Android SDK 5.7.x |
 | `purchasely_flutter 6.0.0-rc.1` | iOS SDK 6.0.0-rc.1 | Android SDK 6.0.0-rc.1 |
-| `@purchasely/cordova-plugin-purchasely 5.7.3` | iOS SDK 5.7.x | Android SDK 5.7.x |
+| `@purchasely/cordova-plugin-purchasely 6.0.0-rc.1` | iOS SDK 6.0.0-rc.1 | Android SDK 6.0.0-rc.1 |
 
-This means a cross-platform 5.7.3 plugin (React Native / Cordova) gets the **5.7.x native SDKs** transitively. You do not need to bump the native pods/gradle dependencies yourself; the plugin's pinning is correct. However, the public JS bridge may expose a different method name than the native SDK — for example current React Native / Cordova bridges expose `closePresentation()`, not `closeAllScreens()`.
+This means the React Native 5.7.3 plugin gets the **5.7.x native SDKs** transitively. You do not need to bump the native pods/gradle dependencies yourself; the plugin's pinning is correct. However, the public JS bridge may expose a different method name than the native SDK — for example the React Native and Cordova bridges expose `closePresentation()`, not `closeAllScreens()`.
 
 > If a user is on a React Native / Cordova plugin version older than 5.7.3, recent native behavior may not be bridged. Upgrade the plugin first, then verify the public bridge method name in that platform's integration reference.
+
+> **Cordova is on the v6 API too** — `@purchasely/cordova-plugin-purchasely 6.0.0-rc.1` pulls the **6.0.0-rc.1 native SDKs** but keeps its **method-based JS surface** (no builder API): `Purchasely.start(...)` (positional args, **never** an object), `fetchPresentation` / `presentPresentation[ForPlacement]`, `setPaywallActionInterceptor` + `onProcessAction`, `closePresentation()`. The v6 renames are `allowDeeplink` / `handleDeeplink` (was `readyToOpenDeeplink` / `isDeeplinkHandled`), `setDefaultPresentationDismissHandler` (was `setDefaultPresentationResultHandler`), `RunningMode.observer` (was `paywallObserver`), and `synchronize(success, error)` now reports completion. `Purchasely.presentSubscriptions()` is a **no-op** (native subscriptions UI removed). See [`cordova/migration-v6.md`](cordova/migration-v6.md) and [`cordova/integration.md`](cordova/integration.md). Pin `@purchasely/cordova-plugin-purchasely: 6.0.0-rc.1`.
 
 > **Flutter is on the v6 API** (same generation as native iOS / Android). `purchasely_flutter 6.0.0-rc.1` pulls the **6.0.0-rc.1 native SDKs** and exposes the v6 Dart surface: `PurchaselyBuilder` fluent init, `PresentationBuilder` / `PresentationRequest` (replacing `fetchPresentation` / `presentPresentation[ForPlacement]`), per-action `interceptAction` + `InterceptResult` (replacing `setPaywallActionInterceptorCallback` + `onProcessAction`), and `presentation.close()` to dismiss (there is no `closePresentation()` / `closeAllScreens()` in Flutter v6). `Purchasely.presentSubscriptions()` is **removed** (breaking) — build your own screen from `userSubscriptions()` / `userSubscriptionsHistory()`. See [`flutter/migration-v6.md`](flutter/migration-v6.md) and [`flutter/integration.md`](flutter/integration.md). Pin `purchasely_flutter: 6.0.0-rc.1`.
 

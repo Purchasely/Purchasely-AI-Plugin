@@ -2,7 +2,7 @@
 
 Applies to: **iOS, Android, React Native, Flutter, Cordova**.
 
-Every fetched/preloaded presentation carries a `type` field telling you what the dashboard returned. **You must check the type before displaying** — calling `display(...)` on a `DEACTIVATED` presentation is undefined behaviour and a `CLIENT` presentation isn't a real paywall at all. Native iOS/Android and Flutter v6 obtain the presentation with `PLYPresentationBuilder` / the `PLYPresentation { }` DSL / `PresentationBuilder` + `preload`; the v5 cross-platform bridges (React Native, Cordova) still call `Purchasely.fetchPresentation(...)`.
+Every fetched/preloaded presentation carries a `type` field telling you what the dashboard returned. **You must check the type before displaying** — calling `display(...)` on a `DEACTIVATED` presentation is undefined behaviour and a `CLIENT` presentation isn't a real paywall at all. Native iOS/Android and Flutter v6 obtain the presentation with `PLYPresentationBuilder` / the `PLYPresentation { }` DSL / `PresentationBuilder` + `preload`; the method-based cross-platform bridges (React Native v5, Cordova v6) still call `Purchasely.fetchPresentation(...)`.
 
 ## The four types
 

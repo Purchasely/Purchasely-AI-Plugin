@@ -88,12 +88,11 @@ for (const file of walk(root)) {
     if (/storePromotionalOffer/.test(line)) {
       failures.push(`${where} uses stale iOS promotional-offer parameter`);
     }
-    // Flutter is intentionally NOT included here: the flutter/*.md files carry an explicit
-    // preview section for the upcoming v6 Flutter builder API, which legitimately uses
-    // allowDeeplink. React Native / Cordova have no such preview, so allowDeeplink there is
-    // always a v5 mistake (the v5 name is readyToOpenDeeplink).
-    if ((rel.includes('react-native') || rel.includes('cordova')) && /allowDeeplink/.test(line) && !isInstructionalNegative(line)) {
-      failures.push(`${where} uses the v6 deeplink readiness name (allowDeeplink) in a v5 cross-platform (React Native / Cordova) reference — use readyToOpenDeeplink`);
+    // Flutter and Cordova are on the v6 API, where `allowDeeplink` is the correct
+    // deeplink-readiness name — so they are NOT flagged here. Only React Native is still
+    // on v5, where `allowDeeplink` would be a mistake (the v5 name is readyToOpenDeeplink).
+    if (rel.includes('react-native') && /allowDeeplink/.test(line) && !isInstructionalNegative(line)) {
+      failures.push(`${where} uses the v6 deeplink readiness name (allowDeeplink) in a v5 React Native reference — use readyToOpenDeeplink`);
     }
     if (/userSubscriptions\(invalidateCache/.test(line) && rel.includes('flutter')) {
       failures.push(`${where} uses unsupported Flutter userSubscriptions invalidateCache parameter`);
