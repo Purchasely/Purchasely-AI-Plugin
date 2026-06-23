@@ -139,7 +139,7 @@ Purchasely.setPaywallActionInterceptorCallback((result) => {
 
 #### Flutter (Dart) — `PurchasePayload` from the per-action interceptor
 
-In v6 Flutter mirrors the native per-action model: register `Purchasely.interceptAction` for the purchase kind and return an `InterceptResult`.
+In v6 Flutter mirrors the native per-action model: register `Purchasely.interceptAction` for the purchase kind and return an `InterceptResult`. `PurchasePayload` carries real Dart model objects (`PLYPlan`, nullable `PLYSubscriptionOffer`, nullable `PLYPromoOffer`), so read properties instead of indexing maps.
 
 ```dart
 Purchasely.interceptAction(PresentationActionKind.purchase, (info, payload) async {
