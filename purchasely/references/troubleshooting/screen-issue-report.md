@@ -106,7 +106,7 @@ Attach a grep of `[Purchasely]` over the failing run. If the issue involves a Fl
 | Screenshots / recording | Shows whether the issue is rendering (missing component) or logic (wrong offer) |
 | Display method | A bug that reproduces via Placement but not via direct presentationId narrows down to audience / targeting |
 | SDK version | Many "missing API" tickets are version pins below the feature's minimum (see [sdk-versions.md](../sdk-versions.md)) |
-| Plugin alignment | Cross-platform: a `react-native-purchasely 5.7.3` + `@purchasely/react-native-purchasely-google 5.6.0` mismatch produces silent rendering bugs |
+| Plugin alignment | Cross-platform: a `react-native-purchasely 6.0.0-rc.1` + `@purchasely/react-native-purchasely-google 5.6.0` mismatch produces silent rendering bugs — pin every Purchasely package to the exact same version |
 | User context | Targeting bugs reproduce only for users matching the broken audience |
 | Logs | The SDK log stream usually contains the root cause — see [common-issues.md §0](common-issues.md#0-diagnostic-logs--read-before-patching) |
 | Recent changes | An issue that started at a specific date correlates with an SDK upgrade or a Console edit |

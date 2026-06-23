@@ -45,7 +45,7 @@ In **Full mode**, Purchasely owns the purchase flow end-to-end. Here is what hap
 
 ### Step 1 — SDK initialization
 
-On app launch, the SDK is initialized with the init builder (native v6: `Purchasely.apiKey(...)....start()` on iOS, the `Purchasely { ... }` DSL on Android; Flutter v6: `PurchaselyBuilder.apiKey(...)....start()`; cross-platform v5 (React Native, Cordova): `Purchasely.start(...)`), passing your API key and the user's `userId`, and — when the app expects Purchasely to own the purchase flow — setting the running mode to Full explicitly (v6 defaults to Observer). It pulls the configuration (paywalls, audiences, active experiments) from the Purchasely Server.
+On app launch, the SDK is initialized with the init builder (native v6: `Purchasely.apiKey(...)....start()` on iOS, the `Purchasely { ... }` DSL on Android; Flutter v6: `PurchaselyBuilder.apiKey(...)....start()`; React Native v6: `Purchasely.builder(...)....start()`; Cordova v5: `Purchasely.start(...)`), passing your API key and the user's `userId`, and — when the app expects Purchasely to own the purchase flow — setting the running mode to Full explicitly (v6 defaults to Observer). It pulls the configuration (paywalls, audiences, active experiments) from the Purchasely Server.
 
 ### Step 2 — Paywall display
 

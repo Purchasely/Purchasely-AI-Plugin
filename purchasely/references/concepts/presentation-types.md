@@ -2,7 +2,7 @@
 
 Applies to: **iOS, Android, React Native, Flutter, Cordova**.
 
-Every fetched/preloaded presentation carries a `type` field telling you what the dashboard returned. **You must check the type before displaying** — calling `display(...)` on a `DEACTIVATED` presentation is undefined behaviour and a `CLIENT` presentation isn't a real paywall at all. Native iOS/Android and Flutter v6 obtain the presentation with `PLYPresentationBuilder` / the `PLYPresentation { }` DSL / `PresentationBuilder` + `preload`; the v5 cross-platform bridges (React Native, Cordova) still call `Purchasely.fetchPresentation(...)`.
+Every fetched/preloaded presentation carries a `type` field telling you what the dashboard returned. **You must check the type before displaying** — calling `display(...)` on a `DEACTIVATED` presentation is undefined behaviour and a `CLIENT` presentation isn't a real paywall at all. Native iOS/Android, React Native and Flutter v6 obtain the presentation with `PLYPresentationBuilder` / the `PLYPresentation { }` DSL / `Purchasely.presentation....build()` / `PresentationBuilder` + `preload`; the v5 Cordova bridge still calls `Purchasely.fetchPresentationForPlacement(...)`.
 
 ## The four types
 
@@ -72,16 +72,20 @@ PLYPresentation { placementId("PREMIUM_PAYWALL") }.preload { loaded, error ->
 ```ts
 import Purchasely, { PLYPresentationType } from 'react-native-purchasely';
 
-const presentation = await Purchasely.fetchPresentation({
-  placementId: 'PREMIUM_PAYWALL',
-});
+const request = Purchasely.presentation.placement('PREMIUM_PAYWALL').build();
+const presentation = await request.preload();
+
+if (!presentation) {
+  return;
+}
 
 switch (presentation.type) {
   case PLYPresentationType.NORMAL:
   case PLYPresentationType.FALLBACK: {
-    // presentPresentation bridges to native presentation.display(), which is required for Flows.
-    const result = await Purchasely.presentPresentation({ presentation });
-    handleResult(result);
+    // request.display() shows the preloaded screen and resolves at dismiss
+    // with a PresentationOutcome (required for Flows).
+    const outcome = await request.display();
+    handleResult(outcome);
     break;
   }
   case PLYPresentationType.DEACTIVATED:
@@ -165,7 +169,7 @@ Use `display()` / bridge `presentPresentation(...)` by default. Switch to contai
 |----------|-----------------|-----------------------|
 | iOS | `presentation.display(from:)` | `presentation.controller` (UIKit) / `presentation.swiftUIView` (SwiftUI) |
 | Android | `loaded.display(activity)` | `loaded.buildView(context) { outcome -> }` or `loaded.getFragment { outcome -> }` |
-| React Native | `Purchasely.presentPresentation({ presentation })` | native view / inline component integration |
+| React Native | `request.display()` (on the built `PresentationRequest`) | `<PLYPresentationView placementId=… />` component |
 | Flutter | `request.display(const Transition.fullScreen())` | `PLYPresentationView(request: ...)` widget |
 | Cordova | `Purchasely.presentPresentation(presentation, isFullscreen, backgroundColor, success, error)` | no general-purpose inline bridge in the public JS API |
 

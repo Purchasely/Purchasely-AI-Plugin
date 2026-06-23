@@ -110,16 +110,46 @@ Purchasely.interceptAction<PLYPresentationAction.Purchase> { info, purchase ->
 }
 ```
 
-#### React Native / Cordova — `subscriptionOffer` in interceptor parameters
+#### React Native (v6) — `subscriptionOffer` on the purchase payload
+
+In v6 register a per-action `interceptAction('purchase', …)` and return a string result (mirroring the native per-action model):
 
 ```ts
-Purchasely.setPaywallActionInterceptorCallback((result) => {
-  if (result.action === PLYPaywallAction.PURCHASE) {
+Purchasely.interceptAction('purchase', async (info, payload) => {
+  if (payload?.kind !== 'purchase') return 'notHandled';
+
+  // Cross-store generic fields
+  const storeProductId = payload.plan?.productId;
+  const storeOfferId   = payload.offer?.storeOfferId;
+
+  // Google specifics
+  const productId   = payload.subscriptionOffer?.subscriptionId;
+  const basePlanId  = payload.subscriptionOffer?.basePlanId;
+  const offerId     = payload.subscriptionOffer?.offerId;
+  const offerToken  = payload.subscriptionOffer?.offerToken;
+
+  // Apple specifics — call Purchasely.signPromotionalOffer({ storeProductId, storeOfferId })
+  // to get { identifier, signature, keyIdentifier, timestamp } and pass them to your purchase flow
+
+  const ok = await yourBillingSystem.purchase(/* fields above */);
+  if (!ok) return 'failed';
+
+  await Purchasely.synchronize(); // upload the new receipt after a successful purchase
+  return 'success';               // app handled the purchase
+  // Observer mode does not auto-close; dismiss with request.close() after this resolves.
+});
+```
+
+#### Cordova (v5) — `subscriptionOffer` in interceptor parameters
+
+```js
+Purchasely.setPaywallActionInterceptor((result) => {
+  if (result.action === 'purchase') {
     // Cross-store generic fields
     const storeProductId = result.parameters.plan?.productId;
     const storeOfferId   = result.parameters.offer?.storeOfferId;
 
-    // Google specifics (v5 / v6 / v8)
+    // Google specifics
     const productId   = result.parameters.subscriptionOffer?.subscriptionId;
     const basePlanId  = result.parameters.subscriptionOffer?.basePlanId;
     const offerId     = result.parameters.subscriptionOffer?.offerId;
