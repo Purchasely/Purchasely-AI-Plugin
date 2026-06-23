@@ -68,7 +68,7 @@ been removed in favour of the builder API.
 | `Purchasely.closePresentation()` / `hidePresentation()` / `close()` | `presentation.close()` (on the loaded `Presentation`) |
 | `Purchasely.showPresentation()` | `presentation.display()` (on the loaded `Presentation`) |
 | `Purchasely.clientPresentationDisplayed(...)` / `clientPresentationClosed(...)` | handled via the `PresentationRequest` lifecycle (`preload` → inspect `PresentationType.client` → render your own UI) |
-| `Purchasely.setDefaultPresentationResultHandler(cb)` / `setDefaultPresentationResultCallback(cb)` | `PresentationBuilder.defaultSource().onDismissed((outcome) => …).build().display()` |
+| `Purchasely.setDefaultPresentationResultHandler(cb)` / `setDefaultPresentationResultCallback(cb)` | `Purchasely.setDefaultPresentationDismissHandler(cb)` |
 | `Purchasely.setPaywallActionInterceptorCallback(cb)` + `Purchasely.onProcessAction(bool)` | `Purchasely.interceptAction(kind, handler)` — handler returns `InterceptResult.success` / `.failed` / `.notHandled` (no more `onProcessAction`) |
 
 > **Reminder.** Everything *not* in this table — purchases, restore, login,
@@ -297,20 +297,19 @@ Dart objects: `plan` is a `PLYPlan`, `subscriptionOffer` is a nullable
 
 ---
 
-## Deeplinks & default result handler
+## Deeplinks, campaigns & default dismiss handler
 
 ```dart
 // Allow deeplinks at start:
 await PurchaselyBuilder.apiKey('<YOUR_API_KEY>').allowDeeplink(true).start();
 
-// Default result handler (replaces setDefaultPresentationResultHandler) — attach
-// onDismissed to a default-source request:
-PresentationBuilder.defaultSource()
-    .onDismissed((outcome) {
-      print('Deeplink presentation dismissed: ${outcome.purchaseResult} / ${outcome.closeReason}');
-    })
-    .build()
-    .display();
+// Default dismiss handler (renamed from setDefaultPresentationResultHandler).
+// Used for presentations opened by the SDK itself: campaigns, deeplinks,
+// promoted in-app purchases.
+await Purchasely.setDefaultPresentationDismissHandler((outcome) {
+  print('SDK presentation dismissed: ${outcome.presentation?.screenId} / '
+      '${outcome.purchaseResult} / ${outcome.closeReason}');
+});
 
 // isDeeplinkHandled is UNCHANGED:
 final handled = await Purchasely.isDeeplinkHandled('app://ply/presentations/');
