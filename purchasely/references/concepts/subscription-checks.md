@@ -155,11 +155,11 @@ Purchasely.restoreAllProducts(
 
 > On iOS, restore may prompt the user to sign in to the App Store. On Android, it queries Google Play Billing locally (no prompt). The user experience differs; account for that in your UI copy.
 
-> **Observer mode:** if you handle restores yourself, intercept the `RESTORE` action in the [paywall actions interceptor](paywall-actions.md), run your own restore flow, then call `Purchasely.synchronize()` and resolve the interceptor (native iOS/Android v6 and Flutter v6: return `PLYInterceptResult.success` / `SUCCESS` / `InterceptResult.success`; React Native / Cordova v5: `proceed(success)`).
+> **Observer mode:** if you handle restores yourself, intercept the `restore` action in the [paywall actions interceptor](paywall-actions.md), run your own restore flow, then call `Purchasely.synchronize()` and resolve the interceptor (native iOS/Android v6 and Flutter v6: return `PLYInterceptResult.success` / `SUCCESS` / `InterceptResult.success`; React Native v6: return `'success'` / `'failed'`; Cordova v5: `proceed(success)`).
 
 ## Close paywalls programmatically
 
-After a manual gate-then-purchase flow, dismiss the paywall after resolving the action interceptor. Native iOS/Android use `Purchasely.closeAllScreens()`; Flutter v6 dismisses via `presentation.close()` on the loaded `Presentation`; current React Native / Cordova public bridges use `Purchasely.closePresentation()`. See [observer-mode-post-purchase.md](observer-mode-post-purchase.md) for exact per-platform ordering.
+After a manual gate-then-purchase flow, dismiss the paywall after resolving the action interceptor. Native iOS/Android use `Purchasely.closeAllScreens()`; React Native v6 dismisses via `request.close()` on the `PresentationRequest` you built; Flutter v6 dismisses via `presentation.close()` on the loaded `Presentation`; the current Cordova public bridge uses `Purchasely.closePresentation()`. See [observer-mode-post-purchase.md](observer-mode-post-purchase.md) for exact per-platform ordering.
 
 ## Anti-patterns
 
