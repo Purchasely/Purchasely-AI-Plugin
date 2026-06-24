@@ -18,16 +18,12 @@
 This release **adapts the Purchasely Flutter plugin to the Purchasely 6.0 native
 SDKs** (iOS `Purchasely 6.0.0-rc.1`, Android `io.purchasely:core 6.0.0-rc.1`).
 
-**All public Dart types now carry the `PLY` prefix** (`PLYPresentationBuilder`,
-`PLYPresentationRequest`, `PLYPresentation`, `PLYTransition`, …), aligning with the iOS/Android naming convention. This
-renaming landed on **2026-06-24** and is a **source-breaking change** — update all
-imports and usages. See the [full rename table](#type-renames-ply-prefix) below.
-
-Only three areas changed beyond the prefix: **starting the SDK**, **displaying /
-preloading / closing a presentation**, and the **action interceptor**. Everything
-else on the `Purchasely` class — purchases, restore, identity, catalog,
-subscriptions, user attributes, events, dynamic offerings, consent and config —
-is **unchanged**.
+Three areas are breaking changes: **starting the SDK**, **displaying / preloading /
+closing a presentation**, and the **action interceptor**. Everything else on the
+`Purchasely` class — purchases, restore, identity, catalog, subscriptions, user
+attributes, events, dynamic offerings, consent and config — is source-compatible
+except for removed v5 aliases. Deeplinks use the v6 names (`allowDeeplink`,
+`handleDeeplink`).
 
 A paywall is now called a **Presentation** (or *Screen*).
 
@@ -48,55 +44,22 @@ A paywall is now called a **Presentation** (or *Screen*).
 - The interceptor is now `Purchasely.interceptAction(kind, handler)`, where
   `handler` returns a `PLYInterceptResult` (`success` / `failed` / `notHandled`).
 - Inline rendering uses the `PLYPresentationView` widget.
-- **All other `Purchasely.*` methods are UNCHANGED** — see
+- Other `Purchasely.*` methods are source-compatible; deeplinks use the v6 names — see
   [What's unchanged](#whats-unchanged).
 
 ---
 
-## Type renames (PLY prefix)
+## Breaking type renames (v5 → v6)
 
-Every public Dart type now carries the `PLY` prefix. This is a **source-breaking
-rename** — update all imports and usages.
+These v5 types have been renamed or restructured. Update all usages.
 
-> **Context.** These are v6-internal types that did not exist in v5. If you are
-> migrating directly from v5, just use the `PLY*` names from the start — you
-> never had the old names. This table is mainly useful for code that was already
-> on an early v6 build (before 2026-06-24).
-
-> **SDK init is not in this table.** `PurchaselyBuilder` (the fluent init
-> builder) was not given the PLY prefix. It is accessed via
-> `Purchasely.apiKey(...)` — see [Initialization](#initialization) below.
-
-| Old early-v6 name | Final v6 name (PLY prefix) |
+| Old (v5) | New (v6) |
 |---|---|
-| `PresentationBuilder` | `PLYPresentationBuilder` |
-| `PresentationRequest` | `PLYPresentationRequest` |
-| `Presentation` | `PLYPresentation` |
-| `PresentationType` | `PLYPresentationType` |
-| `PresentationPlan` | `PLYPresentationPlan` |
-| `PresentationError` | `PLYPresentationError` |
-| `PresentationSource` | `PLYPresentationSource` |
-| `PresentationSourceKind` | `PLYPresentationSourceKind` |
-| `PresentationActionKind` | `PLYPresentationActionKind` |
-| `PurchaseResult` | `PLYPurchaseResult` |
-| `CloseReason` | `PLYCloseReason` |
-| `RunningMode` | `PLYRunningMode` |
-| `LogLevel` | `PLYLogLevel` |
-| `StorekitVersion` | `PLYStorekitVersion` |
-| `Transition` | `PLYTransition` |
-| `TransitionType` | `PLYTransitionType` |
-| `TransitionColors` | `PLYTransitionColors` |
-| `InterceptResult` | `PLYInterceptResult` |
-| `InterceptorInfo` | `PLYInterceptorInfo` |
-| `ActionPayload` | `PLYActionPayload` |
-| `ActionInterceptorHandler` | `PLYActionInterceptorHandler` |
-| `NavigatePayload` | `PLYNavigatePayload` |
-| `PurchasePayload` | `PLYPurchasePayload` |
-| `ClosePayload` | `PLYClosePayload` |
-| `CloseAllPayload` | `PLYCloseAllPayload` |
-| `OpenPresentationPayload` | `PLYOpenPresentationPayload` |
-| `OpenPlacementPayload` | `PLYOpenPlacementPayload` |
-| `WebCheckoutPayload` | `PLYWebCheckoutPayload` |
+| `PresentPresentationResult` | `PLYPresentationOutcome` |
+| `PLYPaywallAction` | `PLYPresentationActionKind` |
+| `PLYPaywallInfo` | `PLYInterceptorInfo` |
+| `PLYPaywallActionParameters` | `PLYActionPayload` (+ typed `PLY*Payload` subclasses) |
+| `PaywallActionInterceptorResult` | callback split into `(PLYInterceptorInfo, PLYActionPayload?, PLYActionInterceptorHandler)` — see [Action interceptor](#action-interceptor) |
 
 **`PLYRunningMode` values changed.** The old (v5-era) `PLYRunningMode` had four
 values: `transactionOnly`, `observer`, `paywallObserver`, `full`. The new enum
