@@ -58,9 +58,17 @@ A paywall is now called a **Presentation** (or *Screen*).
 Every public Dart type now carries the `PLY` prefix. This is a **source-breaking
 rename** — update all imports and usages.
 
-| Old name | New name |
+> **Context.** These are v6-internal types that did not exist in v5. If you are
+> migrating directly from v5, just use the `PLY*` names from the start — you
+> never had the old names. This table is mainly useful for code that was already
+> on an early v6 build (before 2026-06-24).
+
+> **SDK init is not in this table.** `PurchaselyBuilder` (the fluent init
+> builder) was not given the PLY prefix. It is accessed via
+> `Purchasely.apiKey(...)` — see [Initialization](#initialization) below.
+
+| Old early-v6 name | Final v6 name (PLY prefix) |
 |---|---|
-| `PurchaselyBuilder` | `PurchaselyBuilder` (unchanged — access via `Purchasely.apiKey(...)`) |
 | `PresentationBuilder` | `PLYPresentationBuilder` |
 | `PresentationRequest` | `PLYPresentationRequest` |
 | `Presentation` | `PLYPresentation` |
