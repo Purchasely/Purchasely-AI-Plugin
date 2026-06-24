@@ -4,7 +4,7 @@
 > `purchasely_flutter: 6.0.0-rc.1` (and the matching `purchasely_google` /
 > `purchasely_android_player` packages), live on pub.dev alongside the native
 > iOS `Purchasely 6.0.0-rc.1` and Android `io.purchasely:core 6.0.0-rc.1`
-> pre-releases. The builder-based API documented below (`PLYPurchaselyBuilder`,
+> pre-releases. The builder-based API documented below (`Purchasely.apiKey(...)`,
 > `PLYPresentationBuilder`, `Purchasely.interceptAction`) is the current published
 > surface — the v5 API (`Purchasely.start(...)`, `fetchPresentation` /
 > `presentPresentation[ForPlacement]`, `setPaywallActionInterceptorCallback` +
@@ -18,9 +18,8 @@
 This release **adapts the Purchasely Flutter plugin to the Purchasely 6.0 native
 SDKs** (iOS `Purchasely 6.0.0-rc.1`, Android `io.purchasely:core 6.0.0-rc.1`).
 
-**All public Dart types now carry the `PLY` prefix** (`PLYPurchaselyBuilder`,
-`PLYPresentationBuilder`, `PLYPresentationRequest`, `PLYPresentation`,
-`PLYTransition`, …), aligning with the iOS/Android naming convention. This
+**All public Dart types now carry the `PLY` prefix** (`PLYPresentationBuilder`,
+`PLYPresentationRequest`, `PLYPresentation`, `PLYTransition`, …), aligning with the iOS/Android naming convention. This
 renaming landed on **2026-06-24** and is a **source-breaking change** — update all
 imports and usages. See the [full rename table](#type-renames-ply-prefix) below.
 
@@ -36,8 +35,7 @@ A paywall is now called a **Presentation** (or *Screen*).
 
 ## TL;DR
 
-- Start the SDK with the fluent builder:
-  `PLYPurchaselyBuilder.apiKey('…').runningMode(PLYRunningMode.full).start()`.
+- Start the SDK via `Purchasely.apiKey('…').runningMode(PLYRunningMode.full).start()`.
 - Build a presentation with `PLYPresentationBuilder`
   (`.placement(id)`, `.screen(id)`, `.defaultSource()`), then `.build()` to get
   a **`PLYPresentationRequest`** with a lifecycle (`preload()`,
@@ -62,7 +60,7 @@ rename** — update all imports and usages.
 
 | Old name | New name |
 |---|---|
-| `PurchaselyBuilder` | `PLYPurchaselyBuilder` |
+| `PurchaselyBuilder` | `PurchaselyBuilder` (unchanged — access via `Purchasely.apiKey(...)`) |
 | `PresentationBuilder` | `PLYPresentationBuilder` |
 | `PresentationRequest` | `PLYPresentationRequest` |
 | `Presentation` | `PLYPresentation` |
@@ -107,7 +105,7 @@ been removed in favour of the builder API.
 
 | Old (`Purchasely.*`, removed) | New |
 |-------------------------------|-----|
-| `Purchasely.start(apiKey: …, androidStores: …, storeKit1: …, logLevel: …, runningMode: …, userId: …)` | `PLYPurchaselyBuilder.apiKey('…').appUserId(userId).runningMode(PLYRunningMode.full).logLevel(PLYLogLevel.error).stores([PLYStore.google]).storekitVersion(PLYStorekitVersion.storeKit2).start()` |
+| `Purchasely.start(apiKey: …, androidStores: …, storeKit1: …, logLevel: …, runningMode: …, userId: …)` | `await Purchasely.apiKey('…').appUserId(userId).runningMode(PLYRunningMode.full).logLevel(PLYLogLevel.error).stores([PLYStore.google]).storekitVersion(PLYStorekitVersion.storeKit2).start()` |
 | `Purchasely.fetchPresentation(placementId: id)` | `PLYPresentationBuilder.placement(id).build().preload()` |
 | `Purchasely.presentPresentationForPlacement(id, isFullscreen: …)` | `PLYPresentationBuilder.placement(id).build().display(const PLYTransition.fullScreen())` |
 | `Purchasely.presentPresentationWithIdentifier(presentationId, …)` | `PLYPresentationBuilder.screen(id).build().display(const PLYTransition.modal())` |
@@ -151,7 +149,7 @@ Purchasely.readyToOpenDeeplink(true); // removed in v6; use allowDeeplink
 ```dart
 import 'package:purchasely_flutter/purchasely_flutter.dart';
 
-final bool configured = await PLYPurchaselyBuilder.apiKey('<YOUR_API_KEY>')
+final bool configured = await Purchasely.apiKey('<YOUR_API_KEY>')
     .appUserId('user_id')                          // optional, defaults to anonymous
     .runningMode(PLYRunningMode.full)              // PLYRunningMode.observer (default) | full
     .logLevel(PLYLogLevel.error)                   // debug | info | warn | error
@@ -402,7 +400,7 @@ carry no extra fields.
 
 ```dart
 // Allow deeplinks and campaigns at start:
-await PLYPurchaselyBuilder.apiKey('<YOUR_API_KEY>')
+await Purchasely.apiKey('<YOUR_API_KEY>')
     .allowDeeplink(true)
     .allowCampaigns(true)
     .start();

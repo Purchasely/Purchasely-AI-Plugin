@@ -1,8 +1,8 @@
 # Flutter Integration
 
-Purchasely Flutter is on the **v6 API**, the same generation as the native iOS and Android SDKs. The plugin pins the **6.0.0-rc.1** pre-release on every layer: the three Dart packages (`purchasely_flutter`, `purchasely_google`, `purchasely_android_player`) are all `6.0.0-rc.1`, and they pull the published native SDKs (iOS `Purchasely 6.0.0-rc.1` on the CocoaPods trunk, Android `io.purchasely:core 6.0.0-rc.1` on Maven Central). All public Dart types carry the **`PLY` prefix** (`PLYPurchaselyBuilder`, `PLYPresentationBuilder`, `PLYPresentationRequest`, `PLYPresentationOutcome`, `PLYTransition`, …), aligning with the iOS/Android naming convention. This renaming landed on **2026-06-24** and is a **source-breaking change** for any existing v6 code that used unprefixed names.
+Purchasely Flutter is on the **v6 API**, the same generation as the native iOS and Android SDKs. The plugin pins the **6.0.0-rc.1** pre-release on every layer: the three Dart packages (`purchasely_flutter`, `purchasely_google`, `purchasely_android_player`) are all `6.0.0-rc.1`, and they pull the published native SDKs (iOS `Purchasely 6.0.0-rc.1` on the CocoaPods trunk, Android `io.purchasely:core 6.0.0-rc.1` on Maven Central). All public Dart types carry the **`PLY` prefix** (`PLYPresentationBuilder`, `PLYPresentationRequest`, `PLYPresentationOutcome`, `PLYTransition`, …), aligning with the iOS/Android naming convention. The one exception is **SDK initialization**: the builder is started via `Purchasely.apiKey(...)` (a static method on `Purchasely` that returns a `PurchaselyBuilder`). This renaming landed on **2026-06-24** and is a **source-breaking change** for any existing v6 code that used unprefixed names.
 
-Three areas changed shape from v5: **starting the SDK** (`PLYPurchaselyBuilder`), **displaying / preloading / closing a presentation** (`PLYPresentationBuilder` + `PLYPresentationRequest`), and the **action interceptor** (`Purchasely.interceptAction`). Everything else on the `Purchasely` class — purchases, restore, identity, catalog, subscriptions data, user attributes, events, dynamic offerings, consent and config — remains source-compatible. See [`migration-v6.md`](./migration-v6.md) for the full v5 → v6 old→new mapping.
+Three areas changed shape from v5: **starting the SDK** (`Purchasely.apiKey(...)`), **displaying / preloading / closing a presentation** (`PLYPresentationBuilder` + `PLYPresentationRequest`), and the **action interceptor** (`Purchasely.interceptAction`). Everything else on the `Purchasely` class — purchases, restore, identity, catalog, subscriptions data, user attributes, events, dynamic offerings, consent and config — remains source-compatible. See [`migration-v6.md`](./migration-v6.md) for the full v5 → v6 old→new mapping.
 
 > **Cross-platform reference.** This file covers Flutter-specific syntax. Many concepts (Observer-mode post-purchase flow, presentation type guard, presentation cache, programmatic purchases, audience-targeting attributes, GDPR consent, subscription checks) are **universal across iOS / Android / Flutter / RN / Cordova** and live in `../concepts/`. Load:
 >
@@ -72,13 +72,13 @@ allprojects {
 
 ## Import and Initialization
 
-Start the SDK with the fluent `PLYPurchaselyBuilder`. Only the API key is required; every other option has a sensible default. The builder replaces the old `Purchasely.start({...})` call.
+Start the SDK with `Purchasely.apiKey(...)`. Only the API key is required; every other option has a sensible default. The builder replaces the old `Purchasely.start({...})` call.
 
 ```dart
 import 'package:purchasely_flutter/purchasely_flutter.dart';
 
 Future<void> initializePurchasely() async {
-  final bool started = await PLYPurchaselyBuilder.apiKey('YOUR_API_KEY')
+  final bool started = await Purchasely.apiKey('YOUR_API_KEY')
       .appUserId(null)                                // optional, set if user is already known
       .runningMode(PLYRunningMode.full)               // PLYRunningMode.observer (default) | full
       .logLevel(PLYLogLevel.error)                    // debug | info | warn | error
@@ -428,7 +428,7 @@ v6 displays deeplinks and campaigns immediately by default. Allow or gate them o
 Deeplink display is allowed via the start builder; `Purchasely.allowDeeplink(bool)` toggles it at runtime.
 
 ```dart
-await PLYPurchaselyBuilder.apiKey('YOUR_API_KEY')
+await Purchasely.apiKey('YOUR_API_KEY')
     .allowDeeplink(true)
     .start();
 
@@ -487,7 +487,7 @@ import 'package:purchasely_flutter/purchasely_flutter.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await PLYPurchaselyBuilder.apiKey('YOUR_API_KEY')
+  await Purchasely.apiKey('YOUR_API_KEY')
       .runningMode(PLYRunningMode.full)
       .logLevel(PLYLogLevel.error)
       .stores([PLYStore.google])
