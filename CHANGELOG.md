@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+## [2.0.0-rc.4] — 2026-06-29
+
+The Flutter SDK reaches a published release candidate and the skill's Flutter v6 guidance is fully `PLY`-aligned. The Flutter packages ship as **`purchasely_flutter` / `purchasely_google` / `purchasely_android_player` `6.0.0-rc.1`** on pub.dev (pulling the **`6.0.0-rc.2`** native SDKs), and every Flutter v6 reference now uses the `PLY`-prefixed Dart API (`Purchasely.apiKey(...)`, `PLYPresentationBuilder`, `PLYInterceptResult`, …). This release also folds in the iOS default-dismiss-handler rename, the iOS `*View` factory / `ply/products`–`ply/plans` deeplink removals, and the user-attribute → campaign targeting timing guidance. **React Native and Cordova stay on v5 (`5.7.3`).**
+
 ### Added
 
 - Documented the Flutter v6 **cold-start deeplink** builder modifier in `references/flutter/integration.md`: `Purchasely.apiKey(...).handleDeeplink(launchDeeplink).start()` resolves a launch deeplink automatically (no separate `Purchasely.handleDeeplink(...)` call), mirroring native iOS/Android builders. Also documented the deeplink-open event sequence (`DEEPLINK_OPENED` → `PRESENTATION_LOADED` → `PRESENTATION_VIEWED`; `PRESENTATION_OPENED` is not emitted for deeplinks).
