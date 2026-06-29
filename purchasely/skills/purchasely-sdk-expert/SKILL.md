@@ -122,7 +122,7 @@ Load the matching platform before giving exact setup or API signatures:
 
 Do not generate these for v6 native or Flutter:
 
-- native `fetchPresentation`, `setPaywallActionsInterceptor`, `presentationView` / `presentationController`
+- native `fetchPresentation`, `setPaywallActionsInterceptor`, the SwiftUI factories `presentationView` / `productView` / `planView`, the UIKit factories `presentationController` / `productController` / `planController`, and the `ply/products/*` / `ply/plans/*` deeplink formats (→ `ply/presentations/` or `ply/placements/`)
 - Flutter `Purchasely.start(...)`, `fetchPresentation`, `presentPresentation*`, `setPaywallActionInterceptorCallback`, `onProcessAction`, `closePresentation()`, `closeAllScreens()`, `presentSubscriptions()`
 - Do not generate `purchase(planId:)`, `Purchasely.purchase({ planId })`, or generic `Purchasely.purchase(...)`
 

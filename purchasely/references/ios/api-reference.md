@@ -320,22 +320,32 @@ Purchasely.allowDeeplink(true)    // any queued deeplink displays immediately
 Purchasely.allowCampaigns(false)  // independent flag for campaigns
 ```
 
-## Presentation Result Handler
+## Presentation Dismiss Handler
 
-### `Purchasely.setDefaultPresentationResultHandler(handler:)`
+### `Purchasely.setDefaultPresentationDismissHandler(handler:)`
 
-A default handler for paywalls you do **not** instantiate yourself — chiefly deeplink- and campaign-opened screens, where no `onDismissed` closure was supplied.
+A default handler for paywalls you do **not** instantiate yourself — chiefly deeplink- and campaign-opened screens, where no `onDismissed` closure was supplied. The closure receives a single `PLYPresentationOutcome` (`purchaseResult` / `closeReason` / `plan` / `presentation` / `error`).
+
+> Renamed from v5's `setDefaultPresentationResultHandler` (which delivered a `(result, plan)` tuple). See the migration guide for the v5 → v6 mapping.
 
 ```swift
-Purchasely.setDefaultPresentationResultHandler { result, plan in
-    switch result {
-    case .purchased: print("Purchased: \(plan?.vendorId ?? "")")
-    case .restored:  print("Restored")
+Purchasely.setDefaultPresentationDismissHandler { outcome in
+    switch outcome.purchaseResult {        // .purchased / .restored / .cancelled / .none
+    case .purchased: print("Purchased: \(outcome.plan?.vendorId ?? "")")
+    case .restored:  print("Restored: \(outcome.plan?.vendorId ?? "")")
     case .cancelled: print("Cancelled")
+    case .none:      break
     @unknown default: break
     }
+    switch outcome.closeReason {           // .button / .interactiveDismiss / .programmatic / .none
+    case .button, .interactiveDismiss, .programmatic, .none: break
+    @unknown default: break
+    }
+    // outcome.presentation: PLYPresentation?  |  outcome.error: Error? (reserved, nil in 6.0)
 }
 ```
+
+> It is **mutually exclusive** with per-presentation callbacks — it fires only for presentations that have neither an inline `onDismissed` (set via `PLYPresentationBuilder`) nor a per-call completion block.
 
 ## User Management
 

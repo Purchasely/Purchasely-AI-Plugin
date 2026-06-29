@@ -16,8 +16,10 @@ Version 6.0.0-rc.1 introduces a fluent initialization builder, a granular per-ac
 | `Purchasely.display(for:displayMode:)` | `Purchasely.display(for:transition:)` |
 | `Purchasely.closeDisplayedPresentation()` | `Purchasely.closeAllScreens()` |
 | `controller.PresentationView` | `presentation.swiftUIView` (SwiftUI) / `presentation.controller` (UIKit) |
+| `Purchasely.productView(…)` / `planView(…)` / `presentationView(…)` | `PLYPresentationBuilder.…build().preload { … }` → `presentation.swiftUIView` |
 | `readyToOpenDeeplink(_:)` | `allowDeeplink(_:)` |
 | `isDeeplinkHandled(deeplink:)` | `handleDeeplink(_:)` |
+| `ply/products/*` / `ply/plans/*` deeplinks | `ply/presentations/<id>` / `ply/placements/<id>` |
 | `PLYProductViewControllerResult` | `PLYPresentationOutcome` |
 | Objective-C `PLYPresentation *` | `id<PLYPresentation>` |
 
@@ -215,7 +217,7 @@ Return `.notHandled` in Full mode so the SDK runs its own purchase/restore flow.
 
 ## 3. Presentation API — `PLYPresentationBuilder`
 
-`Purchasely.fetchPresentation(for:contentId:fetchCompletion:completion:)` and the UIViewController-returning methods (`presentationController(...)`) are **removed**. Build a request with `PLYPresentationBuilder`, then `preload` and/or `display`.
+`Purchasely.fetchPresentation(for:contentId:fetchCompletion:completion:)`, the UIViewController-returning methods (`presentationController(...)` / `productController(...)` / `planController(...)`) and the SwiftUI `PLYPresentationView?`-returning factories (`presentationView(...)` / `productView(...)` / `planView(...)`) are **removed**. Build a request with `PLYPresentationBuilder`, then `preload` and/or `display`.
 
 ### Before (v5)
 
@@ -314,11 +316,12 @@ The v5 dismissal tuple `(PLYProductViewControllerResult, PLYPlan?)` becomes a si
 
 ## 5. SwiftUI — `swiftUIView` (UIKit keeps `controller`)
 
-The PascalCase `controller.PresentationView` bridge is **removed**. For SwiftUI, read `swiftUIView` off the preloaded presentation:
+The PascalCase `controller.PresentationView` bridge is **removed**, along with the eight `PLYPresentationView?`-returning factory methods (`Purchasely.productView(...)` / `planView(...)` / `presentationView(...)` and their `contentId:` variants) that still carried the legacy `(PLYProductViewControllerResult, PLYPlan?)` completion block. For SwiftUI, read `swiftUIView` off the preloaded presentation (take the dismissal result from `onDismissed`):
 
 ```swift
 PLYPresentationBuilder
     .forScreenId(id)
+    .onDismissed { outcome in /* outcome carries purchaseResult + plan */ }
     .build()
     .preload { presentation, error in
         if let view = presentation?.swiftUIView {   // SwiftUI View; nil for .deactivated
@@ -361,6 +364,17 @@ let handled = Purchasely.handleDeeplink(url)
 ```
 
 In v6, deeplinks display **immediately** by default. Call `Purchasely.allowDeeplink(false)` to defer (e.g. during onboarding) and `allowDeeplink(true)` when ready. Hand a cold-start deeplink at init: `Purchasely.apiKey("…").handleDeeplink(url).start { error in }`. Unlike Android, iOS does **not** auto-intercept — keep passing deeplinks via `Purchasely.handleDeeplink(_:)` from your `AppDelegate` / `SceneDelegate`.
+
+### Product / plan deeplinks removed (breaking)
+
+The `ply/products/*` and `ply/plans/*` deeplink formats are **removed** in v6, along with the internal `productController` factory that served them. A deeplink to one of these paths is no longer handled — deep-link to a placement or a presentation instead (configure the target screen in the Console):
+
+| v5 (removed) | v6 |
+|--------------|----|
+| `app_scheme://ply/products/PRODUCT_ID/PRESENTATION_ID` | `app_scheme://ply/presentations/PRESENTATION_ID` |
+| `app_scheme://ply/plans/PLAN_ID/PRESENTATION_ID` | `app_scheme://ply/presentations/PRESENTATION_ID` |
+| `app_scheme://ply/products/PRODUCT_ID` | `app_scheme://ply/placements/PLACEMENT_ID` |
+| `app_scheme://ply/plans/PLAN_ID` | `app_scheme://ply/placements/PLACEMENT_ID` |
 
 ## 8. Objective-C migration
 
@@ -407,8 +421,8 @@ These v5 signatures are identical in v6 — leave them alone:
 - [ ] Map `proceed(false)` → `.success`, `proceed(true)` → `.notHandled`; use `.failed` for failures
 - [ ] Replace `PLYPresentationInfo` with `PLYInterceptorInfo` (`info.presentationId` → `info.presentation?.id`, etc.)
 - [ ] Remove the `paywallActionsInterceptor:` start parameter and any `PLYPaywallActionsInterceptor` typealias
-- [ ] Replace `Purchasely.fetchPresentation(...)` / `presentationController(...)` with `PLYPresentationBuilder.…build().preload { … }`
-- [ ] Replace `controller.PresentationView` with `presentation.swiftUIView` (SwiftUI) / `presentation.controller` (UIKit)
+- [ ] Replace `Purchasely.fetchPresentation(...)` / `presentationController(...)` / `productController(...)` / `planController(...)` with `PLYPresentationBuilder.…build().preload { … }`
+- [ ] Replace `controller.PresentationView` and the `productView(...)` / `planView(...)` / `presentationView(...)` factories with `presentation.swiftUIView` (SwiftUI) / `presentation.controller` (UIKit)
 - [ ] Replace `Purchasely.closeDisplayedPresentation()` with `Purchasely.closeAllScreens()`
 - [ ] Update `Purchasely.display(for:displayMode:)` to `Purchasely.display(for:transition:)`
 - [ ] Replace the `(PLYProductViewControllerResult, PLYPlan?)` tuple with `PLYPresentationOutcome` (`purchaseResult` / `plan` / `closeReason`)
@@ -418,6 +432,7 @@ These v5 signatures are identical in v6 — leave them alone:
 
 - [ ] Migrate the pre-`start` `set*` class funcs to chain modifiers
 - [ ] Replace `readyToOpenDeeplink(_:)` with `allowDeeplink(_:)` and `isDeeplinkHandled(deeplink:)` with `handleDeeplink(_:)`
+- [ ] Repoint any `ply/products/*` or `ply/plans/*` deeplinks to `ply/presentations/<id>` or `ply/placements/<id>` (breaking — these formats are removed)
 - [ ] Build and verify no deprecation warnings remain
 
 ### Verify
@@ -425,7 +440,7 @@ These v5 signatures are identical in v6 — leave them alone:
 Search must return no v5-only API usages in app source/tests:
 
 ```bash
-rg "paywallObserver|readyToOpenDeeplink|isDeeplinkHandled|setPaywallActionsInterceptor|fetchPresentation|presentationController|PresentationView|PLYProductViewControllerResult|PLYPresentationInfo|closeDisplayedPresentation|start\(withAPIKey" Sources
+rg "paywallObserver|readyToOpenDeeplink|isDeeplinkHandled|setPaywallActionsInterceptor|fetchPresentation|presentationController|productController|planController|PresentationView|productView|planView|presentationView|PLYProductViewControllerResult|PLYPresentationInfo|closeDisplayedPresentation|start\(withAPIKey|ply/products|ply/plans" Sources
 ```
 
 > An app may keep a wrapper method *named* `isDeeplinkHandled` that internally calls `Purchasely.handleDeeplink` — that is fine; only the `Purchasely.isDeeplinkHandled(...)` SDK call must be gone.
