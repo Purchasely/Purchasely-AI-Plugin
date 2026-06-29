@@ -112,10 +112,10 @@ await Purchasely.start({
 ```dart
 import 'package:purchasely_flutter/purchasely_flutter.dart';
 
-await PurchaselyBuilder.apiKey('YOUR_API_KEY')
-    .runningMode(RunningMode.full)              // or RunningMode.observer — default is observer in v6
-    .storekitVersion(StorekitVersion.storeKit2)
-    .logLevel(LogLevel.warn)
+await Purchasely.apiKey('YOUR_API_KEY')
+    .runningMode(PLYRunningMode.full)              // or PLYRunningMode.observer — default is observer in v6
+    .storekitVersion(PLYStorekitVersion.storeKit2)
+    .logLevel(PLYLogLevel.warn)
     .stores([PLYStore.google])
     .start();
 ```
