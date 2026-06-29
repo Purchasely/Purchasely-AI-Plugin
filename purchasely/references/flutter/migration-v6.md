@@ -3,7 +3,7 @@
 > **Published as a pre-release.** The Flutter v6 API ships in
 > `purchasely_flutter: 6.0.0-rc.1` (and the matching `purchasely_google` /
 > `purchasely_android_player` packages), live on pub.dev alongside the native
-> iOS `Purchasely 6.0.0-rc.1` and Android `io.purchasely:core 6.0.0-rc.1`
+> iOS `Purchasely 6.0.0-rc.2` and Android `io.purchasely:core 6.0.0-rc.2`
 > pre-releases. The builder-based API documented below (`Purchasely.apiKey(...)`,
 > `PLYPresentationBuilder`, `Purchasely.interceptAction`) is the current published
 > surface — the v5 API (`Purchasely.start(...)`, `fetchPresentation` /
@@ -16,7 +16,7 @@
 > [`../concepts/`](../concepts/).
 
 This release **adapts the Purchasely Flutter plugin to the Purchasely 6.0 native
-SDKs** (iOS `Purchasely 6.0.0-rc.1`, Android `io.purchasely:core 6.0.0-rc.1`).
+SDKs** (iOS `Purchasely 6.0.0-rc.2`, Android `io.purchasely:core 6.0.0-rc.2`).
 
 Three areas are breaking changes: **starting the SDK**, **displaying / preloading /
 closing a presentation**, and the **action interceptor**. Everything else on the
@@ -466,7 +466,7 @@ name, signature and behaviour:
 > were **removed** in v6. Use `allowDeeplink` / `handleDeeplink` instead.
 
 > **Native dependency.** This Flutter release targets the Purchasely v6 native SDKs
-> (iOS `Purchasely 6.0.0-rc.1`, Android `io.purchasely:core 6.0.0-rc.1`), published as pre-releases
+> (iOS `Purchasely 6.0.0-rc.2`, Android `io.purchasely:core 6.0.0-rc.2`), published as pre-releases
 > on CocoaPods / Maven Central — see [`../sdk-versions.md`](../sdk-versions.md) for the canonical
-> pins. The published **Flutter** package is `purchasely_flutter: 6.0.0-rc.1`, pinned exactly
-> to those native versions.
+> pins. The published **Flutter** package is `purchasely_flutter: 6.0.0-rc.1`, which pulls those
+> native versions transitively.

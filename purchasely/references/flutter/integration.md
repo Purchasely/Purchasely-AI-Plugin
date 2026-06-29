@@ -1,6 +1,6 @@
 # Flutter Integration
 
-Purchasely Flutter is on the **v6 API**, the same generation as the native iOS and Android SDKs. The plugin pins the **6.0.0-rc.1** pre-release on every layer: the three Dart packages (`purchasely_flutter`, `purchasely_google`, `purchasely_android_player`) are all `6.0.0-rc.1`, and they pull the published native SDKs (iOS `Purchasely 6.0.0-rc.1` on the CocoaPods trunk, Android `io.purchasely:core 6.0.0-rc.1` on Maven Central). All public Dart types carry the **`PLY` prefix** (`PLYPresentationBuilder`, `PLYPresentationRequest`, `PLYPresentationOutcome`, `PLYTransition`, …), aligning with the iOS/Android naming convention. The one exception is **SDK initialization**: the builder is started via `Purchasely.apiKey(...)` (a static method on `Purchasely` that returns a `PurchaselyBuilder`). This renaming landed on **2026-06-24** and is a **source-breaking change** for any existing v6 code that used unprefixed names.
+Purchasely Flutter is on the **v6 API**, the same generation as the native iOS and Android SDKs. The plugin pins the **6.0.0-rc.1** Dart packages (`purchasely_flutter`, `purchasely_google`, `purchasely_android_player` are all `6.0.0-rc.1`), which pull the published **6.0.0-rc.2** native SDKs (iOS `Purchasely 6.0.0-rc.2` on the CocoaPods trunk, Android `io.purchasely:core 6.0.0-rc.2` on Maven Central). All public Dart types carry the **`PLY` prefix** (`PLYPresentationBuilder`, `PLYPresentationRequest`, `PLYPresentationOutcome`, `PLYTransition`, …), aligning with the iOS/Android naming convention. The one exception is **SDK initialization**: the builder is started via `Purchasely.apiKey(...)` (a static method on `Purchasely` that returns a `PurchaselyBuilder`). This renaming landed on **2026-06-24** and is a **source-breaking change** for any existing v6 code that used unprefixed names.
 
 Three areas changed shape from v5: **starting the SDK** (`Purchasely.apiKey(...)`), **displaying / preloading / closing a presentation** (`PLYPresentationBuilder` + `PLYPresentationRequest`), and the **action interceptor** (`Purchasely.interceptAction`). Everything else on the `Purchasely` class — purchases, restore, identity, catalog, subscriptions data, user attributes, events, dynamic offerings, consent and config — remains source-compatible. See [`migration-v6.md`](./migration-v6.md) for the full v5 → v6 old→new mapping.
 
@@ -41,7 +41,7 @@ dependencies:
   purchasely_android_player: 6.0.0-rc.1
 ```
 
-> **Native dependency.** `purchasely_flutter 6.0.0-rc.1` pulls the **6.0.0-rc.1** native SDKs transitively — iOS `Purchasely 6.0.0-rc.1` (CocoaPods trunk) and Android `io.purchasely:core 6.0.0-rc.1` (Maven Central). Both are published, so the project builds from the public repositories with no `mavenLocal()` and no development pod. You do not bump the native pods/gradle dependencies yourself; the plugin's pinning is correct.
+> **Native dependency.** `purchasely_flutter 6.0.0-rc.1` pulls the **6.0.0-rc.2** native SDKs transitively — iOS `Purchasely 6.0.0-rc.2` (CocoaPods trunk) and Android `io.purchasely:core 6.0.0-rc.2` (Maven Central). Both are published, so the project builds from the public repositories with no `mavenLocal()` and no development pod. You do not bump the native pods/gradle dependencies yourself; the plugin's pinning is correct.
 
 ### iOS Setup
 
