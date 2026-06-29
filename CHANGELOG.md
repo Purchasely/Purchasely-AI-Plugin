@@ -7,6 +7,7 @@ All notable changes to this project are documented here. The format is based on 
 ### Added
 
 - Added the portable `purchasely-sdk-expert` skill for free-form Purchasely SDK questions. Skills-only installs now get expert Q&A guidance without requiring the Claude Code subagent.
+- Documented the Flutter v6 **cold-start deeplink** builder modifier in `references/flutter/integration.md`: `Purchasely.apiKey(...).handleDeeplink(launchDeeplink).start()` resolves a launch deeplink automatically (no separate `Purchasely.handleDeeplink(...)` call), mirroring native iOS/Android builders. Also documented the deeplink-open event sequence (`DEEPLINK_OPENED` → `PRESENTATION_LOADED` → `PRESENTATION_VIEWED`; `PRESENTATION_OPENED` is not emitted for deeplinks).
 
 ### Changed
 

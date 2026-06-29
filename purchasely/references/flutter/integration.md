@@ -421,7 +421,7 @@ presentation.back();     // navigate back inside a multi-step (Flow) presentatio
 
 ## Deeplinks
 
-v6 displays deeplinks and campaigns immediately by default. Allow or gate them on the builder, and feed cold-start / runtime deeplinks with `Purchasely.handleDeeplink`.
+v6 displays deeplinks and campaigns immediately by default. Allow or gate them on the builder, feed a **cold-start** deeplink via the builder's `handleDeeplink(...)`, and feed **runtime** deeplinks via `Purchasely.handleDeeplink(...)`.
 
 ### Allow Deeplinks
 
@@ -436,7 +436,25 @@ await Purchasely.apiKey('YOUR_API_KEY')
 await Purchasely.allowDeeplink(true);
 ```
 
-### Handle Incoming Deeplink
+### Cold-Start Deeplink (deeplink that launched the app)
+
+When the app is **launched from** a deeplink, pass the captured URL to the start
+builder's `handleDeeplink(String?)` modifier. The SDK resolves it automatically
+once configured — **no separate `Purchasely.handleDeeplink(...)` call is needed**.
+
+```dart
+await Purchasely.apiKey('YOUR_API_KEY')
+    .allowDeeplink(true)
+    .handleDeeplink(launchDeeplink) // null when not launched from a deeplink
+    .start();
+```
+
+`handleDeeplink(null)` (or omitting it) is a no-op. Mirrors native
+`PurchaselyBuilder.handleDeeplink(_:)` (iOS) / `Purchasely.Builder.handleDeeplink(uri)` (Android).
+
+### Handle Incoming Deeplink (runtime)
+
+For a deeplink received while the app is already running, forward it at runtime:
 
 ```dart
 final handled = await Purchasely.handleDeeplink('purchasely://your-deeplink-url');
@@ -444,6 +462,8 @@ if (handled) {
   // Purchasely will display the appropriate content
 }
 ```
+
+> **Events on a deeplink open:** `DEEPLINK_OPENED` → `PRESENTATION_LOADED` → `PRESENTATION_VIEWED`. `PRESENTATION_OPENED` is **not** emitted for a deeplink (only for in-paywall action opens).
 
 > **`readyToOpenDeeplink` and `isDeeplinkHandled` were removed in v6.** Use `allowDeeplink` / `handleDeeplink` instead.
 
