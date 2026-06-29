@@ -173,3 +173,5 @@ app_scheme://ply/plans/PLAN_ID/PRESENTATION_ID
 ## Unchanged in v6 (no migration needed)
 
 These v5 APIs are identical in v6 — they are listed here only so the `purchasely-migrate` skill does **not** flag them: `userLogin(with:shouldRefresh:)`, `userLogout()`, `setUserAttribute(with*Value:forKey:)`, `userSubscriptions(success:failure:)`, `restoreAllProducts(success:failure:)`, `synchronize(success:failure:)`, `purchase(plan:contentId:success:failure:)`, `setEventDelegate(_:)`.
+
+> **Not** identical in v6: `setDefaultPresentationResultHandler(_:)` was **renamed** to `setDefaultPresentationDismissHandler(_:)` and **retyped** — its closure now receives a single `PLYPresentationOutcome` instead of `(result, plan)`. The `purchasely-migrate` skill must migrate it; see the v5 → v6 mapping in `purchasely-migrate`.

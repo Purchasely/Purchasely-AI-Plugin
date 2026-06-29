@@ -322,21 +322,26 @@ Purchasely.allowCampaigns(false)  // independent flag for campaigns
 
 ## Presentation Dismiss Handler
 
-### `Purchasely.setDefaultPresentationDismissHandler(_:)`
+### `Purchasely.setDefaultPresentationDismissHandler(handler:)`
 
-A default handler for paywalls you do **not** instantiate yourself — chiefly deeplink- and campaign-opened screens, where no `onDismissed` closure was supplied. It takes a `PLYPresentationOutcomeHandler` and delivers the full `PLYPresentationOutcome` (the same payload as `PLYPresentationBuilder.onDismissed`), replacing the v5 `setDefaultPresentationResultHandler { result, plan in }` block.
+A default handler for paywalls you do **not** instantiate yourself — chiefly deeplink- and campaign-opened screens, where no `onDismissed` closure was supplied. The closure receives a single `PLYPresentationOutcome` (`purchaseResult` / `closeReason` / `plan` / `presentation` / `error`).
+
+> Renamed from v5's `setDefaultPresentationResultHandler` (which delivered a `(result, plan)` tuple). See the migration guide for the v5 → v6 mapping.
 
 ```swift
 Purchasely.setDefaultPresentationDismissHandler { outcome in
-    switch outcome.purchaseResult {
+    switch outcome.purchaseResult {        // .purchased / .restored / .cancelled / .none
     case .purchased: print("Purchased: \(outcome.plan?.vendorId ?? "")")
-    case .restored:  print("Restored")
-    case .cancelled: print("Cancelled (\(outcome.closeReason))")
+    case .restored:  print("Restored: \(outcome.plan?.vendorId ?? "")")
+    case .cancelled: print("Cancelled")
     case .none:      break
     @unknown default: break
     }
-    // The app didn't instantiate this presentation, so the outcome carries it:
-    print("from presentation \(outcome.presentation?.id ?? "?")")
+    switch outcome.closeReason {           // .button / .interactiveDismiss / .programmatic / .none
+    case .button, .interactiveDismiss, .programmatic, .none: break
+    @unknown default: break
+    }
+    // outcome.presentation: PLYPresentation?  |  outcome.error: Error? (reserved, nil in 6.0)
 }
 ```
 
