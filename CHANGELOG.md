@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Changed
+
+- iOS & Android skill references and `purchasely-migrate` / `purchasely-review` / `purchasely-debug` checklists updated for the v6 rename of the global handler `Purchasely.setDefaultPresentationResultHandler` → `setDefaultPresentationDismissHandler` (delivers a `PLYPresentationOutcome`). The `display()` dismissal callback is referred to as the "dismiss callback". Flutter references unchanged.
+
 ## [2.0.0-rc.3] — 2026-06-17
 
 Flutter joins the **v6 line**, and skills-only installs gain first-class expert Q&A. Flutter guidance moves off v5 to match native iOS & Android — the published Flutter SDK now targets **Purchasely v6.0.0-rc.1** with the builder API. A new portable `purchasely-sdk-expert` skill brings free-form SDK Q&A to harnesses without the Claude Code subagent. **React Native and Cordova stay on v5 (`5.7.3`).**
