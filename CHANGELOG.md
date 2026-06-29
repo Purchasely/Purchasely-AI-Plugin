@@ -4,10 +4,17 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Added
+
+- `references/concepts/user-attributes-targeting.md` — new "When an attribute change takes effect (timing)" section: `setUserAttribute` saves the value (persisted across sessions) but does not re-evaluate placements/campaigns; the value is applied only on the next placement fetch or campaign trigger.
+- `references/concepts/campaigns.md` — new "Custom-attribute audiences: set the attribute before campaigns are evaluated" section explaining why a custom-attribute campaign misses on first launch (matches from the next session once the value is persisted) and the `allowCampaigns(false)` → set attribute → `allowCampaigns(true)` recipe for reliable first-launch matching.
+
 ### Changed
 
 - iOS & Android skill references and `purchasely-migrate` / `purchasely-review` / `purchasely-debug` checklists updated for the v6 rename of the global handler `Purchasely.setDefaultPresentationResultHandler` → `setDefaultPresentationDismissHandler` (delivers a `PLYPresentationOutcome`). The `display()` dismissal callback is referred to as the "dismiss callback". Flutter references unchanged.
 - **iOS v6 references and skills track the latest `PLYPresentationBuilder` cleanup.** Documented two breaking removals that landed in the iOS SDK: the SwiftUI embedded-view factories (`Purchasely.productView(...)` / `planView(...)` / `presentationView(...)`, the SwiftUI counterpart to the removed UIKit `*Controller` factories) and the `ply/products/*` / `ply/plans/*` deeplink formats (→ `ply/presentations/<id>` or `ply/placements/<id>`). Updated `references/ios/migration-v6.md`, `references/ios/v5-api-reference.md`, and the `purchasely-migrate`, `purchasely-review`, and `purchasely-sdk-expert` skills (recognition tokens, removed-API checks, and replacement guidance).
+- `purchasely-sdk-expert` and `purchasely-debug` now state the user-attribute → campaign timing rule: setting an attribute does not re-trigger targeting, and custom-attribute audiences are gated with `allowCampaigns` (ordering: start → set attributes → allow campaigns).
+- `references/troubleshooting/common-issues.md` §7 now covers the "campaign on a custom-attribute audience is hit-or-miss on first launch" symptom and its fix.
 
 ### Fixed
 

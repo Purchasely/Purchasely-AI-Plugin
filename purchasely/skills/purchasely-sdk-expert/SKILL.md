@@ -135,6 +135,7 @@ For any campaign / trigger / `APP_STARTED` / launch display question, load `../.
 - Trigger-based campaigns are SDK-managed. The app does not manually build or fetch the campaign paywall.
 - Placement-based campaigns override the placement when the app displays that placement.
 - Mention deeplink display readiness: v6 native / Flutter use `allowDeeplink` (default true); React Native / Cordova v5 use `readyToOpenDeeplink(true)` after the app UI is ready.
+- **Attribute timing for custom-attribute audiences.** `setUserAttribute(...)` saves the value (persisted across sessions) but does **not** re-trigger or re-evaluate any campaign/placement. A trigger-based campaign evaluates its audience when the trigger resolves (default `APP_STARTED` → shortly after start), using the attributes held at that instant. So a custom-attribute audience won't match on the **first** launch if the attribute is set after start; it matches **from the next session** because the value is persisted (this is the classic "works once / hit-or-miss" symptom). For reliable first-launch matching, gate campaigns: `allowCampaigns(false)` → `setUserAttribute(...)` → `allowCampaigns(true)` (ordering: start → set attributes → allow campaigns). `allowCampaigns` (plural) defaults to true; gating queues the campaign *trigger*, which then resolves its audience with the attribute present. Do not claim setting an attribute re-runs targeting. Load `../../references/concepts/campaigns.md` and `../../references/concepts/user-attributes-targeting.md`.
 
 ### BYOS
 

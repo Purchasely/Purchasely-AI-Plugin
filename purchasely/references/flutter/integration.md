@@ -260,7 +260,7 @@ await Purchasely.interceptAction(
 );
 ```
 
-Action kinds (`PresentationActionKind`): `close`, `closeAll`, `login`, `navigate`, `purchase`, `restore`, `openPresentation`, `openPlacement`, `promoCode`, `webCheckout`. Each kind has a typed payload (`NavigatePayload`, `PurchasePayload`, `ClosePayload`, `CloseAllPayload`, `OpenPresentationPayload`, `OpenPlacementPayload`, `WebCheckoutPayload`); payload-less kinds (`login`, `restore`, `promoCode`) carry no extra fields.
+Action kinds (`PresentationActionKind`): `close`, `closeAll`, `login`, `navigate`, `purchase`, `restore`, `openPresentation`, `openPlacement`, `promoCode`, `webCheckout`. Each kind has a typed payload (`NavigatePayload`, `PurchasePayload`, `ClosePayload`, `CloseAllPayload`, `OpenPresentationPayload`, `OpenPlacementPayload`, `WebCheckoutPayload`); payload-less kinds (`login`, `restore`, `promoCode`) carry no extra fields. `PurchasePayload` exposes real Dart objects: `plan` is a `PLYPlan`, `subscriptionOffer` is a nullable `PLYSubscriptionOffer`, and `offer` is a nullable `PLYPromoOffer`.
 
 ### Removing interceptors
 
@@ -423,17 +423,15 @@ if (handled) {
 
 > The v5 names `readyToOpenDeeplink(bool)` and `isDeeplinkHandled(uri)` remain only as **deprecated aliases** for `allowDeeplink` / `handleDeeplink`.
 
-### Default Presentation Result Handler
+### Default Presentation Dismiss Handler
 
-Retrieve the result of user actions on presentations opened via deeplinks by attaching `onDismissed` to a default-source request (replaces `setDefaultPresentationResultHandler`):
+Retrieve the result of user actions on presentations opened by the SDK itself (deeplinks, campaigns, promoted in-app purchases) with `setDefaultPresentationDismissHandler` (replaces `setDefaultPresentationResultHandler`):
 
 ```dart
-PresentationBuilder.defaultSource()
-    .onDismissed((outcome) {
-      print('Deeplink presentation dismissed: ${outcome.purchaseResult} / ${outcome.closeReason}');
-    })
-    .build()
-    .display();
+await Purchasely.setDefaultPresentationDismissHandler((outcome) {
+  print('SDK presentation dismissed: ${outcome.presentation?.screenId} / '
+      '${outcome.purchaseResult} / ${outcome.closeReason}');
+});
 ```
 
 ## Synchronize Purchases

@@ -15,6 +15,26 @@ User attributes are key-value pairs the SDK forwards to Purchasely servers. They
 
 > **Attribute changes can change which audience matches** → invalidate any [presentation cache](presentation-cache.md) after setting attributes.
 
+## When an attribute change takes effect (timing)
+
+Setting an attribute is **not** an event the SDK reacts to. `setUserAttribute(...)` saves the value immediately (and persists it across sessions in the SDK's own disk cache, so you only have to set it once), but it does **not** re-run, re-fetch, or re-evaluate any placement or campaign on its own. The new value is applied to audience matching only on the **next call** that resolves a screen:
+
+- **Placements:** the next presentation fetch/build picks up the value (native v6 `PLYPresentationBuilder.forPlacementId(...).build()` / `.preload()`, Flutter v6 `PresentationBuilder.placement(...).build()` → `preload()` / `display(...)`, React Native / Cordova v5 `fetchPresentation(...)`). So set the attribute **before** you fetch the placement.
+- **Campaigns:** the audience is evaluated when the campaign trigger resolves — for the default `APP_STARTED` trigger this happens **shortly after SDK start** (or when you flip [`allowCampaigns(true)`](campaigns.md#sdk-setup--gating-campaign-display) if you gated it). Setting the attribute afterwards has no effect on that already-resolved trigger.
+
+**Consequence for a campaign whose audience is built on a custom attribute:** if the attribute is set *after* the SDK has already evaluated campaigns at start, the audience will **not** match on the **first launch**. Because the value is persisted, it is present at the next cold start, so the campaign matches **from the next session** onward — which is why this kind of bug looks intermittent ("it worked once").
+
+To make it reliable on the **first** launch, set the attribute before campaigns are evaluated. The recommended ordering is **start SDK → set user attributes → allow campaigns**, gating campaigns until your attributes are set:
+
+```swift
+// iOS — defer campaigns, set attributes, then release
+Purchasely.apiKey("YOUR_API_KEY").allowCampaigns(false).start { _ in }
+Purchasely.setUserAttribute(withStringValue: campaignId, forKey: "appsflyer_last_campaign_id")
+Purchasely.allowCampaigns(true)   // the campaign trigger now resolves with the attribute present
+```
+
+See [campaigns.md](campaigns.md#custom-attribute-audiences-set-the-attribute-before-campaigns-are-evaluated) for the per-platform `allowCampaigns` API and the full recipe.
+
 ## Supported attribute types
 
 Same on every platform; only the method signatures differ:

@@ -113,7 +113,7 @@ In v6 the `.purchase` interceptor is an async callback that **returns** an `Inte
 Purchasely.interceptAction(PresentationActionKind.purchase, (info, payload) async {
   if (payload is! PurchasePayload) return InterceptResult.notHandled;
 
-  final purchased = await myBilling.purchase(payload.plan['productId']);
+  final purchased = await myBilling.purchase(payload.plan.productId);
   if (!purchased) return InterceptResult.failed;
 
   await Purchasely.synchronize();   // resolves once the native bridge confirms
