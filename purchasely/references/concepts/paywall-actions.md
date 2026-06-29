@@ -10,7 +10,7 @@ The **action interceptor** is a callback the SDK invokes when the user interacts
 
 If a branch (early return, error catch, `switch default`, `try/catch`, etc.) skips it, the paywall UI freezes permanently — this is the #1 most common Purchasely bug across all platforms. If a branch resolves twice, behavior is undefined.
 
-When in doubt, wrap the handler in a `try/finally` (or equivalent) that resolves the result on every path (native iOS/Android & Flutter v6 returns `.notHandled` / `PLYInterceptResult.NOT_HANDLED` / `InterceptResult.notHandled`; React Native / Cordova calls `proceed(false)` / `processAction(false)`).
+When in doubt, wrap the handler in a `try/finally` (or equivalent) that resolves the result on every path (native iOS/Android & Flutter v6 returns `.notHandled` / `PLYInterceptResult.NOT_HANDLED` / `PLYInterceptResult.notHandled`; React Native / Cordova calls `proceed(false)` / `processAction(false)`).
 
 ## `PLYPresentationAction`
 

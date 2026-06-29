@@ -135,7 +135,7 @@ Purchasely.start(
 );
 ```
 
-> **Cross-platform note.** Flutter is on the v6 API (default Observer, `PurchaselyBuilder.apiKey(...)....start()`), in the same v6 group as native iOS & Android. React Native and Cordova plugins are still on the v5 API (default Full, `start({...})` / positional `start(...)`); their v6 migrations are pending — keep their existing initialization. Always confirm the exact plugin signature in that platform's integration reference and in [`sdk-versions.md`](../sdk-versions.md).
+> **Cross-platform note.** Flutter is on the v6 API (default Observer, `Purchasely.apiKey(...)....start()`), in the same v6 group as native iOS & Android. React Native and Cordova plugins are still on the v5 API (default Full, `start({...})` / positional `start(...)`); their v6 migrations are pending — keep their existing initialization. Always confirm the exact plugin signature in that platform's integration reference and in [`sdk-versions.md`](../sdk-versions.md).
 
 ## Log Levels
 
