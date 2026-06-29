@@ -112,10 +112,10 @@ await Purchasely.start({
 ```dart
 import 'package:purchasely_flutter/purchasely_flutter.dart';
 
-await PurchaselyBuilder.apiKey('YOUR_API_KEY')
-    .runningMode(RunningMode.full)              // or RunningMode.observer — default is observer in v6
-    .storekitVersion(StorekitVersion.storeKit2)
-    .logLevel(LogLevel.warn)
+await Purchasely.apiKey('YOUR_API_KEY')
+    .runningMode(PLYRunningMode.full)              // or PLYRunningMode.observer — default is observer in v6
+    .storekitVersion(PLYStorekitVersion.storeKit2)
+    .logLevel(PLYLogLevel.warn)
     .stores([PLYStore.google])
     .start();
 ```
@@ -135,7 +135,7 @@ Purchasely.start(
 );
 ```
 
-> **Cross-platform note.** Flutter is on the v6 API (default Observer, `PurchaselyBuilder.apiKey(...)....start()`), in the same v6 group as native iOS & Android. React Native and Cordova plugins are still on the v5 API (default Full, `start({...})` / positional `start(...)`); their v6 migrations are pending — keep their existing initialization. Always confirm the exact plugin signature in that platform's integration reference and in [`sdk-versions.md`](../sdk-versions.md).
+> **Cross-platform note.** Flutter is on the v6 API (default Observer, `Purchasely.apiKey(...)....start()`), in the same v6 group as native iOS & Android. React Native and Cordova plugins are still on the v5 API (default Full, `start({...})` / positional `start(...)`); their v6 migrations are pending — keep their existing initialization. Always confirm the exact plugin signature in that platform's integration reference and in [`sdk-versions.md`](../sdk-versions.md).
 
 ## Log Levels
 

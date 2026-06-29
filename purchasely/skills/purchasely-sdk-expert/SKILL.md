@@ -38,7 +38,7 @@ On native iOS, native Android, and Flutter v6, the default running mode is **Obs
 
 - iOS: `.runningMode(.full)`
 - Android: `runningMode(PLYRunningMode.Full)`
-- Flutter: `.runningMode(RunningMode.full)`
+- Flutter: `.runningMode(PLYRunningMode.full)`
 
 Observer mode means the app owns billing and must call `Purchasely.synchronize()` after successful purchases. Native iOS/Android Observer presentations do not auto-close after purchase/restore; dismiss explicitly with `closeAllScreens()`. Flutter v6 dismisses via `presentation.close()`.
 
@@ -104,7 +104,7 @@ Load the matching platform before giving exact setup or API signatures:
 
 - iOS v6: `PLYPresentationBuilder.forPlacementId("id").build().preload()` then `presentation.display(from:)`.
 - Android v6: `PLYPresentation { placementId("id") }.preload()` then `loaded.display(context)`.
-- Flutter v6: `PresentationBuilder.placement("id").build()` → `PresentationRequest`, then `request.preload()` and/or `request.display([Transition])`.
+- Flutter v6: `PLYPresentationBuilder.placement("id").build()` → `PLYPresentationRequest`, then `request.preload()` and/or `request.display([PLYTransition])`.
 - React Native v5: `fetchPresentation(...)` then `presentPresentation({ presentation })`.
 - Cordova v5: `fetchPresentationForPlacement(...)` then `presentPresentation(...)`.
 - For Flows, prefer build/fetch → type guard → display. Avoid placement shorthand when Flow behavior matters.
@@ -114,7 +114,7 @@ Load the matching platform before giving exact setup or API signatures:
 
 - Native iOS/Android v6 and Flutter v6 use **per-action** interceptors.
 - Every native v6 handler must return `PLYInterceptResult` on every path.
-- Every Flutter v6 handler must return `InterceptResult` on every path.
+- Every Flutter v6 handler must return `PLYInterceptResult` on every path.
 - React Native / Cordova v5 must call `onProcessAction(true/false)` on every path.
 - Missing completion freezes the paywall.
 

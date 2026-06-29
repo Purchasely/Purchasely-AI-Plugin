@@ -10,7 +10,7 @@ The **action interceptor** is a callback the SDK invokes when the user interacts
 
 If a branch (early return, error catch, `switch default`, `try/catch`, etc.) skips it, the paywall UI freezes permanently — this is the #1 most common Purchasely bug across all platforms. If a branch resolves twice, behavior is undefined.
 
-When in doubt, wrap the handler in a `try/finally` (or equivalent) that resolves the result on every path (native iOS/Android & Flutter v6 returns `.notHandled` / `PLYInterceptResult.NOT_HANDLED` / `InterceptResult.notHandled`; React Native / Cordova calls `proceed(false)` / `processAction(false)`).
+When in doubt, wrap the handler in a `try/finally` (or equivalent) that resolves the result on every path (native iOS/Android & Flutter v6 returns `.notHandled` / `PLYInterceptResult.NOT_HANDLED` / `PLYInterceptResult.notHandled`; React Native / Cordova calls `proceed(false)` / `processAction(false)`).
 
 ## `PLYPresentationAction`
 
@@ -43,7 +43,7 @@ Casing / type reference per platform:
 | iOS | `Purchasely.interceptAction(.purchase)` / `.restore` / `.login` / `.close` / `.navigate` / `.openPresentation` / `.promoCode` |
 | Android | Sealed class: `PLYPresentationAction.Purchase` / `.Restore` / `.Login` / `.Close` / `.Navigate` / `.OpenPresentation` / `.OpenPlacement` / `.PromoCode` |
 | React Native | `PLYPaywallAction.PURCHASE` etc. (string constants) |
-| Flutter | `PresentationActionKind.purchase` / `.restore` / `.login` / `.close` / `.navigate` / `.openPresentation` / `.promoCode` |
+| Flutter | `PLYPresentationActionKind.purchase` / `.restore` / `.login` / `.close` / `.navigate` / `.openPresentation` / `.promoCode` |
 | Cordova | String values: `'purchase'`, `'restore'`, `'login'`, `'close'`, `'navigate'`, `'open_presentation'`, `'promo_code'` |
 
 ## Registering the interceptor
@@ -130,20 +130,20 @@ Purchasely.setPaywallActionInterceptorCallback(result => {
 
 ### Flutter (Dart)
 
-In v6 Flutter registers one interceptor **per action** and returns a `InterceptResult` (mirroring native iOS/Android):
+In v6 Flutter registers one interceptor **per action** and returns a `PLYInterceptResult` (mirroring native iOS/Android):
 
 ```dart
-Purchasely.interceptAction(PresentationActionKind.login, (info, payload) async {
+Purchasely.interceptAction(PLYPresentationActionKind.login, (info, payload) async {
   final ok = await showLogin();
-  return ok ? InterceptResult.success : InterceptResult.notHandled;
+  return ok ? PLYInterceptResult.success : PLYInterceptResult.notHandled;
 });
 
-Purchasely.interceptAction(PresentationActionKind.purchase, (info, payload) async {
-  return InterceptResult.notHandled; // Full mode lets the SDK run the purchase
+Purchasely.interceptAction(PLYPresentationActionKind.purchase, (info, payload) async {
+  return PLYInterceptResult.notHandled; // Full mode lets the SDK run the purchase
 });
 ```
 
-Remove with `Purchasely.removeInterceptor(PresentationActionKind.login)` / `Purchasely.removeAllInterceptors()`.
+Remove with `Purchasely.removeActionInterceptor(PLYPresentationActionKind.login)` / `Purchasely.removeAllActionInterceptors()`.
 
 ### Cordova (JavaScript)
 
