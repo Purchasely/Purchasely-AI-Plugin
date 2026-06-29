@@ -813,7 +813,7 @@ await Purchasely.interceptAction(
 );
 ```
 
-Action kinds (`PresentationActionKind`): `close`, `closeAll`, `login`, `navigate`, `purchase`, `restore`, `openPresentation`, `openPlacement`, `promoCode`, `webCheckout`. Each kind has a typed payload (`NavigatePayload`, `PurchasePayload`, `OpenPresentationPayload`, `OpenPlacementPayload`, `WebCheckoutPayload`, …); payload-less kinds (`login`, `restore`, `promoCode`) carry no extra fields.
+Action kinds (`PresentationActionKind`): `close`, `closeAll`, `login`, `navigate`, `purchase`, `restore`, `openPresentation`, `openPlacement`, `promoCode`, `webCheckout`. Each kind has a typed payload (`NavigatePayload`, `PurchasePayload`, `OpenPresentationPayload`, `OpenPlacementPayload`, `WebCheckoutPayload`, …); payload-less kinds (`login`, `restore`, `promoCode`) carry no extra fields. `PurchasePayload` exposes real Dart objects: `plan` is a `PLYPlan`, `subscriptionOffer` is a nullable `PLYSubscriptionOffer`, and `offer` is a nullable `PLYPromoOffer`.
 
 ### Cordova (JavaScript)
 
@@ -1042,7 +1042,7 @@ await Purchasely.interceptAction(
   PresentationActionKind.purchase,
   (info, payload) async {
     if (payload is! PurchasePayload) return InterceptResult.notHandled;
-    final ok = await MyPurchaseSystem.purchase(payload.plan['vendorId']);
+    final ok = await MyPurchaseSystem.purchase(payload.plan.vendorId);
     if (!ok) return InterceptResult.failed;
     try {
       await Purchasely.synchronize();  // upload the receipt to Purchasely

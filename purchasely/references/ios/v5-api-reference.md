@@ -10,6 +10,8 @@ Grep the project for any of these legacy tokens — a hit means the integration 
 start(withAPIKey      .paywallObserver       PLYRunningModePaywallObserver
 setPaywallActionsInterceptor                 PLYPresentationInfo
 fetchPresentation     presentationController .PresentationView
+productView           planView               presentationView
+ply/products          ply/plans
 PLYProductViewControllerResult               readyToOpenDeeplink
 isDeeplinkHandled     closeDisplayedPresentation                displayMode:
 PLYPaywallActionsInterceptor
@@ -97,6 +99,17 @@ present(controller, animated: true)
 
 → **v6 equivalent:** `presentation.swiftUIView` (a SwiftUI `View`; `nil` for `.deactivated`). UIKit hosting uses `presentation.controller`.
 
+### `Purchasely.productView(...)` / `planView(...)` / `presentationView(...)` (SwiftUI factories) — **removed**
+
+```swift
+let view = Purchasely.presentationView(for: "PLACEMENT_ID",
+    loaded: { _ in }, completion: { result, plan in })   // returned PLYPresentationView?
+```
+
+The eight `PLYPresentationView?`-returning factories (`productView` / `planView` / `presentationView` and their `contentId:` variants) carried the legacy `(PLYProductViewControllerResult, PLYPlan?)` completion block.
+
+→ **v6 equivalent:** preload via `PLYPresentationBuilder`, read `presentation.swiftUIView`, and take the dismissal result from `.onDismissed { outcome in }`.
+
 ### `Purchasely.display(for:displayMode:)` — **renamed parameter**
 
 ```swift
@@ -117,6 +130,14 @@ completion: { result, plan in /* result: .purchased / .restored / .cancelled */ 
 ```
 
 → **v6 equivalent:** a single `PLYPresentationOutcome` carrying `purchaseResult` (`PLYPurchaseResult`), `plan`, `presentation`, the new `closeReason` (`PLYCloseReason`), and `error`.
+
+### `Purchasely.setDefaultPresentationResultHandler { result, plan in }` — **renamed** (iOS)
+
+```swift
+Purchasely.setDefaultPresentationResultHandler { result, plan in /* .purchased / .restored / .cancelled */ }
+```
+
+→ **v6 equivalent:** `Purchasely.setDefaultPresentationDismissHandler { outcome in }` — renamed, and now delivers the full `PLYPresentationOutcome` (`outcome.purchaseResult` / `outcome.plan` / `outcome.closeReason` / `outcome.presentation`). It is mutually exclusive with per-presentation `onDismissed` / completion callbacks. (Note: **Android keeps the name** `setDefaultPresentationResultHandler` and only changes the callback to a single `outcome`; the rename is iOS-only.)
 
 ### `PLYPresentation` was a **class**
 
@@ -140,6 +161,17 @@ let handled = Purchasely.isDeeplinkHandled(deeplink: url)
 
 → **v6 equivalent:** `Purchasely.handleDeeplink(_:)` (still returns `Bool`). Cold-start variant: `Purchasely.apiKey("…").handleDeeplink(url).start { error in }`.
 
+### `ply/products/*` and `ply/plans/*` deeplink formats — **removed**
+
+```
+app_scheme://ply/products/PRODUCT_ID/PRESENTATION_ID
+app_scheme://ply/plans/PLAN_ID/PRESENTATION_ID
+```
+
+→ **v6 equivalent:** deep-link to a presentation (`app_scheme://ply/presentations/PRESENTATION_ID`) or a placement (`app_scheme://ply/placements/PLACEMENT_ID`). The internal `productController` factory that served these is removed too.
+
 ## Unchanged in v6 (no migration needed)
 
-These v5 APIs are identical in v6 — they are listed here only so the `purchasely-migrate` skill does **not** flag them: `userLogin(with:shouldRefresh:)`, `userLogout()`, `setUserAttribute(with*Value:forKey:)`, `userSubscriptions(success:failure:)`, `restoreAllProducts(success:failure:)`, `synchronize(success:failure:)`, `purchase(plan:contentId:success:failure:)`, `setEventDelegate(_:)`, `setDefaultPresentationResultHandler(_:)`.
+These v5 APIs are identical in v6 — they are listed here only so the `purchasely-migrate` skill does **not** flag them: `userLogin(with:shouldRefresh:)`, `userLogout()`, `setUserAttribute(with*Value:forKey:)`, `userSubscriptions(success:failure:)`, `restoreAllProducts(success:failure:)`, `synchronize(success:failure:)`, `purchase(plan:contentId:success:failure:)`, `setEventDelegate(_:)`.
+
+> **Not** identical in v6: `setDefaultPresentationResultHandler(_:)` was **renamed** to `setDefaultPresentationDismissHandler(_:)` and **retyped** — its closure now receives a single `PLYPresentationOutcome` instead of `(result, plan)`. The `purchasely-migrate` skill must migrate it; see the v5 → v6 mapping in `purchasely-migrate`.

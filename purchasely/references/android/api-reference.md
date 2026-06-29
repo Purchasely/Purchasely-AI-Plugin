@@ -226,7 +226,7 @@ prepared.state.collect { state ->
 }
 ```
 
-`onClose` was renamed `onCloseRequested` (fires when the user requests a close, e.g. taps the X). The actual dismissal with the outcome is delivered by `onDismissed` / the `display()` result handler / `PLYPresentationState.Dismissed`.
+`onClose` was renamed `onCloseRequested` (fires when the user requests a close, e.g. taps the X). The actual dismissal with the outcome is delivered by `onDismissed` / the `display()` dismiss callback / `PLYPresentationState.Dismissed`.
 
 ### `PLYPresentationOutcome`
 
