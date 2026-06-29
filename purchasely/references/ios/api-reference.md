@@ -345,6 +345,8 @@ Purchasely.setDefaultPresentationDismissHandler { outcome in
 }
 ```
 
+> It is **mutually exclusive** with per-presentation callbacks — it fires only for presentations that have neither an inline `onDismissed` (set via `PLYPresentationBuilder`) nor a per-call completion block.
+
 ## User Management
 
 ### `Purchasely.userLogin(with:shouldRefresh:)`

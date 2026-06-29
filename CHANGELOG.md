@@ -7,6 +7,11 @@ All notable changes to this project are documented here. The format is based on 
 ### Changed
 
 - iOS & Android skill references and `purchasely-migrate` / `purchasely-review` / `purchasely-debug` checklists updated for the v6 rename of the global handler `Purchasely.setDefaultPresentationResultHandler` → `setDefaultPresentationDismissHandler` (delivers a `PLYPresentationOutcome`). The `display()` dismissal callback is referred to as the "dismiss callback". Flutter references unchanged.
+- **iOS v6 references and skills track the latest `PLYPresentationBuilder` cleanup.** Documented two breaking removals that landed in the iOS SDK: the SwiftUI embedded-view factories (`Purchasely.productView(...)` / `planView(...)` / `presentationView(...)`, the SwiftUI counterpart to the removed UIKit `*Controller` factories) and the `ply/products/*` / `ply/plans/*` deeplink formats (→ `ply/presentations/<id>` or `ply/placements/<id>`). Updated `references/ios/migration-v6.md`, `references/ios/v5-api-reference.md`, and the `purchasely-migrate`, `purchasely-review`, and `purchasely-sdk-expert` skills (recognition tokens, removed-API checks, and replacement guidance).
+
+### Fixed
+
+- **Corrected the iOS default presentation handler across the v6 references and skills.** iOS v6 **renamed** `setDefaultPresentationResultHandler { result, plan in }` to `setDefaultPresentationDismissHandler { outcome in }` (now delivers `PLYPresentationOutcome`, mutually exclusive with per-presentation `onDismissed`). `references/ios/api-reference.md` documented the old name as a valid v6 API and `references/ios/v5-api-reference.md` listed it as "unchanged in v6"; fixed both, plus the `purchasely-migrate`, `purchasely-review`, and `purchasely-debug` skills. The fix is **platform-aware**: Android v6 keeps the `setDefaultPresentationResultHandler` name and only changes the callback to a single `outcome`, so the cross-platform skills no longer imply the iOS rename applies to Android.
 
 ## [2.0.0-rc.3] — 2026-06-17
 
