@@ -159,7 +159,7 @@ Purchasely.restoreAllProducts(
 
 ## Close paywalls programmatically
 
-After a manual gate-then-purchase flow, dismiss the paywall after resolving the action interceptor. Native iOS/Android use `Purchasely.closeAllScreens()`; React Native v6 dismisses via `request.close()` on the `PresentationRequest` you built; Flutter v6 dismisses via `presentation.close()` on the loaded `Presentation`; the current Cordova public bridge uses `Purchasely.closePresentation()`. See [observer-mode-post-purchase.md](observer-mode-post-purchase.md) for exact per-platform ordering.
+After a manual gate-then-purchase flow, dismiss the paywall after resolving the action interceptor. Native iOS/Android use `Purchasely.closeAllScreens()`; React Native v6 dismisses via `request.close()` on the `PLYPresentationRequest` you built; Flutter v6 dismisses via `presentation.close()` on the loaded `Presentation`; the current Cordova public bridge uses `Purchasely.closePresentation()`. See [observer-mode-post-purchase.md](observer-mode-post-purchase.md) for exact per-platform ordering.
 
 ## Anti-patterns
 

@@ -56,7 +56,7 @@ Before writing integration code, run a Purchasely expert checkpoint. If the harn
 
 If that subagent is not available, do the checkpoint inline using the `purchasely-sdk-expert` guidance when available, or this fallback checklist:
 
-- Confirm the SDK generation: native iOS / native Android / Flutter / React Native use v6 (`6.0.0-rc.1`); Cordova uses v5 (`5.7.3`).
+- Confirm the SDK generation: React Native uses v6 (`6.0.0-rc.2`); native iOS / native Android / Flutter use v6 (`6.0.0-rc.1`); Cordova uses v5 (`5.7.3`).
 - Confirm versions are pinned from `../../references/sdk-versions.md` and no floating ranges are introduced.
 - Confirm Full mode is explicit when Purchasely must process and validate purchases.
 - Confirm the presentation path matches the platform generation and handles `DEACTIVATED` / `FALLBACK` where relevant.
@@ -102,10 +102,10 @@ Run the appropriate installation commands and modify project files as needed.
 | iOS (native) | **6.0.0-rc.1** |
 | Android (native) | **6.0.0-rc.1** |
 | Flutter | **6.0.0-rc.1** |
-| React Native | **6.0.0-rc.1** |
+| React Native | **6.0.0-rc.2** |
 | Cordova | **5.7.3** |
 
-Always pin to the **exact** version above, never floating (`5.+`, `6.+`, `^5.0.0`, `^6.0.0-rc.1`). Floating versions break reproducibility and silently pull regressions. Because `6.0.0-rc.1` is a pre-release, it must be pinned exactly on every layer (no caret / range).
+Always pin to the **exact** version above, never floating (`5.+`, `6.+`, `^5.0.0`, `^6.0.0-rc.2`). Floating versions break reproducibility and silently pull regressions. Because these v6 versions are pre-releases, they must be pinned exactly on every layer (no caret / range).
 
 **Before installing, ask the user these questions (adapt per platform):**
 
@@ -202,9 +202,9 @@ Then sync Gradle.
 
 ### React Native
 
-Requirements: iOS 13.4+, Android minSdkVersion 21 (align compileSdk/targetSdk on the existing app, e.g. 36)
+Requirements: iOS 13.4+, Android minSdkVersion 23, compileSdk 35 (align compileSdk/targetSdk on the existing app, 35+). Built and tested against React Native 0.86 / Node 22.
 
-> **React Native is on the v6 API** (same generation as native iOS / Android / Flutter — no longer grouped with Cordova). `react-native-purchasely 6.0.0-rc.1` pulls the 6.0.0-rc.1 native SDKs (iOS pod `Purchasely`, Android `io.purchasely:core`) and exposes the v6 TypeScript surface: `Purchasely.builder('key')…start()`, `Purchasely.presentation.placement(id).build()` → a `PresentationRequest` (`preload()` / `display(transition?)`), and the per-action `Purchasely.interceptAction(kind, handler)` returning `'success' | 'failed' | 'notHandled'` strings. `../../references/react-native/integration.md` documents the v6 API.
+> **React Native is on the v6 API** (same generation as native iOS / Android / Flutter — no longer grouped with Cordova). `react-native-purchasely 6.0.0-rc.2` pulls the 6.0.0-rc.2 native SDKs (iOS pod `Purchasely`, Android `io.purchasely:core`) and exposes the v6 TypeScript surface: `Purchasely.builder('key')…start()`, `Purchasely.presentation.placement(id).build()` → a `PLYPresentationRequest` (`preload()` / `display(transition?)`), and the per-action `Purchasely.interceptAction(kind, handler)` returning `'success' | 'failed' | 'notHandled'` strings. `../../references/react-native/integration.md` documents the v6 API.
 
 **1. Install the core SDK:**
 ```bash
@@ -233,12 +233,12 @@ npm install @purchasely/react-native-purchasely-huawei
 cd ios && pod install
 ```
 
-**5. Android setup** — Android uses autolinking; just make sure `mavenCentral()` is present (default in modern projects) and `minSdkVersion` is at least 21 in `android/build.gradle`:
+**5. Android setup** — Android uses autolinking; just make sure `mavenCentral()` is present (default in modern projects) and `minSdkVersion` is at least 23 in `android/build.gradle`:
 ```groovy
 buildscript {
     ext {
-        minSdkVersion = 21    // SDK minimum
-        // align compileSdk/targetSdk on the existing app (e.g. 36)
+        minSdkVersion = 23    // SDK minimum (v6)
+        // align compileSdk/targetSdk on the existing app (35+)
     }
 }
 allprojects {
@@ -248,16 +248,16 @@ allprojects {
 }
 ```
 
-**CRITICAL: All Purchasely packages must be at the exact same version.** Pin to the **exact** `6.0.0-rc.1` — never a caret / range, because it is a pre-release (see `../../references/sdk-versions.md`):
+**CRITICAL: All Purchasely packages must be at the exact same version.** Pin to the **exact** `6.0.0-rc.2` — never a caret / range, because it is a pre-release (see `../../references/sdk-versions.md`):
 ```json
 "dependencies": {
-  "react-native-purchasely": "6.0.0-rc.1",
-  "@purchasely/react-native-purchasely-google": "6.0.0-rc.1",
-  "@purchasely/react-native-purchasely-android-player": "6.0.0-rc.1"
+  "react-native-purchasely": "6.0.0-rc.2",
+  "@purchasely/react-native-purchasely-google": "6.0.0-rc.2",
+  "@purchasely/react-native-purchasely-android-player": "6.0.0-rc.2"
 }
 ```
 
-> **Native dependency.** `react-native-purchasely 6.0.0-rc.1` pins the 6.0.0-rc.1 native SDKs — Android `io.purchasely:core` / `google-play` / `player` on **Maven Central**, iOS `Purchasely` on the **CocoaPods trunk** — so the project builds from the public repositories.
+> **Native dependency.** `react-native-purchasely 6.0.0-rc.2` pins the 6.0.0-rc.2 native SDKs — Android `io.purchasely:core` / `google-play` / `player` on **Maven Central**, iOS `Purchasely` on the **CocoaPods trunk** — so the project builds from the public repositories.
 
 ### Flutter
 
@@ -491,7 +491,7 @@ Purchasely.start(
 
 Purchasely uses a **placement-based** approach. Placements are configured in the Purchasely Console and identified by a `placementId` (e.g., `"onboarding"`, `"settings"`, `"home_banner"`). Each placement can be associated with different Screens, audiences, and A/B tests — all managed remotely.
 
-Native iOS, Android, Flutter and React Native are on the v6 builder API. iOS uses `PLYPresentationBuilder` (`.forPlacementId(_)` / `.forScreenId(_)`) → `.build().preload()`. Android uses the `PLYPresentation { ... }.preload()` builder. Flutter uses `PresentationBuilder` (`.placement(id)` / `.screen(id)` / `.defaultSource()`) → `.build()` to get a `PresentationRequest`, then `preload()` / `display([Transition])`. React Native uses `Purchasely.presentation.placement(id)` / `.screen(id)` / `.default()` → `.build()` to get a `PresentationRequest`, then `preload()` / `display(transition?)`. The legacy `fetchPresentation(...)` / `presentationView(...)` / VC-returning methods are removed in v6 native, Flutter v6 and React Native v6 — do **NOT** use them on these platforms.
+Native iOS, Android, Flutter and React Native are on the v6 builder API. iOS uses `PLYPresentationBuilder` (`.forPlacementId(_)` / `.forScreenId(_)`) → `.build().preload()`. Android uses the `PLYPresentation { ... }.preload()` builder. Flutter uses `PresentationBuilder` (`.placement(id)` / `.screen(id)` / `.defaultSource()`) → `.build()` to get a `PresentationRequest`, then `preload()` / `display([Transition])`. React Native uses `Purchasely.presentation.placement(id)` / `.screen(id)` / `.defaultSource()` (alias `.default()`) → `.build()` to get a `PLYPresentationRequest`, then `preload()` / `display(transition?)`. The legacy `fetchPresentation(...)` / `presentationView(...)` / VC-returning methods are removed in v6 native, Flutter v6 and React Native v6 — do **NOT** use them on these platforms.
 
 > 💡 **Cordova (still v5): prefer `fetchPresentation()` + `presentPresentation(presentation)` over `presentPresentationForPlacement(placementId)`.** The pre-fetch path is what the [official docs recommend](https://docs.purchasely.com/docs/general-in-app-experiences-display#how-to-display-an-in-app-experience-associated-to-a-placement) and it's the only one that handles **Flows** correctly on plugin versions ≤ 5.7.x: it branches on `isFlow` / `flowId != null` natively and calls `presentation.display()`, which owns the close affordance and step transitions. The shorthand `presentPresentationForPlacement` is still exposed and remains fine for **simple, non-Flow paywalls** when you don't need to inspect the `PLYPresentationType` (e.g. quick prototypes, a placement guaranteed to never host a Flow), but if a Flow is ever assigned to that placement from the Console the user will get a stuck modal with no way out. When in doubt, use the pre-fetch path. **(React Native is now on the v6 builder API — see the React Native section below.)**
 
@@ -556,16 +556,18 @@ when (presentation.type) {
 
 ### React Native (TypeScript, SDK v6)
 
-Build a `PresentationRequest` with `Purchasely.presentation.placement(id).build()`, `preload()` it to inspect the `type`, then `display(transition?)` — which resolves at **dismiss** with a 5-field `PresentationOutcome` (`presentation`, `purchaseResult`, `plan`, `closeReason`, `error`). The legacy `fetchPresentation` / `presentPresentation[ForPlacement]` methods are removed in React Native v6:
+Build a `PLYPresentationRequest` with `Purchasely.presentation.placement(id).build()`, `preload()` it to inspect the `type`, then `display(transition?)` — which resolves at **dismiss** with a 5-field `PLYPresentationOutcome` (`presentation`, `purchaseResult`, `plan`, `closeReason`, `error`). The legacy `fetchPresentation` / `presentPresentation[ForPlacement]` methods are removed in React Native v6:
 
 ```typescript
+import Purchasely, { PLYPresentationType } from 'react-native-purchasely';
+
 const request = Purchasely.presentation.placement('PLACEMENT_ID').build();
 
-const presentation = await request.preload();
+const loaded = await request.preload(); // PLYLoadedPresentation
 
-switch (presentation.type) {
-  case PresentationType.NORMAL:
-  case PresentationType.FALLBACK:
+switch (loaded.type) {
+  case PLYPresentationType.NORMAL:
+  case PLYPresentationType.FALLBACK:
     const outcome = await request.display();
     if (outcome.purchaseResult === 'purchased' || outcome.purchaseResult === 'restored') {
       console.log('User purchased', outcome.plan?.name);
@@ -573,16 +575,16 @@ switch (presentation.type) {
       console.log('Dismissed without purchase:', outcome.closeReason);
     }
     break;
-  case PresentationType.DEACTIVATED:
+  case PLYPresentationType.DEACTIVATED:
     // Placement is deactivated — do nothing
     break;
-  case PresentationType.CLIENT:
-    // Show your own custom paywall (use presentation.id / plan summaries)
+  case PLYPresentationType.CLIENT:
+    // Show your own custom paywall (use loaded.screenId / plan summaries)
     break;
 }
 ```
 
-`purchaseResult` is a string (`'purchased' | 'cancelled' | 'restored' | null`). If you don't need to inspect the type first, you can build and display in one chain: `await Purchasely.presentation.placement('PLACEMENT_ID').build().display()`. `display(transition?)` takes an optional `Transition` object (`{ type: 'fullScreen' | 'push' | 'modal' | 'drawer' | 'popin' | 'inlinePaywall', heightPercentage?, dismissible?, backgroundColors? }`). To dismiss programmatically later, hold the `PresentationRequest` and call `request.close()` (also `.display()` / `.back()`).
+`purchaseResult` is a string (`'purchased' | 'cancelled' | 'restored' | null`); `closeReason` is `'button' | 'backSystem' | 'programmatic' | null`. If you don't need to inspect the type first, you can build and display in one chain: `await Purchasely.presentation.placement('PLACEMENT_ID').build().display()`. `display(transition?)` takes an optional `PLYTransition` object (`{ type: 'fullScreen' | 'push' | 'modal' | 'drawer' | 'popin' | 'inlinePaywall', width?, height?, dismissible?, backgroundColors? }` where `width` / `height` are `{ type: 'pixel' | 'percentage', value }` dimensions — the v5 `heightPercentage` was removed). To dismiss programmatically later, hold the `PLYPresentationRequest` and call `request.close()` (also `.display()` / `.back()`).
 
 ### Flutter (Dart, SDK v6)
 

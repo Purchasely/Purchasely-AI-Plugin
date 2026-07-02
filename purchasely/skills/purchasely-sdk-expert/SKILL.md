@@ -26,7 +26,7 @@ For workflow tasks, use the dedicated skills instead:
 
 ### SDK generation rules
 
-- **Native iOS, native Android, Flutter, and React Native use SDK v6 (`6.0.0-rc.1`).**
+- **Native iOS, native Android, Flutter, and React Native use SDK v6** (React Native pins `6.0.0-rc.2`; native iOS / Android / Flutter pin `6.0.0-rc.1`).
 - **Cordova stays on v5 (`5.7.3`).**
 - Always answer iOS / Android / Flutter / React Native with v6 APIs.
 - Always answer Cordova with v5 APIs.
@@ -106,7 +106,7 @@ Load the matching platform before giving exact setup or API signatures:
 - iOS v6: `PLYPresentationBuilder.forPlacementId("id").build().preload()` then `presentation.display(from:)`.
 - Android v6: `PLYPresentation { placementId("id") }.preload()` then `loaded.display(context)`.
 - Flutter v6: `PresentationBuilder.placement("id").build()` → `PresentationRequest`, then `request.preload()` and/or `request.display([Transition])`.
-- React Native v6: `Purchasely.presentation.placement("id").build()` → `PresentationRequest`, then `request.preload()` and/or `request.display(transition?)`.
+- React Native v6: `Purchasely.presentation.placement("id").build()` → `PLYPresentationRequest`, then `request.preload()` (resolves a `PLYLoadedPresentation`) and/or `request.display(transition?)`.
 - Cordova v5: `fetchPresentationForPlacement(...)` then `presentPresentation(...)`.
 - For Flows, prefer build/fetch → type guard → display. Avoid placement shorthand when Flow behavior matters.
 - For embedded / nested rendering, only use container APIs when the user explicitly wants to own the container.
@@ -126,7 +126,7 @@ Do not generate these for v6 native, Flutter or React Native:
 
 - native `fetchPresentation`, `setPaywallActionsInterceptor`, `presentationView` / `presentationController`
 - Flutter `Purchasely.start(...)`, `fetchPresentation`, `presentPresentation*`, `setPaywallActionInterceptorCallback`, `onProcessAction`, `closePresentation()`, `closeAllScreens()`, `presentSubscriptions()`
-- React Native `Purchasely.start({...})`, `fetchPresentation`, `presentPresentation*`, `setPaywallActionInterceptor`, `onProcessAction`, `closePresentation()`, `closeAllScreens()`, `presentSubscriptions()`, `readyToOpenDeeplink`, `setDefaultPresentationResultCallback`/`Handler`. ⚠️ **`Purchasely.isDeeplinkHandled(uri)` is KEPT on React Native** (NOT renamed to `handleDeeplink`) — generate it as-is.
+- React Native `Purchasely.start({...})`, `fetchPresentation`, `presentPresentation*`, `setPaywallActionInterceptor`, `onProcessAction`, `closePresentation()`, `closeAllScreens()`, `presentSubscriptions()`, `readyToOpenDeeplink`, `isDeeplinkHandled`, `setDefaultPresentationResultCallback`/`Handler`. ⚠️ **`isDeeplinkHandled(uri)` was renamed to `Purchasely.handleDeeplink(uri)` on React Native** (removed with no alias, matching native iOS/Android and Flutter) — generate `handleDeeplink`, never `isDeeplinkHandled`.
 - Do not generate `purchase(planId:)`, `Purchasely.purchase({ planId })`, or generic `Purchasely.purchase(...)`
 
 Use `purchaseWithPlanVendorId(...)` for React Native / Flutter / Cordova programmatic purchases; use native `PLYPlan` purchase APIs on iOS / Android.

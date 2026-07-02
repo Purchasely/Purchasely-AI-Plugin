@@ -265,7 +265,7 @@ Purchasely-AI-Plugin/
 | `/purchasely:integrate` | Slash command + matching `purchasely-integrate` skill | The command launches the skill; the skill is also auto-invoked when Claude detects an SDK integration task |
 | `/purchasely:review` | Slash command + matching `purchasely-review` skill | Same as above |
 | `/purchasely:debug` | Slash command + matching `purchasely-debug` skill | Same as above |
-| `/purchasely:migrate` | Slash command + matching `purchasely-migrate` skill | Migrates native iOS, native Android, and Flutter integrations from SDK v5 to v6 |
+| `/purchasely:migrate` | Slash command + matching `purchasely-migrate` skill | Migrates native iOS, native Android, Flutter, and React Native integrations from SDK v5 to v6 |
 | Natural Purchasely SDK question | Portable `purchasely-sdk-expert` skill + Claude Code `purchasely-sdk-expert` agent when available | No slash command needed — ask normally and the expert guidance can be used directly for free-form Purchasely SDK Q&A |
 
 ## Supported Platforms
@@ -275,7 +275,7 @@ Purchasely-AI-Plugin/
 | iOS (Swift / Obj-C) | v6 (`6.0.0-rc.1`) | `Purchasely.apiKey(...).runningMode(...).start()` | `PLYPresentationBuilder...build().preload()` → `display(from:)` | per-action `interceptAction` returning `PLYInterceptResult` | `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
 | Android (Kotlin / Java) | v6 (`6.0.0-rc.1`) | `Purchasely { ... }` or `Purchasely.Builder(...)` | `PLYPresentation { ... }.preload()` → `display(context)` | per-action `interceptAction` returning `PLYInterceptResult` | auto-intercept + `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
 | Flutter | v6 (`6.0.0-rc.1`) | `PurchaselyBuilder.apiKey(...).start()` | `PresentationBuilder...build()` → `preload()` / `display(...)` | per-action `interceptAction` returning `InterceptResult` | `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
-| React Native | v5 (`5.7.3`) | `Purchasely.start(...)` | `fetchPresentation` + `presentPresentation` | `setPaywallActionInterceptor` + `onProcessAction` | `handleDeeplink` + `readyToOpenDeeplink` | `userLogin` / `userLogout` |
+| React Native | v6 (`6.0.0-rc.2`) | `Purchasely.builder(...).runningMode(...).start()` | `Purchasely.presentation.placement(...).build()` → `preload()` / `display(transition?)` | per-action `interceptAction` returning `'success' \| 'failed' \| 'notHandled'` | `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
 | Cordova | v5 (`5.7.3`) | `Purchasely.start(...)` | `fetchPresentationForPlacement` + `presentPresentation` | `setPaywallActionInterceptor` + `onProcessAction` | `handleDeeplink` + `readyToOpenDeeplink` | `userLogin` / `userLogout` |
 
 ## Requirements
