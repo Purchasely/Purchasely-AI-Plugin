@@ -1,17 +1,17 @@
 # React Native — Migrating to the Purchasely 6.0 API
 
 > **Published as a pre-release.** The React Native v6 API ships in
-> `react-native-purchasely: 6.0.0-rc.1` (and the matching
+> `react-native-purchasely: 6.0.0-rc.2` (and the matching
 > `@purchasely/react-native-purchasely-google` / `-android-player` / `-amazon` /
-> `-huawei` packages), live on npm alongside the native iOS `Purchasely 6.0.0-rc.1`
-> and Android `io.purchasely:core 6.0.0-rc.1` pre-releases. The builder-based API
+> `-huawei` packages), live on npm alongside the native iOS `Purchasely 6.0.0-rc.2`
+> and Android `io.purchasely:core 6.0.0-rc.2` pre-releases. The builder-based API
 > documented below (`Purchasely.builder`, `Purchasely.presentation`,
 > `Purchasely.interceptAction`) is the current published surface — the v5
 > paywall API (`Purchasely.start({...})`, `fetchPresentation` /
 > `presentPresentation[ForPlacement]`, `setPaywallActionInterceptorCallback` +
-> `onProcessAction`, `closePresentation()`, `readyToOpenDeeplink`) is **removed**
-> (not deprecated): calling any removed method fails to compile (TypeScript) and
-> the method no longer exists at runtime.
+> `onProcessAction`, `closePresentation()`, `readyToOpenDeeplink`,
+> `isDeeplinkHandled`) is **removed** (not deprecated): calling any removed method
+> fails to compile (TypeScript) and the method no longer exists at runtime.
 
 > **In-repo migration guide.** This is the React Native-specific old→new mapping for
 > the Purchasely 6.0 plugin. The companion integration reference is
@@ -19,16 +19,17 @@
 > [`../concepts/`](../concepts/).
 
 This release **adapts the Purchasely React Native plugin to the Purchasely 6.0
-native SDKs** (iOS `Purchasely 6.0.0-rc.1`, Android `io.purchasely:core 6.0.0-rc.1`).
-There is **no "v6" naming in the JS API** — the public symbols keep their plain
-names (`Purchasely.builder`, `PresentationBuilder`, `PresentationRequest`,
-`PresentationOutcome`, `Transition`, …). No `v6` / `V6` symbols exist.
+native SDKs** (iOS `Purchasely 6.0.0-rc.2`, Android `io.purchasely:core 6.0.0-rc.2`).
+The public paywall symbols are **`PLY`-prefixed** — `Purchasely.builder`,
+`PLYPresentationBuilder`, `PLYPresentationRequest`, `PLYLoadedPresentation`,
+`PLYPresentationOutcome`, `PLYTransition`, `PLYInterceptResult`, … No `v6` / `V6`
+symbols exist.
 
-Only three areas changed: **starting the SDK**, **displaying / preloading /
-closing a presentation**, and the **action interceptor**. Everything else on the
-`Purchasely` default export — purchases, restore, identity, catalog,
-subscriptions, user attributes, events, dynamic offerings, consent and config —
-is **unchanged** (including `isDeeplinkHandled`, which is **kept**, not renamed).
+Only a few areas changed: **starting the SDK**, **displaying / preloading /
+closing a presentation**, the **action interceptor**, and the **deeplink API**.
+Everything else on the `Purchasely` default export — purchases, restore, identity,
+catalog, subscriptions, user attributes, events, dynamic offerings, consent and
+config — is **unchanged**.
 
 A paywall is now called a **Presentation** (or *Screen*).
 
@@ -37,7 +38,7 @@ A paywall is now called a **Presentation** (or *Screen*).
 > read your integration and rewrite the v5 paywall calls to the v6 builder API
 > for you. Point them at the files that call `Purchasely.start`,
 > `presentPresentationForPlacement`, `fetchPresentation`,
-> `setPaywallActionInterceptorCallback`, etc.
+> `setPaywallActionInterceptorCallback`, `isDeeplinkHandled`, etc.
 
 ---
 
@@ -45,17 +46,21 @@ A paywall is now called a **Presentation** (or *Screen*).
 
 - Start the SDK with the fluent builder:
   `Purchasely.builder('…').runningMode('full').start()` (returns `Promise<boolean>`).
-- Build a presentation with `Purchasely.presentation`
-  (`.placement(id)`, `.screen(id)`, `.default()`), then `.build()` to get a
-  **`PresentationRequest`** with a lifecycle (`preload()`, `display(transition?)`,
-  `close()`, `back()`).
+- Build a presentation with `Purchasely.presentation` (a `PLYPresentationBuilder`):
+  `.placement(id)`, `.screen(id)`, `.defaultSource()` (alias `.default()`), then
+  `.build()` to get a **`PLYPresentationRequest`** with a lifecycle
+  (`preload()`, `display(transition?)`, `close()`, `back()`, `requestId`).
+- `preload()` resolves a **`PLYLoadedPresentation`** (data + `display`/`close`/`back`).
 - `display(transition?)` resolves at **dismiss** with a 5-field
-  **`PresentationOutcome`** (`presentation`, `purchaseResult`, `plan`,
+  **`PLYPresentationOutcome`** (`presentation`, `purchaseResult`, `plan`,
   `closeReason`, `error`).
 - The interceptor is now `Purchasely.interceptAction(kind, handler)`, where
-  `handler` returns a **string** (`'success'` / `'failed'` / `'notHandled'`) —
-  there is no more `onProcessAction`.
-- Inline rendering still uses the **`PLYPresentationView`** component (unchanged).
+  `handler` returns a **`PLYInterceptResult`** (`'success'` / `'failed'` /
+  `'notHandled'`) — there is no more `onProcessAction`.
+- Deeplinks: `isDeeplinkHandled` / `readyToOpenDeeplink` are **removed** — use
+  `Purchasely.handleDeeplink(uri)` and `.allowDeeplink(true)`.
+- Inline rendering still uses the **`PLYPresentationView`** component (now also
+  accepts a preloaded `request`).
 - **All other `Purchasely.*` methods are UNCHANGED** — see
   [What's unchanged](#whats-unchanged).
 
@@ -63,26 +68,30 @@ A paywall is now called a **Presentation** (or *Screen*).
 
 ## Migration checklist
 
-1. Bump all five npm packages to **`6.0.0-rc.1`** exactly (`--save-exact`); never
+1. Bump all five npm packages to **`6.0.0-rc.2`** exactly (`--save-exact`); never
    floating. `rm -rf node_modules && npm install`, then `pod install --repo-update`.
+   Bump the Android host `minSdkVersion` to **23** (was 21) and `compileSdk` to 35.
 2. Replace `Purchasely.start({...})` / `startWithAPIKey(...)` with the
    `Purchasely.builder(apiKey)…start()` chain. **Add `.runningMode('full')`
    explicitly** if you relied on the old implicit Full mode (default is now
    `'observer'`).
 3. Replace `fetchPresentation` / `presentPresentation*` /
    `presentProductWithIdentifier` / `presentPlanWithIdentifier` with
-   `Purchasely.presentation.placement(id) | .screen(id)` → `.build()` →
-   `.preload()` / `.display()`.
+   `Purchasely.presentation.placement(id) | .screen(id) | .defaultSource()` →
+   `.build()` → `.preload()` / `.display()`.
 4. Replace `setPaywallActionInterceptorCallback` + `onProcessAction` with one
    `Purchasely.interceptAction(kind, handler)` per kind; return
    `'success' | 'failed' | 'notHandled'`.
 5. Replace `readyToOpenDeeplink(true)` with `.allowDeeplink(true)` on the builder.
-   **Keep `isDeeplinkHandled(uri)`** — it is unchanged in React Native.
+   **Replace `isDeeplinkHandled(uri)` with `Purchasely.handleDeeplink(uri)`** — the
+   v5 name is removed with no alias.
 6. Replace `setDefaultPresentationResultCallback` /
    `setDefaultPresentationResultHandler` with
    `Purchasely.setDefaultPresentationDismissHandler(outcome => …)`.
-7. Remove every call to `presentSubscriptions()` — it no longer exists. Build
-   your own screen from `userSubscriptions()` / `userSubscriptionsHistory()`.
+7. Remove every call to `presentSubscriptions()`,
+   `displaySubscriptionCancellationInstruction()`, `clientPresentationDisplayed` /
+   `clientPresentationClosed` — they no longer exist. Build your own screen from
+   `userSubscriptions()` / `userSubscriptionsHistory()`.
 8. Replace `showPresentation` / `hidePresentation` / `closePresentation` with the
    request lifecycle (`request.display()` / `request.close()` / `request.back()`).
 9. Migrate `ProductResult` ordinal checks to the `purchaseResult` string union
@@ -111,12 +120,17 @@ They have been removed in favour of the builder API.
 | `Purchasely.hidePresentation()` / `Purchasely.closePresentation()` | request lifecycle: `request.close()` |
 | `Purchasely.setPaywallActionInterceptorCallback(cb)` + `Purchasely.onProcessAction(bool)` | `Purchasely.interceptAction(kind, handler)` — handler returns `'success' \| 'failed' \| 'notHandled'` (no more `onProcessAction`) |
 | `Purchasely.setDefaultPresentationResultCallback(cb)` / `setDefaultPresentationResultHandler(cb)` | `Purchasely.setDefaultPresentationDismissHandler(outcome => …)` — global handler for presentations the SDK opens itself (campaigns, deeplinks, Promoted IAP). For paywalls **you** display, use `request.onDismissed(outcome => …)` instead. |
-| `Purchasely.readyToOpenDeeplink(true)` | `Purchasely.builder(apiKey).allowDeeplink(true).start()` |
+| `Purchasely.readyToOpenDeeplink(true)` | `Purchasely.builder(apiKey).allowDeeplink(true).start()` (or `Purchasely.allowDeeplink(true)`) |
+| `Purchasely.isDeeplinkHandled(uri)` | `Purchasely.handleDeeplink(uri)` — **renamed, no alias.** Returns `Promise<boolean>`. |
 | `Purchasely.presentSubscriptions()` | **REMOVED — no replacement.** Build your own screen from `userSubscriptions()` / `userSubscriptionsHistory()`. |
+| `Purchasely.clientPresentationDisplayed(...)` / `clientPresentationClosed(...)` | **REMOVED — no replacement.** |
+| `PLYPaywallAction` / `Purchasely.PaywallAction.*` enum | **REMOVED.** Interceptor kinds are now string literals (`'purchase'`, `'navigate'`, …). |
+| `RunningMode.TRANSACTION_ONLY` / `RunningMode.PAYWALL_OBSERVER` | **REMOVED.** Only `'observer'` / `'full'` remain. |
 
 > **Reminder.** Everything *not* in this table — purchases, restore, login,
 > attributes, subscriptions data, products, events, offerings, consent and config
-> — keeps the exact same `Purchasely.*` signatures. Only the paywall surface moved.
+> — keeps the exact same `Purchasely.*` signatures. Only the paywall + deeplink
+> surface moved.
 
 ---
 
@@ -189,7 +203,7 @@ switch (result.result) {
 
 ### After (v6)
 
-`display()` resolves at **dismiss** with a `PresentationOutcome`:
+`display()` resolves at **dismiss** with a `PLYPresentationOutcome`:
 
 ```typescript
 const outcome = await Purchasely.presentation
@@ -204,12 +218,14 @@ if (outcome.error) {
 } else if (outcome.purchaseResult === 'purchased' || outcome.purchaseResult === 'restored') {
   console.log('Purchased', outcome.plan?.name);
 } else {
-  console.log('Dismissed', outcome.closeReason); // 'button' | 'backSystem' | 'interactiveDismiss' | 'programmatic'
+  console.log('Dismissed', outcome.closeReason); // 'button' | 'backSystem' | 'programmatic'
 }
 ```
 
 `purchaseResult` is now a string union (`'purchased' | 'cancelled' | 'restored'`)
-instead of the `ProductResult` ordinal enum.
+instead of the `ProductResult` ordinal enum. `closeReason` is one of `'button'`,
+`'backSystem'` (Android system back **and** iOS interactive dismiss both map here)
+or `'programmatic'` — there is **no** `interactiveDismiss` value.
 
 ### Targeting a specific screen / product / plan
 
@@ -222,7 +238,30 @@ await Purchasely.presentation.screen('SCREEN_ID').contentId('CONTENT_ID').build(
 
 // Specific plan (was presentPlanWithIdentifier)
 await Purchasely.presentation.screen('SCREEN_ID').build().display();
+
+// Default placement
+await Purchasely.presentation.defaultSource().build().display();
 ```
+
+### Transitions
+
+`display([transition])` takes an optional `PLYTransition` object. Sizing uses
+`width` / `height` **dimension objects** (`{ type: 'pixel' | 'percentage', value }`).
+The v5 `heightPercentage` field was **removed** — use
+`height: { type: 'percentage', value }` instead:
+
+```typescript
+await request.display({ type: 'fullScreen' });
+await request.display({ type: 'modal', dismissible: false });
+await request.display({
+  type: 'drawer',
+  height: { type: 'percentage', value: 0.6 },
+  backgroundColors: { light: '#FFFFFF', dark: '#000000' },
+});
+```
+
+`type` accepts `'fullScreen'`, `'push'`, `'modal'`, `'drawer'`, `'popin'`,
+`'inlinePaywall'`.
 
 ---
 
@@ -237,14 +276,15 @@ const result = await Purchasely.presentPresentation({ presentation });
 
 ### After (v6)
 
-Build a `PresentationRequest`, `preload()` it to fetch the screen from the
-network, then `display()` the **same** request when you are ready.
+Build a `PLYPresentationRequest`, `preload()` it to fetch the screen from the
+network (it resolves a **`PLYLoadedPresentation`** — data + lifecycle methods),
+then `display()` the **same** request when you are ready.
 
 ```typescript
 const request = Purchasely.presentation.placement('ONBOARDING').build();
-const presentation = await request.preload(); // resolves when the screen is loaded
+const loaded = await request.preload(); // PLYLoadedPresentation
 // later, when ready to show it:
-const outcome = await request.display();
+const outcome = await loaded.display();  // (same as request.display())
 ```
 
 ---
@@ -262,9 +302,12 @@ request.close();    // hide / close
 request.back();     // navigate back inside a multi-step (Flow) presentation
 ```
 
-> `request.close()` currently dismisses **all** displayed presentations (the
-> native SDK does not yet expose a per-request close). If you stack
-> presentations, closing one will dismiss the others.
+> **`request.close()` platform difference.** On **iOS** it closes the **specific**
+> presentation identified by its `requestId` (falling back to closing all
+> Purchasely screens when the request is no longer tracked). On **Android** the
+> native SDK does not yet expose a per-request close, so it dismisses **all**
+> displayed presentations. If you stack presentations, closing one dismisses the
+> others on Android.
 
 ---
 
@@ -272,8 +315,8 @@ request.back();     // navigate back inside a multi-step (Flow) presentation
 
 `setPaywallActionInterceptorCallback` + `onProcessAction` are replaced by
 `Purchasely.interceptAction(kind, handler)`. Register **one handler per action
-kind**; the handler returns `'success' | 'failed' | 'notHandled'` instead of
-calling `onProcessAction(true/false)`.
+kind**; the handler returns a `PLYInterceptResult` (`'success' | 'failed' |
+'notHandled'`) instead of calling `onProcessAction(true/false)`.
 
 ### Before (v5 — removed)
 
@@ -314,11 +357,17 @@ Purchasely.removeActionInterceptor('purchase');
 Purchasely.removeAllActionInterceptors();
 ```
 
-Action kinds: `'close'`, `'closeAll'`, `'login'`, `'navigate'`, `'purchase'`,
+Action kinds (10): `'close'`, `'closeAll'`, `'login'`, `'navigate'`, `'purchase'`,
 `'restore'`, `'openPresentation'`, `'openPlacement'`, `'promoCode'`,
-`'webCheckout'`. Each kind exposes a typed payload via `payload?.kind`
-(e.g. `payload.url` for `'navigate'`, `payload.plan` for `'purchase'`);
-payload-less kinds (`'login'`, `'restore'`, `'promoCode'`) carry no extra fields.
+`'webCheckout'`. The handler receives a `PLYInterceptorInfo` (`{ contentId?,
+presentation? }`) and a **typed payload** discriminated by `payload.kind`:
+`PLYPurchasePayload` (`plan`, `subscriptionOffer?`, `offer?`), `PLYNavigatePayload`
+(`url`, `title?`), `PLYClosePayload` (`closeReason`), `PLYOpenPresentationPayload`
+(`presentationId`), `PLYOpenPlacementPayload` (`placementId`),
+`PLYWebCheckoutPayload` (`url`, `clientReferenceId`, `queryParameterKey`,
+`webCheckoutProvider`). For `'login'` / `'restore'` / `'promoCode'` the payload is
+`null`. If the handler throws it counts as `'failed'`; on iOS a handler that does
+not resolve within **30 seconds** falls back to `'notHandled'`.
 
 ---
 
@@ -327,6 +376,9 @@ payload-less kinds (`'login'`, `'restore'`, `'promoCode'`) carry no extra fields
 ```typescript
 // Allow deeplinks (replaces readyToOpenDeeplink(true)) — set at start:
 await Purchasely.builder('YOUR_API_KEY').allowDeeplink(true).start();
+
+// Handle an incoming deeplink at runtime (replaces isDeeplinkHandled — renamed):
+const handled = await Purchasely.handleDeeplink('app://ply/presentations/');
 ```
 
 There are **two distinct paywall flows** — don't conflate them:
@@ -359,7 +411,7 @@ const subscription = Purchasely.setDefaultPresentationDismissHandler((outcome) =
     'SDK paywall dismissed:',
     outcome.presentation?.screenId,
     outcome.purchaseResult, // 'purchased' | 'restored' | 'cancelled' | null
-    outcome.closeReason     // 'button' | 'backSystem' | 'interactiveDismiss' | 'programmatic' | null
+    outcome.closeReason     // 'button' | 'backSystem' | 'programmatic' | null
   );
 });
 
@@ -370,14 +422,10 @@ subscription.remove();
 Purchasely.removeDefaultPresentationDismissHandler();
 ```
 
-> **Platform note.** `closeReason` is the cross-platform superset: Android
-> reports `backSystem` (system back), iOS reports `interactiveDismiss`
-> (swipe-down / nav pop). `error` is reserved (always `null` in 6.0).
-
-```typescript
-// isDeeplinkHandled is UNCHANGED in React Native (NOT renamed to handleDeeplink):
-const handled = await Purchasely.isDeeplinkHandled('app://ply/presentations/');
-```
+> **Platform note.** `closeReason` has three values: `button`, `backSystem`
+> (Android system back **and** the iOS interactive dismiss — swipe-down / nav pop
+> — both map here), and `programmatic`. `error` and `closeReason` are mutually
+> exclusive: when `error != null`, `closeReason` is `null`.
 
 ---
 
@@ -410,41 +458,47 @@ try {
 
 All **core** SDK methods are unchanged in name, signature, and behaviour. Only
 the v5 *paywall* surface was removed (plus `synchronize`, which gained an
-awaitable result — see above). The following keep working exactly as in v5:
+awaitable result, and the deeplink rename — see above). The following keep working
+exactly as in v5:
 
 - **User**: `userLogin`, `userLogout`, `getAnonymousUserId`, `isAnonymous`.
 - **Products**: `allProducts`, `productWithIdentifier`, `planWithIdentifier`,
   `purchaseWithPlanVendorId`, `signPromotionalOffer`, `isEligibleForIntroOffer`,
   `setDynamicOffering`, `getDynamicOfferings`, `removeDynamicOffering`,
   `clearDynamicOfferings`.
-- **Subscriptions data**: `userSubscriptions`, `userSubscriptionsHistory`,
-  `restoreAllProducts`, `silentRestoreAllProducts`,
+- **Subscriptions data**: `userSubscriptions` (`{ invalidateCache }`),
+  `userSubscriptionsHistory`, `restoreAllProducts`, `silentRestoreAllProducts`,
   `userDidConsumeSubscriptionContent`.
-- **Attributes**: `setUserAttributeWith{String,Number,Boolean,Date,StringArray,NumberArray,BooleanArray}`,
-  `incrementUserAttribute`, `decrementUserAttribute`, `userAttributes`,
-  `userAttribute`, `clearUserAttribute`, `clearUserAttributes`,
-  `clearBuiltInAttributes`, `setAttribute`.
-- **Listeners**: `addEventListener` / `removeEventListener`,
-  `addPurchasedListener` / `removePurchasedListener`,
+- **Attributes**: `setUserAttributeWith{String,Number,Int,Double,Boolean,Date,StringArray,NumberArray,IntArray,DoubleArray,BooleanArray}`
+  (`Int`/`Double` are aliases of `Number`), `incrementUserAttribute`,
+  `decrementUserAttribute`, `userAttributes`, `userAttribute`,
+  `clearUserAttribute`, `clearUserAttributes`, `clearBuiltInAttributes`,
+  `setAttribute`. Legal basis is `PLYDataProcessingLegalBasis.ESSENTIAL` / `.OPTIONAL`.
+- **Listeners**: `addEventListener` / `removeEventListener` (aliases
+  `listenToEvents` / `stopListeningToEvents`),
+  `addPurchasedListener` / `removePurchasedListener` (aliases
+  `listenToPurchases` / `stopListeningToPurchases`),
   `addUserAttributeSetListener` / `removeUserAttributeSetListener`,
-  `addUserAttributeRemovedListener` / `removeUserAttributeRemovedListener`.
-- **Client (BYOS) presentations**: `clientPresentationDisplayed`,
-  `clientPresentationClosed` — unchanged.
+  `addUserAttributeRemovedListener` / `removeUserAttributeRemovedListener`,
+  `setUserAttributeListener` / `clearUserAttributeListener`.
 - **Misc**: `setLogLevel`, `setLanguage`, `setThemeMode`, `setDebugMode`,
-  `isDeeplinkHandled`, `revokeDataProcessingConsent`, `getConstants`, `close`.
-- **Embedded component**: `PLYPresentationView` — unchanged.
+  `allowDeeplink`, `allowCampaigns`, `revokeDataProcessingConsent`, `getConstants`.
+- **Embedded component**: `PLYPresentationView` — now also accepts a preloaded
+  `request` prop (see [`integration.md`](./integration.md)).
 
 > **`presentSubscriptions()` is REMOVED in v6 (BREAKING).** The native
 > subscriptions screen was removed from **both** the iOS and Android SDKs, so
 > `Purchasely.presentSubscriptions()` no longer exists in React Native v6 — it is
-> not a no-op, the method is gone entirely. Build your own subscriptions screen
-> from `userSubscriptions()` / `userSubscriptionsHistory()`.
+> not a no-op, the method is gone entirely. `displaySubscriptionCancellationInstruction()`
+> and `clientPresentationDisplayed` / `clientPresentationClosed` are gone too.
+> Build your own subscriptions screen from `userSubscriptions()` /
+> `userSubscriptionsHistory()`.
 
 > **Native dependency.** This React Native release targets the Purchasely v6 native
-> SDKs (iOS `Purchasely 6.0.0-rc.1`, Android `io.purchasely:core 6.0.0-rc.1`),
+> SDKs (iOS `Purchasely 6.0.0-rc.2`, Android `io.purchasely:core 6.0.0-rc.2`),
 > published as pre-releases on CocoaPods / Maven Central — see
 > [`../sdk-versions.md`](../sdk-versions.md) for the canonical pins. The published
-> **React Native** packages are all `6.0.0-rc.1`, pinned exactly to those native
+> **React Native** packages are all `6.0.0-rc.2`, pinned exactly to those native
 > versions.
 
 ---
