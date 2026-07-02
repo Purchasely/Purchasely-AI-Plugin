@@ -83,7 +83,7 @@ switch (presentation.type) {
   case PLYPresentationType.NORMAL:
   case PLYPresentationType.FALLBACK: {
     // request.display() shows the preloaded screen and resolves at dismiss
-    // with a PresentationOutcome (required for Flows).
+    // with a PLYPresentationOutcome (required for Flows).
     const outcome = await request.display();
     handleResult(outcome);
     break;

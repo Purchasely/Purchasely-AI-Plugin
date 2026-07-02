@@ -89,7 +89,7 @@ await PurchaselyBuilder.apiKey('<YOUR_API_KEY>')
 `allowCampaigns` is set at init via `PurchaselyBuilder` and is a separate flag from `allowDeeplink`. Both default to `true`.
 
 > **v6 native:** `allowCampaigns` and `allowDeeplink` are **independent** flags (in v5 a single flag governed both). Control campaign display with `allowCampaigns`; control deeplink presentations with `allowDeeplink` (defaults to `true`). Android also **auto-intercepts** deeplinks, so no manual `handleDeeplink` call is required for them.
-> **React Native v6:** there is no separate `allowCampaigns` flag — `.allowDeeplink(...)` on the builder gates campaign/deeplink presentations (defaults to `false`). Deeplinks you receive yourself are still passed with `Purchasely.isDeeplinkHandled(url)` (unchanged from v5).
+> **React Native v6:** `.allowDeeplink(...)` on the builder gates campaign/deeplink presentations (defaults to `false`); there is also an `.allowCampaigns(...)` modifier. Deeplinks you receive yourself are passed with `Purchasely.handleDeeplink(url)` — the v5 `isDeeplinkHandled` was removed and renamed to `handleDeeplink` (no alias).
 > If you implement a [UI Handler](https://docs.purchasely.com/docs/ui-handler-deeplinks) to manage deeplink display yourself, **keep the presentation object returned** and do not refetch it — refetching loses the campaign context.
 
 > **React Native v6 — dismiss handler for SDK-opened presentations.** Campaigns, deeplinks and Promoted IAP open presentations the app didn't trigger. Register a single global handler to observe their outcome (the v6 replacement for v5's `setDefaultPresentationResultCallback`):
