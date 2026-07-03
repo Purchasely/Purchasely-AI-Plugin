@@ -116,7 +116,7 @@ The eight `PLYPresentationView?`-returning factories (`productView` / `planView`
 Purchasely.display(for: "PLACEMENT_ID", displayMode: .modal)
 ```
 
-→ **v6 equivalent:** `Purchasely.display(for: "PLACEMENT_ID", transition: .modal)` (parameter `displayMode:` → `transition:`). `PLYDisplayMode` also gains sizing: `.drawer(height:)`, `.popin(width:height:)`, `.modal(dismissible:)`.
+→ **v6 equivalent:** `Purchasely.display(for: "PLACEMENT_ID", transition: .modal)` (parameter `displayMode:` → `transition:`). `PLYTransition` also supports sizing: `.drawer(height:)`, `.popin(width:height:)`, `.modal(dismissible:)`.
 
 ### `Purchasely.closeDisplayedPresentation()` — **removed**
 

@@ -229,14 +229,14 @@ if presentation.isFlow {
 }
 ```
 
-### Display mode & sizing — `PLYDisplayMode` / `PLYDimension`
+### Display transition & sizing — `PLYTransition` / `PLYDimension`
 
-`PLYDisplayMode` exposes sizing for drawer / popin; `PLYDimension` is public (`.value(Int)` in points or `.percentage(Double)`):
+`PLYTransition` exposes sizing for drawer / popin; `PLYDimension` is public (`.value(Int)` in points or `.percentage(Double)`):
 
 ```swift
-let drawer  = PLYDisplayMode.drawer(height: .value(400))                  // 400 pt tall
-let popin   = PLYDisplayMode.popin(width: .percentage(0.9), height: .value(500))
-let blocked = PLYDisplayMode.modal(dismissible: false)                    // block ambient dismiss
+let drawer  = PLYTransition.drawer(height: .value(400))                  // 400 pt tall
+let popin   = PLYTransition.popin(width: .percentage(0.9), height: .value(500))
+let blocked = PLYTransition.modal(dismissible: false)                    // block ambient dismiss
 ```
 
 When `dismissible` is `false`, ambient dismiss (background tap, swipe-down, iPad form-sheet tap-outside) is blocked; the close button and programmatic dismiss still work.
