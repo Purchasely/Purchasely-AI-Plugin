@@ -57,7 +57,7 @@ Flutter joins the **v6 line**, and skills-only installs gain first-class expert 
 
 ### Removed
 
-- Flutter docs no longer present `Purchasely.presentSubscriptions()` — it is **removed** in Flutter v6 (the native subscriptions screen was dropped on both platforms; build your own from `userSubscriptions()` / `userSubscriptionsHistory()`). `displaySubscriptionCancellationInstruction()` is a no-op.
+- Flutter docs no longer present `Purchasely.presentSubscriptions()` or `displaySubscriptionCancellationInstruction()` — both are **removed** in Flutter v6 (the native subscriptions screen was dropped on both platforms; build your own from `userSubscriptions()` / `userSubscriptionsHistory()`).
 - Removed the `/purchasely:question` slash command. Free-form Purchasely SDK questions should be asked naturally and routed to `purchasely-sdk-expert` guidance when available.
 
 ## [2.0.0-rc.2] — 2026-06-16

@@ -459,8 +459,7 @@ name, signature and behaviour:
 > Build your own subscriptions screen with `userSubscriptions()` /
 > `userSubscriptionsHistory()`.
 >
-> `Purchasely.displaySubscriptionCancellationInstruction()` is kept for source
-> compatibility but is a **no-op on both Android and iOS**.
+> `Purchasely.displaySubscriptionCancellationInstruction()` is also **removed** from Flutter v6.
 
 > **Removed deeplink helpers.** `readyToOpenDeeplink` and `isDeeplinkHandled`
 > were **removed** in v6. Use `allowDeeplink` / `handleDeeplink` instead.

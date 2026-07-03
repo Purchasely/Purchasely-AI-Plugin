@@ -276,14 +276,14 @@ Purchasely.display(for: placementId, transition: .modal)  // override
 let presentation = try await Purchasely.display(for: placementId, transition: .modal)
 ```
 
-### `PLYDisplayMode` sizing (new) + `PLYDimension` public
+### `PLYTransition` sizing (new) + `PLYDimension` public
 
-`PLYDisplayMode` exposes new sizing for drawer / popin; `PLYDimension` is now public (`.value(Int)` in points, `.percentage(Double)`):
+`PLYTransition` exposes new sizing for drawer / popin; `PLYDimension` is now public (`.value(Int)` in points, `.percentage(Double)`):
 
 ```swift
-let drawer  = PLYDisplayMode.drawer(height: .value(400))
-let popin   = PLYDisplayMode.popin(width: .percentage(0.9), height: .value(500))
-let blocked = PLYDisplayMode.modal(dismissible: false)   // block ambient dismiss
+let drawer  = PLYTransition.drawer(height: .value(400))
+let popin   = PLYTransition.popin(width: .percentage(0.9), height: .value(500))
+let blocked = PLYTransition.modal(dismissible: false)   // block ambient dismiss
 ```
 
 When `dismissible` is `false`, ambient dismiss (background tap, swipe-down, iPad form-sheet tap-outside) is blocked; the close button and programmatic dismiss still work.
