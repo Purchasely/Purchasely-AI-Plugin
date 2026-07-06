@@ -67,7 +67,7 @@ Purchasely.setPaywallActionsInterceptor { action, params, info, proceed in
 info.presentationId; info.placementId; info.audienceId; info.abTestId; info.campaignId
 ```
 
-→ **v6 equivalent:** `PLYInterceptorInfo` — `info.presentation?.id`, `info.presentation?.placementId`, `info.presentation?.audienceId`, `info.presentation?.abTestId`, `info.presentation?.campaignId`. `info.contentId` / `info.controller` unchanged.
+→ **v6 equivalent:** `PLYInterceptorInfo` — `info.presentation?.screenId`, `info.presentation?.placementId`, `info.presentation?.audienceId`, `info.presentation?.abTestId`, `info.presentation?.campaignId`. `info.contentId` / `info.controller` unchanged.
 
 ### `PLYPresentationActionParameters` / `PLYPaywallActionsInterceptor` typealias
 
@@ -145,7 +145,7 @@ Purchasely.setDefaultPresentationResultHandler { result, plan in /* .purchased /
 
 ## Deeplinks
 
-### `Purchasely.readyToOpenDeeplink(_:)` — **deprecated** (removal v7)
+### `Purchasely.readyToOpenDeeplink(_:)` — **removed in v6** (no alias)
 
 ```swift
 Purchasely.readyToOpenDeeplink(true)
@@ -153,7 +153,7 @@ Purchasely.readyToOpenDeeplink(true)
 
 → **v6 equivalent:** `Purchasely.allowDeeplink(_:)` (deeplinks now display immediately by default; pass `false` to defer). Companion flag `Purchasely.allowCampaigns(_:)`.
 
-### `Purchasely.isDeeplinkHandled(deeplink:)` — **deprecated** (removal v7)
+### `Purchasely.isDeeplinkHandled(deeplink:)` — **removed in v6** (no alias)
 
 ```swift
 let handled = Purchasely.isDeeplinkHandled(deeplink: url)
