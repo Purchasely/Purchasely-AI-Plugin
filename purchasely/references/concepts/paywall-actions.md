@@ -90,7 +90,16 @@ Purchasely.interceptAction<PLYPresentationAction.Purchase> { info, purchase ->
 }
 ```
 
-> The reified `interceptAction<T>` / `removeActionInterceptor<T>()` are `inline` member functions of `Purchasely` targeting JVM 11 — no separate import beyond `io.purchasely.ext.Purchasely` is needed. Compile your Kotlin module with `jvmTarget = 11`, or use the `Class`-based overload (see Java below).
+> The reified `interceptAction<T>` / `removeActionInterceptor<T>()` are `inline` member functions of `Purchasely` targeting JVM 11 — no separate import beyond `io.purchasely.ext.Purchasely` is needed. Compile your Kotlin module with `jvmTarget = 11`, or use the `Class`-based overload (below).
+
+If your call site is **not** a coroutine, use the `Class`-based overload from Kotlin too (select it with `::class.java`) and return the result later via the `result` lambda:
+
+```kotlin
+Purchasely.interceptAction(PLYPresentationAction.Purchase::class.java) { info, action, result ->
+    val purchase = action as PLYPresentationAction.Purchase   // cast yourself
+    result(PLYInterceptResult.NOT_HANDLED)   // call exactly once, may be deferred
+}
+```
 
 ### Android (Java)
 

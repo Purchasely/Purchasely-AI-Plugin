@@ -266,7 +266,18 @@ Purchasely.interceptAction<PLYPresentationAction.Purchase> { info, action ->
 }
 ```
 
-Java callers cannot use the reified `interceptAction<T>`. Use the `Class`-based overload, cast the action, and resolve with `result.invoke(...)`:
+The reified lambda above is `suspend` (return the result directly). If your Kotlin call site is
+**not** a coroutine, use the `Class`-based overload — select it with `::class.java` and return the
+result later via the `result` lambda (call it exactly once):
+
+```kotlin
+Purchasely.interceptAction(PLYPresentationAction.Purchase::class.java) { info, action, result ->
+    val purchase = action as PLYPresentationAction.Purchase   // not cast for you here
+    result(PLYInterceptResult.NOT_HANDLED)   // may be deferred after async work
+}
+```
+
+Java callers cannot use the reified `interceptAction<T>`. Use the same `Class`-based overload, cast the action, and resolve with `result.invoke(...)`:
 
 ```java
 Purchasely.interceptAction(PLYPresentationAction.Purchase.class, (info, action, result) -> {

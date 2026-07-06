@@ -780,7 +780,34 @@ Purchasely.interceptAction<PLYPresentationAction.Purchase> { _, _ ->
 }
 ```
 
+The reified `interceptAction<T> { … }` lambda is `suspend` and **returns** the `PLYInterceptResult`.
+When your call site is not a coroutine, use the `Class`-based overload (`::class.java`) and return
+the result later via the `result` lambda:
+
+```kotlin
+Purchasely.interceptAction(PLYPresentationAction.Purchase::class.java) { _, action, result ->
+    val purchase = action as PLYPresentationAction.Purchase   // cast yourself
+    result(PLYInterceptResult.NOT_HANDLED)   // call exactly once, may be deferred
+}
+```
+
 Android v6 returns `PLYInterceptResult.SUCCESS`, `FAILED`, or `NOT_HANDLED`; there is no `processAction` callback in the new native Android interceptor.
+
+### Android (Java, SDK v6)
+
+Java cannot use the reified `interceptAction<T>` — use the `Class`-based overload, cast the action,
+and resolve via `result.invoke(...)`:
+
+```java
+Purchasely.interceptAction(PLYPresentationAction.Login.class, (info, action, result) ->
+    result.invoke(PLYInterceptResult.NOT_HANDLED));
+
+Purchasely.interceptAction(PLYPresentationAction.Purchase.class, (info, action, result) -> {
+    PLYPresentationAction.Purchase purchase = (PLYPresentationAction.Purchase) action;
+    // ... optionally async; call result exactly once:
+    result.invoke(PLYInterceptResult.NOT_HANDLED);
+});
+```
 
 ### React Native (TypeScript, SDK v6)
 
