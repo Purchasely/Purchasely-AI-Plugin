@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Fixed
+
+- Android references (`api-reference.md`, `migration-v6.md`, `concepts/paywall-actions.md`) no longer show a separate `import io.purchasely.ext.interceptAction` / `removeActionInterceptor`. As of SDK `6.0.0-rc.2`, both are inline member functions of `Purchasely` — importing `io.purchasely.ext.Purchasely` is enough.
+
 ## [2.0.0-rc.5] — 2026-07-03
 
 React Native joins the **v6 line**. The plugin now treats native iOS, native Android, Flutter, and React Native as SDK v6 platforms, while **Cordova stays on v5 (`5.7.3`)**. React Native guidance targets the published **`react-native-purchasely` `6.0.0-rc.2`** packages and their native **`6.0.0-rc.2`** dependencies.

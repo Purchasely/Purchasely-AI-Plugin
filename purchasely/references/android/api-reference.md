@@ -12,8 +12,6 @@ import io.purchasely.ext.PLYRunningMode
 import io.purchasely.ext.LogLevel
 import io.purchasely.ext.PLYError
 import io.purchasely.ext.PLYInterceptResult
-import io.purchasely.ext.interceptAction
-import io.purchasely.ext.removeActionInterceptor
 
 import io.purchasely.ext.presentation.PLYPresentation
 import io.purchasely.ext.presentation.PLYPresentationAction
@@ -271,13 +269,19 @@ AndroidView(factory = { loaded.buildView(it) { outcome -> } })
 
 ## Action Interceptor
 
-The global `setPaywallActionsInterceptor` was removed. Each action has its own typed interceptor returning a `PLYInterceptResult`.
+The global `setPaywallActionsInterceptor` was removed. Each action has its own typed interceptor.
+There are three ways to register one — pick by call site:
 
-Kotlin (reified):
+| Style | Signature | How you return the result |
+|-------|-----------|---------------------------|
+| Kotlin, coroutine | `interceptAction<T> { info, action -> … }` | **return** a `PLYInterceptResult` (lambda is `suspend`) |
+| Kotlin, no coroutine | `interceptAction(T::class.java) { info, action, result -> … }` | call `result(…)` later (callback) |
+| Java | `interceptAction(T.class, callback)` | call `result.invoke(…)` later (callback) |
+
+Kotlin — with coroutine (reified, returns `PLYInterceptResult` directly; `suspend` calls allowed):
 
 ```kotlin
 import io.purchasely.ext.PLYInterceptResult
-import io.purchasely.ext.interceptAction
 import io.purchasely.ext.presentation.PLYPresentationAction
 
 Purchasely.interceptAction<PLYPresentationAction.Login> { _, _ ->
@@ -292,6 +296,17 @@ Purchasely.interceptAction<PLYPresentationAction.Purchase> { info, purchase ->
     } else {
         PLYInterceptResult.NOT_HANDLED
     }
+}
+```
+
+Kotlin — without coroutine (Class-based overload, selected via `::class.java`; return the result
+later through the `result` lambda — call it exactly once, synchronously or after async work):
+
+```kotlin
+Purchasely.interceptAction(PLYPresentationAction.Purchase::class.java) { info, action, result ->
+    val purchase = action as PLYPresentationAction.Purchase   // not cast for you here
+    // ... optionally async (billing, dialog); then:
+    result(PLYInterceptResult.NOT_HANDLED)
 }
 ```
 
@@ -317,7 +332,7 @@ Purchasely.removeActionInterceptor(PLYPresentationAction.Purchase.class); // Jav
 Purchasely.removeAllActionInterceptors();
 ```
 
-> The reified `interceptAction<T>` / `removeActionInterceptor<T>()` are `inline` functions targeting JVM 11. Compile your Kotlin module with `jvmTarget = 11`, or use the `Class`-based overload.
+> The reified `interceptAction<T>` / `removeActionInterceptor<T>()` are `inline` member functions of `Purchasely` targeting JVM 11 — no separate import beyond `io.purchasely.ext.Purchasely` is needed. Compile your Kotlin module with `jvmTarget = 11`, or use the `Class`-based overload.
 
 | Result | Meaning |
 |--------|---------|
