@@ -23,7 +23,7 @@ If `6.0.0-rc.1` is only installed on the developer machine, add `mavenLocal()` i
 
 SDK v6 uses the modern Android toolchain: Gradle 9.3.0+, AGP 9.x, Kotlin 2.2.x (K2 compiler), JDK 17 to build, minSdk 23, compileSdk 36.
 
-The reified entry points `interceptAction<T> { … }` / `removeActionInterceptor<T>()` are `inline` functions targeting JVM 11. Compile your Kotlin module with `jvmTarget = 11`, or use the `Class`-based overload.
+The reified entry points `interceptAction<T> { … }` / `removeActionInterceptor<T>()` are `inline` member functions of `Purchasely` targeting JVM 11 — no separate import beyond `io.purchasely.ext.Purchasely` is needed. Compile your Kotlin module with `jvmTarget = 11`, or use the `Class`-based overload.
 
 With AGP 9, remove the explicit `org.jetbrains.kotlin.android` plugin; AGP provides Android Kotlin support directly. Keep specialized Kotlin plugins such as Compose or Serialization when the app uses them. Also remove `android { kotlinOptions { ... } }` once `kotlin-android` is gone.
 
@@ -249,7 +249,6 @@ The global `setPaywallActionsInterceptor` API was removed. Use typed interceptor
 
 ```kotlin
 import io.purchasely.ext.PLYInterceptResult
-import io.purchasely.ext.interceptAction
 import io.purchasely.ext.presentation.PLYPresentationAction
 
 Purchasely.interceptAction<PLYPresentationAction.Login> { _, _ ->
