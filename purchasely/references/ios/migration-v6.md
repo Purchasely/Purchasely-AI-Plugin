@@ -189,7 +189,7 @@ Remove interceptors with `Purchasely.removeActionInterceptor(.login)` / `Purchas
 
 | `PLYPresentationInfo` (removed) | `PLYInterceptorInfo` (new) |
 |---------------------------------|----------------------------|
-| `info.presentationId` | `info.presentation?.id` |
+| `info.presentationId` | `info.presentation?.screenId` |
 | `info.placementId` | `info.presentation?.placementId` |
 | `info.audienceId` | `info.presentation?.audienceId` |
 | `info.abTestId` / `info.abTestVariantId` | `info.presentation?.abTestId` / `…abTestVariantId` |
@@ -350,11 +350,11 @@ Purchasely.closeAllScreens()   // was Purchasely.closeDisplayedPresentation()
 
 It is `@MainActor`-isolated. From a non-isolated context wrap it: `Task { @MainActor in Purchasely.closeAllScreens() }`.
 
-## 7. Deeplinks (deprecated renames)
+## 7. Deeplinks (removed & renamed)
 
-The old methods still compile but are deprecated (removal in v7):
+The old methods are **removed** in v6 — replace every call:
 
-| v5 (deprecated) | v6 |
+| v5 (removed) | v6 |
 |-----------------|----|
 | `Purchasely.readyToOpenDeeplink(_:)` | `Purchasely.allowDeeplink(_:)` |
 | `Purchasely.isDeeplinkHandled(deeplink:)` | `Purchasely.handleDeeplink(_:)` (still returns `Bool`) |
@@ -419,7 +419,7 @@ These v5 signatures are identical in v6 — leave them alone:
 - [ ] Update the completion to a single `Error?` (drop the `Bool success` parameter)
 - [ ] Replace `setPaywallActionsInterceptor { … }` with per-action `Purchasely.interceptAction(.x) { … }`
 - [ ] Map `proceed(false)` → `.success`, `proceed(true)` → `.notHandled`; use `.failed` for failures
-- [ ] Replace `PLYPresentationInfo` with `PLYInterceptorInfo` (`info.presentationId` → `info.presentation?.id`, etc.)
+- [ ] Replace `PLYPresentationInfo` with `PLYInterceptorInfo` (`info.presentationId` → `info.presentation?.screenId`, etc.)
 - [ ] Remove the `paywallActionsInterceptor:` start parameter and any `PLYPaywallActionsInterceptor` typealias
 - [ ] Replace `Purchasely.fetchPresentation(...)` / `presentationController(...)` / `productController(...)` / `planController(...)` with `PLYPresentationBuilder.…build().preload { … }`
 - [ ] Replace `controller.PresentationView` and the `productView(...)` / `planView(...)` / `presentationView(...)` factories with `presentation.swiftUIView` (SwiftUI) / `presentation.controller` (UIKit)

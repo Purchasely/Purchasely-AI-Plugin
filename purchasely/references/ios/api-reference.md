@@ -122,7 +122,7 @@ The interceptor's first argument is a `PLYInterceptorInfo`:
 
 | `PLYInterceptorInfo` field | Notes |
 |----------------------------|-------|
-| `info.presentation?.id` | (was `info.presentationId`) |
+| `info.presentation?.screenId` | (was `info.presentationId`) |
 | `info.presentation?.placementId` | (was `info.placementId`) |
 | `info.presentation?.audienceId` | (was `info.audienceId`) |
 | `info.presentation?.abTestId` / `…abTestVariantId` | A/B test identifiers |
@@ -296,7 +296,7 @@ PLYPresentationBuilder
 
 ### `Purchasely.handleDeeplink(_:)`
 
-Pass an incoming deeplink to the SDK. iOS does **not** auto-intercept deeplinks — call this from your `AppDelegate` / `SceneDelegate`. Replaces the deprecated `isDeeplinkHandled(deeplink:)` (removal in v7).
+Pass an incoming deeplink to the SDK. iOS does **not** auto-intercept deeplinks — call this from your `AppDelegate` / `SceneDelegate`. Replaces `isDeeplinkHandled(deeplink:)`, which was **removed** in v6.
 
 ```swift
 func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any]) -> Bool {
@@ -312,7 +312,7 @@ Purchasely.apiKey("YOUR_API_KEY").handleDeeplink(url).start { error in }
 
 ### `Purchasely.allowDeeplink(_:)` / `Purchasely.allowCampaigns(_:)`
 
-In v6, deeplinks display **immediately** by default. Defer them (e.g. during onboarding) and re-enable when ready. Replaces the deprecated `readyToOpenDeeplink(_:)` (removal in v7).
+In v6, deeplinks display **immediately** by default. Defer them (e.g. during onboarding) and re-enable when ready. Replaces `readyToOpenDeeplink(_:)`, which was **removed** in v6.
 
 ```swift
 Purchasely.allowDeeplink(false)   // defer display

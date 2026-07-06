@@ -7,6 +7,7 @@ All notable changes to this project are documented here. The format is based on 
 ### Fixed
 
 - Android references (`api-reference.md`, `migration-v6.md`, `concepts/paywall-actions.md`) no longer show a separate `import io.purchasely.ext.interceptAction` / `removeActionInterceptor`. As of SDK `6.0.0-rc.2`, both are inline member functions of `Purchasely` — importing `io.purchasely.ext.Purchasely` is enough.
+- iOS references (`api-reference.md`, `migration-v6.md`) align with the SDK v6 API renames: the interceptor presentation identifier is `info.presentation?.screenId` (was `.id`), and `readyToOpenDeeplink(_:)` / `isDeeplinkHandled(deeplink:)` are documented as **removed** in v6 (→ `allowDeeplink(_:)` / `handleDeeplink(_:)`) rather than deprecated-until-v7.
 
 ## [2.0.0-rc.5] — 2026-07-03
 
