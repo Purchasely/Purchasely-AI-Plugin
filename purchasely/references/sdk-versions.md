@@ -4,7 +4,7 @@
 
 ## Current supported versions
 
-_Last updated: 2026-06-15._
+_Last updated: 2026-07-07._
 
 | Platform | Latest version | Notes |
 |----------|----------------|-------|
@@ -12,7 +12,7 @@ _Last updated: 2026-06-15._
 | **Android** (native) | **6.0.0-rc.1** | Presentation builder API, `screenId`, typed action interceptors, `PLYPresentationOutcome`. **Default running mode is now `Observer`** — set `PLYRunningMode.Full` for purchase handling. No `presentation-compose` artifact (use `AndroidView { buildView }` for Compose). |
 | **React Native** | **6.0.0-rc.2** | v6 builder API: `Purchasely.builder` fluent init (string options), `Purchasely.presentation` (`PLYPresentationBuilder`) / `PLYPresentationRequest`, per-action `interceptAction` returning `'success' \| 'failed' \| 'notHandled'`, `PLYPresentationOutcome` (with `closeReason` = `button`/`backSystem`/`programmatic`). `isDeeplinkHandled` is **removed** — use `handleDeeplink(uri)`. `presentSubscriptions()` is **removed**. Pulls the **6.0.0-rc.2 native SDKs** (iOS `Purchasely` + Android `io.purchasely:core`). Requires **`minSdk 23`**. **Default running mode is now `'observer'`** — set `.runningMode('full')` for purchase handling. All five `react-native-purchasely*` packages MUST be the same version, pinned exactly. |
 | **Flutter** | **6.0.0-rc.1** | v6 builder API: `PurchaselyBuilder` fluent init, `PresentationBuilder` / `PresentationRequest`, per-action `interceptAction` + `InterceptResult`, `PresentationOutcome` (with `closeReason`). Pulls the **6.0.0-rc.1 native SDKs** (iOS `Purchasely` + Android `io.purchasely:core`). **Default running mode is now `RunningMode.observer`** — set `.runningMode(RunningMode.full)` for purchase handling. All three `purchasely_*` packages MUST be the same version. |
-| **Cordova** | **5.7.3** | Cross-platform plugin. All `@purchasely/cordova-plugin-*` packages MUST be the same version. |
+| **Cordova** | **6.0.0-rc.1** | Method-based JS plugin (no builder API — it bridges the v6 native SDKs behind `cordova.exec` actions); pulls the **6.0.0-rc.2 native SDKs** (iOS `Purchasely` + Android `io.purchasely:core`). **Default running mode is now `observer`** — pass `Purchasely.RunningMode.full` for purchase handling. Three breaking surfaces: `start()` takes an **options object** (was positional); the action interceptor is **per-action** `interceptAction(kind, handler)` + `InterceptResult` (`setPaywallActionInterceptor` + `onProcessAction` removed); `isFullscreen` became a **display mode** (`TransitionType`). Deeplinks use `allowDeeplink` / `handleDeeplink` (+ `allowCampaigns`). All `@purchasely/cordova-plugin-*` packages MUST be the same version, pinned exactly. |
 
 ## How to pin
 
@@ -89,36 +89,38 @@ Pin **exactly** (`6.0.0-rc.1`) — a floating constraint will not resolve a pre-
 ```json
 {
   "dependencies": {
-    "@purchasely/cordova-plugin-purchasely": "5.7.3",
-    "@purchasely/cordova-plugin-purchasely-google": "5.7.3"
+    "@purchasely/cordova-plugin-purchasely": "6.0.0-rc.1",
+    "@purchasely/cordova-plugin-purchasely-google": "6.0.0-rc.1"
   }
 }
 ```
 
 ## Cross-platform plugin → native dependency mapping
 
-When you install a cross-platform plugin, it internally pulls a specific native SDK version. React Native and Flutter are on the v6 generation (React Native pins `6.0.0-rc.2`, Flutter `6.0.0-rc.1`); Cordova is still on v5:
+When you install a cross-platform plugin, it internally pulls a specific native SDK version. React Native, Flutter, and Cordova are on the v6 generation (React Native pins `6.0.0-rc.2`, Flutter `6.0.0-rc.1`, Cordova `6.0.0-rc.1`):
 
 | Cross-platform plugin | Pulls iOS native | Pulls Android native |
 |-----------------------|------------------|----------------------|
 | `react-native-purchasely 6.0.0-rc.2` | iOS SDK 6.0.0-rc.2 | Android SDK 6.0.0-rc.2 |
 | `purchasely_flutter 6.0.0-rc.1` | iOS SDK 6.0.0-rc.1 | Android SDK 6.0.0-rc.1 |
-| `@purchasely/cordova-plugin-purchasely 5.7.3` | iOS SDK 5.7.x | Android SDK 5.7.x |
+| `@purchasely/cordova-plugin-purchasely 6.0.0-rc.1` | iOS SDK 6.0.0-rc.2 | Android SDK 6.0.0-rc.2 |
 
-This means a v6 cross-platform plugin gets the matching v6 native SDKs transitively (React Native → `6.0.0-rc.2`, Flutter → `6.0.0-rc.1`), while a Cordova 5.7.3 plugin gets the **5.7.x native SDKs**. You do not need to bump the native pods/gradle dependencies yourself; the plugin's pinning is correct.
+This means a v6 cross-platform plugin gets its pinned v6 native SDKs transitively (React Native → `6.0.0-rc.2`, Flutter → `6.0.0-rc.1`, Cordova → `6.0.0-rc.2`). You do not need to bump the native pods/gradle dependencies yourself; the plugin's pinning is correct.
 
-> If a user is on a Cordova plugin version older than 5.7.3, recent native behavior may not be bridged. Upgrade the plugin first, then verify the public bridge method name in that platform's integration reference.
+> If a user is on a Cordova plugin version older than `6.0.0-rc.1`, v6 native behavior may not be bridged. Upgrade the plugin first, then verify the public bridge method name in that platform's integration reference.
 
 > **React Native is on the v6 API** (same generation as native iOS / Android). All five `react-native-purchasely*` packages at `6.0.0-rc.2` pull the **6.0.0-rc.2 native SDKs** and expose the v6 JS surface: `Purchasely.builder` fluent init with string options (replacing `Purchasely.start({...})`), `Purchasely.presentation` (`PLYPresentationBuilder`) / `PLYPresentationRequest` (replacing `fetchPresentation` / `presentPresentation[ForPlacement]`), per-action `Purchasely.interceptAction` returning `'success' \| 'failed' \| 'notHandled'` (replacing `setPaywallActionInterceptorCallback` + `onProcessAction`), and `request.close()` to dismiss. `isDeeplinkHandled(uri)` / `readyToOpenDeeplink(bool)` are **removed** — use `Purchasely.handleDeeplink(uri)` and `.allowDeeplink(true)`. `Purchasely.presentSubscriptions()` is **removed** (breaking) — build your own screen from `userSubscriptions()` / `userSubscriptionsHistory()`. Requires Android `minSdk 23`. See [`react-native/migration-v6.md`](react-native/migration-v6.md) and [`react-native/integration.md`](react-native/integration.md). Pin all packages to `6.0.0-rc.2` exactly (`--save-exact`).
 
 > **Flutter is on the v6 API** (same generation as native iOS / Android). `purchasely_flutter 6.0.0-rc.1` pulls the **6.0.0-rc.1 native SDKs** and exposes the v6 Dart surface: `PurchaselyBuilder` fluent init, `PresentationBuilder` / `PresentationRequest` (replacing `fetchPresentation` / `presentPresentation[ForPlacement]`), per-action `interceptAction` + `InterceptResult` (replacing `setPaywallActionInterceptorCallback` + `onProcessAction`), and `presentation.close()` to dismiss (there is no `closePresentation()` / `closeAllScreens()` in Flutter v6). `Purchasely.presentSubscriptions()` is **removed** (breaking) — build your own screen from `userSubscriptions()` / `userSubscriptionsHistory()`. See [`flutter/migration-v6.md`](flutter/migration-v6.md) and [`flutter/integration.md`](flutter/integration.md). Pin `purchasely_flutter: 6.0.0-rc.1`.
 
+> **Cordova is on the v6 API** (same generation as native iOS / Android). `@purchasely/cordova-plugin-purchasely 6.0.0-rc.1` pulls the **6.0.0-rc.2 native SDKs** and keeps a **method-based JS surface** (no builder API), but with three breaking surfaces: `Purchasely.start(options, success, error)` now takes a **single options object** (the v5 positional list is gone); the action interceptor is **per-action** `interceptAction(kind, handler)` returning an `InterceptResult` (`setPaywallActionInterceptor` + `onProcessAction` were removed, `PaywallAction` renamed to `PresentationAction`); and the `isFullscreen` boolean on `present*` became a **display mode** (`TransitionType` string / boolean / transition object). Unchanged: `fetchPresentation` / `fetchPresentationForPlacement`, `presentPresentation[ForPlacement]`, and `closePresentation()`. Other renames: `allowDeeplink` / `handleDeeplink` (+ new `allowCampaigns`) replaces `readyToOpenDeeplink` / `isDeeplinkHandled`; `setDefaultPresentationDismissHandler` replaces `setDefaultPresentationResultHandler`; `RunningMode` values are name strings `'observer'` / `'full'`; `synchronize(success, error)` now reports completion. Removed: `presentSubscriptions()`, `presentProductWithIdentifier()`, `presentPlanWithIdentifier()`, `showPresentation()`, and `hidePresentation()`. See [`cordova/migration-v6.md`](cordova/migration-v6.md) and [`cordova/integration.md`](cordova/integration.md). Pin all Cordova packages to `6.0.0-rc.1` exactly.
+
 ## Universal rules
 
-1. **All plugin packages on the same version.** Mixing `react-native-purchasely 6.0.0-rc.2` with `@purchasely/react-native-purchasely-google 5.7.3` causes runtime crashes.
-2. **Use exact versions (`5.7.5`), not floating versions (`5.+`, `^5.0.0`).** Floating versions silently pull breaking changes on `pod install` / `flutter pub get` / `npm install`.
-3. **iOS deployment target: 11.0+** (13.4+ for the v6 React Native / native SDKs). Older targets break the Pod install.
-4. **Android `minSdk` 23 for native and React Native v6; 21 for the v5 Cordova plugin.** Native Android v6 also targets the AGP 9 / Kotlin 2.2 toolchain.
+1. **All plugin packages on the same version.** Mixing `react-native-purchasely 6.0.0-rc.2` with `@purchasely/react-native-purchasely-google 5.7.3`, or `@purchasely/cordova-plugin-purchasely 6.0.0-rc.1` with `@purchasely/cordova-plugin-purchasely-google 5.7.3`, causes runtime crashes.
+2. **Use exact versions** (for example `6.0.0-rc.1`, `6.0.0-rc.2`, or `5.7.5`), not floating versions (`6.+`, `5.+`, `^6.0.0-rc.1`, `^5.0.0`). Floating versions silently pull breaking changes on `pod install` / `flutter pub get` / `npm install`.
+3. **iOS deployment target: 11.0+** (13.4+ for the v6 native, Flutter, React Native, and Cordova SDKs). Older targets break the Pod install.
+4. **Android `minSdk` 23 for native, React Native v6, and Cordova v6.** Native Android v6 also targets the AGP 9 / Kotlin 2.2 toolchain.
 5. **Run a fresh install after pinning** — `pod install --repo-update` (iOS), `./gradlew --refresh-dependencies` (Android), `flutter clean && flutter pub get` (Flutter), `rm -rf node_modules && npm i` (RN / Cordova).
 
 ## When to upgrade

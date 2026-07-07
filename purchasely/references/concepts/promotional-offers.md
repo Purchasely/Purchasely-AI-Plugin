@@ -140,30 +140,33 @@ Purchasely.interceptAction('purchase', async (info, payload) => {
 });
 ```
 
-#### Cordova (v5) — `subscriptionOffer` in interceptor parameters
+#### Cordova (v6) — `subscriptionOffer` in interceptor parameters
 
 ```js
-Purchasely.setPaywallActionInterceptor((result) => {
-  if (result.action === 'purchase') {
-    // Cross-store generic fields
-    const storeProductId = result.parameters.plan?.productId;
-    const storeOfferId   = result.parameters.offer?.storeOfferId;
+Purchasely.interceptAction(Purchasely.PresentationAction.purchase, async (info, parameters) => {
+  // Cross-store generic fields
+  const storeProductId = parameters.plan?.productId;
+  const storeOfferId   = parameters.offer?.storeOfferId;
 
-    // Google specifics
-    const productId   = result.parameters.subscriptionOffer?.subscriptionId;
-    const basePlanId  = result.parameters.subscriptionOffer?.basePlanId;
-    const offerId     = result.parameters.subscriptionOffer?.offerId;
-    const offerToken  = result.parameters.subscriptionOffer?.offerToken;
+  // Google specifics
+  const productId   = parameters.subscriptionOffer?.subscriptionId;
+  const basePlanId  = parameters.subscriptionOffer?.basePlanId;
+  const offerId     = parameters.subscriptionOffer?.offerId;
+  const offerToken  = parameters.subscriptionOffer?.offerToken;
 
-    // Apple specifics — call Purchasely.signPromotionalOffer({ storeProductId, storeOfferId })
-    // to get { identifier, signature, keyIdentifier, timestamp } and pass them to your purchase flow
+  // Apple specifics — call Purchasely.signPromotionalOffer({ storeProductId, storeOfferId })
+  // to get { identifier, signature, keyIdentifier, timestamp } and pass them to your purchase flow
 
-    // After your own purchase flow resolves:
-    Purchasely.onProcessAction(false);
-    Purchasely.closePresentation();
-  } else {
-    Purchasely.onProcessAction(true);
-  }
+  const ok = await yourBillingSystem.purchase(/* fields above */);
+  if (!ok) return Purchasely.InterceptResult.failed;
+
+  return new Promise(function (resolve) {
+    Purchasely.synchronize(
+      function () { resolve(Purchasely.InterceptResult.success); },
+      function () { resolve(Purchasely.InterceptResult.failed); },
+    );
+  });
+  // Observer mode does not auto-close; dismiss with closePresentation() after this resolves.
 });
 ```
 

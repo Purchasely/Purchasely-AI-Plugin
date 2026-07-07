@@ -66,6 +66,30 @@ for (const file of walk(root)) {
     }
   }
 
+  // Cordova v6 `start` takes a single options object; a positional string-first-arg
+  // call (`Purchasely.start('APIKEY', ...)`) is the removed v5 form. Skip legitimate
+  // "Before (v5)" migration examples, v5-recognition token lists, and instructional
+  // negatives (the marker is often on the preceding comment line, so check context).
+  if (rel.includes('cordova')) {
+    const positionalCordovaStart = /Purchasely\.start\(\s*['"]/g;
+    for (const match of content.matchAll(positionalCordovaStart)) {
+      const matchIndex = match.index ?? 0;
+      const context = content.slice(Math.max(0, matchIndex - 240), matchIndex + 40);
+      if (!isInstructionalNegative(context) && !/before|\bv5\b|5\.x|legacy|positional|removed|renamed/i.test(context)) {
+        failures.push(`${rel}:${lineNumberForIndex(content, matchIndex)} uses positional Cordova start syntax (v6 takes an options object)`);
+      }
+    }
+
+    const cordovaClosePaywall = /\bPurchasely\.closePaywall\(\)|\bclosePaywall\b/g;
+    for (const match of content.matchAll(cordovaClosePaywall)) {
+      const matchIndex = match.index ?? 0;
+      const context = content.slice(Math.max(0, matchIndex - 240), matchIndex + 120);
+      if (!isInstructionalNegative(context) && !/\bv5\b|5\.x|legacy|recognize|mapping|maps|map|rename|renamed|removed|replace|replacing|migration|isFullscreen|closePresentation/i.test(context)) {
+        failures.push(`${rel}:${lineNumberForIndex(content, matchIndex)} uses Cordova closePaywall() (v6 uses closePresentation())`);
+      }
+    }
+  }
+
   lines.forEach((line, index) => {
     const where = `${rel}:${index + 1}`;
     const normalized = line.trim();
@@ -76,9 +100,6 @@ for (const file of walk(root)) {
     if (/purchase\(planId:/.test(line) && !isInstructionalNegative(line)) {
       failures.push(`${where} uses invented iOS/Flutter purchase(planId:) syntax`);
     }
-    if (rel.includes('cordova') && /Purchasely\.start\(\{/.test(line)) {
-      failures.push(`${where} uses object-form Cordova start syntax`);
-    }
     if ((rel.includes('flutter') || rel.includes('cordova')) && /setUserAttributeWithNumber/.test(line)) {
       failures.push(`${where} uses stale numeric attribute API`);
     }
@@ -87,12 +108,6 @@ for (const file of walk(root)) {
     }
     if (/storePromotionalOffer/.test(line)) {
       failures.push(`${where} uses stale iOS promotional-offer parameter`);
-    }
-    // Flutter and React Native are intentionally NOT included here: both document the
-    // v6 builder API, where `allowDeeplink` is the correct deeplink-readiness name.
-    // Cordova is still on v5, so allowDeeplink there is a mistake (v5 name: readyToOpenDeeplink).
-    if (rel.includes('cordova') && /allowDeeplink/.test(line) && !isInstructionalNegative(line)) {
-      failures.push(`${where} uses the v6 deeplink readiness name (allowDeeplink) in a v5 Cordova reference — use readyToOpenDeeplink`);
     }
     if (/userSubscriptions\(invalidateCache/.test(line) && rel.includes('flutter')) {
       failures.push(`${where} uses unsupported Flutter userSubscriptions invalidateCache parameter`);

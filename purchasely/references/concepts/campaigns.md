@@ -39,7 +39,7 @@ Docs:
 
 ## SDK setup — gating campaign display
 
-Trigger-based campaigns can be deferred until your app explicitly authorises display — useful when you have a splash / onboarding / login flow that must finish first. On **native iOS/Android v6 and Flutter v6** the flag is `allowCampaigns` (a separate flag from `allowDeeplink`); **React Native v6** controls deeplink/campaign presentation readiness with `.allowDeeplink(...)` on the builder (it replaces v5's `readyToOpenDeeplink`); the **Cordova** v5 bridge still exposes `readyToOpenDeeplink`.
+Trigger-based campaigns can be deferred until your app explicitly authorises display — useful when you have a splash / onboarding / login flow that must finish first. On **native iOS/Android v6, Flutter v6, and Cordova v6** campaigns and deeplinks are governed by **two independent flags**: `allowCampaigns` (campaign display) and `allowDeeplink` (deeplink presentations) — both default to `true`. **React Native v6** controls deeplink/campaign presentation readiness with `.allowDeeplink(...)` on the builder (it replaces v5's `readyToOpenDeeplink`); it also exposes an `.allowCampaigns(...)` modifier.
 
 ### iOS (Swift)
 
@@ -71,11 +71,18 @@ await Purchasely.builder('YOUR_API_KEY')
   .start();
 ```
 
-### Cordova (v5)
+### Cordova (v6)
 
 ```js
-Purchasely.readyToOpenDeeplink(true);
+// v6 renamed readyToOpenDeeplink -> allowDeeplink and added allowCampaigns (both default true)
+Purchasely.allowCampaigns(false);  // queue campaigns during onboarding
+Purchasely.allowDeeplink(false);   // defer deeplink presentations during onboarding
+// later, when the launch routine is complete:
+Purchasely.allowCampaigns(true);   // queued campaigns display immediately
+Purchasely.allowDeeplink(true);    // queued deeplinks display immediately
 ```
+
+Like native/Flutter v6, `allowCampaigns` and `allowDeeplink` are **independent** flags on Cordova v6 and can also be passed in the `Purchasely.start(...)` options object.
 
 ### Flutter (v6)
 
@@ -88,7 +95,7 @@ await PurchaselyBuilder.apiKey('<YOUR_API_KEY>')
 
 `allowCampaigns` is set at init via `PurchaselyBuilder` and is a separate flag from `allowDeeplink`. Both default to `true`.
 
-> **v6 native:** `allowCampaigns` and `allowDeeplink` are **independent** flags (in v5 a single flag governed both). Control campaign display with `allowCampaigns`; control deeplink presentations with `allowDeeplink` (defaults to `true`). Android also **auto-intercepts** deeplinks, so no manual `handleDeeplink` call is required for them.
+> **v6 native / Flutter / Cordova:** `allowCampaigns` and `allowDeeplink` are **independent** flags (in v5 a single flag governed both). Control campaign display with `allowCampaigns`; control deeplink presentations with `allowDeeplink` (defaults to `true`). Android also **auto-intercepts** deeplinks, so no manual `handleDeeplink` call is required for them.
 > **React Native v6:** `.allowDeeplink(...)` on the builder gates campaign/deeplink presentations (defaults to `false`); there is also an `.allowCampaigns(...)` modifier. Deeplinks you receive yourself are passed with `Purchasely.handleDeeplink(url)` — the v5 `isDeeplinkHandled` was removed and renamed to `handleDeeplink` (no alias).
 > If you implement a [UI Handler](https://docs.purchasely.com/docs/ui-handler-deeplinks) to manage deeplink display yourself, **keep the presentation object returned** and do not refetch it — refetching loses the campaign context.
 
@@ -105,7 +112,7 @@ await PurchaselyBuilder.apiKey('<YOUR_API_KEY>')
 
 ## Placement-based campaigns — no extra SDK code
 
-You already fetch the placement (native iOS/Android v6: `PLYPresentationBuilder.forPlacementId("PLACEMENT_ID")` / `PLYPresentation { placementId("PLACEMENT_ID") }`; React Native v6: `Purchasely.presentation.placement("PLACEMENT_ID").build()`; Flutter v6: `PresentationBuilder.placement("PLACEMENT_ID").build()`; Cordova v5: `fetchPresentationForPlacement("PLACEMENT_ID")`). When a campaign targets that placement and the user matches the audience, the SDK substitutes the campaign's Screen for the Placement's default rules. Same `PLYPresentationType` handling, same display path. Nothing to change in your code.
+You already fetch the placement (native iOS/Android v6: `PLYPresentationBuilder.forPlacementId("PLACEMENT_ID")` / `PLYPresentation { placementId("PLACEMENT_ID") }`; React Native v6: `Purchasely.presentation.placement("PLACEMENT_ID").build()`; Flutter v6: `PresentationBuilder.placement("PLACEMENT_ID").build()`; Cordova v6: `fetchPresentationForPlacement("PLACEMENT_ID")`). When a campaign targets that placement and the user matches the audience, the SDK substitutes the campaign's Screen for the Placement's default rules. Same presentation-type handling, same display path. Nothing to change in your code.
 
 ## Typical use cases
 
@@ -132,8 +139,8 @@ Property bag includes `campaign_id`, `campaign_name`, `screen_id`, `audience_id`
 
 ## Anti-patterns
 
-- ❌ **Leaving campaigns gated.** If you set `allowCampaigns = false` (native iOS/Android v6 and Flutter v6) / start with `.allowDeeplink(false)` (React Native v6) / `readyToOpenDeeplink(false)` (Cordova v5) and never re-authorise display, trigger-based campaigns silently never appear. (On React Native v6 `.allowDeeplink(...)` is set once on the builder before `start()`; start with `true` once your app is ready to show SDK-opened presentations.)
-- ❌ **Re-enabling campaigns too early.** If your splash screen runs after `start()`, flipping `allowCampaigns = true` (native iOS/Android v6 and Flutter v6) / `readyToOpenDeeplink(true)` (Cordova v5) while it is still up lands the campaign paywall on top of the splash. Wait until your launch routine is complete. (On React Native v6, since `.allowDeeplink(...)` is decided at init, defer `start()` itself until after the splash, or keep deeplink display off until the launch routine completes.)
+- ❌ **Leaving campaigns gated.** If you set `allowCampaigns = false` (native iOS/Android v6, Flutter v6, Cordova v6, and React Native v6 when using `.allowCampaigns(...)`) / start with `.allowDeeplink(false)` (React Native v6) and never re-authorise display, trigger-based campaigns silently never appear. (On React Native v6 `.allowDeeplink(...)` is set once on the builder before `start()`; start with `true` once your app is ready to show SDK-opened presentations.)
+- ❌ **Re-enabling campaigns too early.** If your splash screen runs after `start()`, flipping `allowCampaigns = true` (native iOS/Android v6, Flutter v6, Cordova v6, and React Native v6 when using `.allowCampaigns(...)`) / `.allowDeeplink(true)` (React Native v6) while it is still up lands the campaign paywall on top of the splash. Wait until your launch routine is complete. (On React Native v6, since `.allowDeeplink(...)` is decided at init, defer `start()` itself until after the splash, or keep deeplink display off until the launch routine completes.)
 - ❌ **Coupling capping logic to placement-based campaigns.** Capping only applies on triggers — if you need capping on a placement, build the cap into your audience attribute or use a trigger.
 - ❌ **Refetching the presentation returned by the deeplink handler.** You lose the campaign context (audience match, screen variant, exposure tracking).
 - ❌ **Targeting subscribers with promotional offers without eligibility audience.** See [promotional-offers.md](promotional-offers.md#eligibility-is-your-responsibility-promotional-offers--developer-determined-offers).
