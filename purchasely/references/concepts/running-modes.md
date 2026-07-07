@@ -4,14 +4,14 @@ Applies to: **iOS, Android, React Native, Flutter, Cordova**.
 
 The SDK can run in one of two modes. The mode is set once at initialization and changes how the SDK handles the purchase flow.
 
-## ⚠️ Default running mode changed in v6 (native iOS & Android)
+## ⚠️ Default running mode changed in v6
 
 This is the single most impactful change of SDK v6 and it is **silent** — the project keeps compiling.
 
 | SDK version | Default running mode |
 |-------------|----------------------|
-| v5.x (and current Cordova plugin) | **Full** |
-| **v6 (native iOS & Android, React Native, and Flutter)** | **Observer** ⚠️ |
+| v5.x | **Full** |
+| **v6 (native iOS & Android, React Native, Flutter, and Cordova)** | **Observer** ⚠️ |
 
 > 🚧 In v6, if your app relies on Purchasely to process purchases and validate receipts, you **must set the running mode to Full explicitly**. If you forget, the SDK still compiles and runs but **stops validating transactions**. In Observer mode, presentations also **no longer auto-close** after a purchase/restore (v5 Full auto-appended a `close_all`).
 
@@ -35,7 +35,7 @@ Purchasely {
 | Mode | Description | When to use |
 |------|-------------|-------------|
 | **Full** | Purchasely owns the entire purchase flow: it talks to StoreKit / Google Play Billing / Huawei IAP, validates the receipt, and reports the result. | Most apps. Use it unless you already have a custom billing stack. **Default in v5; must be set explicitly in v6.** |
-| **Observer** (was `PaywallObserver` on Android in v5) | Your app owns the purchase flow. Purchasely only *displays* paywalls and *observes* the resulting transactions for analytics and SDK-level state. | You have an existing billing system (custom StoreKit 2 / Google Play Billing, another subscription platform, in-house IAP layer) and want Purchasely only for paywall presentation, A/B testing and analytics. **Default in v6 (native iOS & Android, React Native, Flutter).** |
+| **Observer** (was `PaywallObserver` on Android in v5) | Your app owns the purchase flow. Purchasely only *displays* paywalls and *observes* the resulting transactions for analytics and SDK-level state. | You have an existing billing system (custom StoreKit 2 / Google Play Billing, another subscription platform, in-house IAP layer) and want Purchasely only for paywall presentation, A/B testing and analytics. **Default in v6 (native iOS & Android, React Native, Flutter, Cordova).** |
 
 **Important:** in Observer mode, the [action interceptor](paywall-actions.md) **must** be wired up — otherwise nothing happens when the user taps a purchase button.
 
@@ -120,22 +120,24 @@ await PurchaselyBuilder.apiKey('YOUR_API_KEY')
     .start();
 ```
 
-### Cordova (JavaScript) — v5 plugin
+### Cordova (JavaScript) — v6
 
 ```js
 Purchasely.start(
-  'YOUR_API_KEY',
-  ['Google'],
-  false,
-  null,
-  Purchasely.LogLevel.WARN,
-  Purchasely.RunningMode.full, // or paywallObserver
+  {
+    apiKey: 'YOUR_API_KEY',
+    stores: [Purchasely.Store.google],
+    storeKit1: false,
+    appUserId: null,
+    logLevel: Purchasely.LogLevel.WARN,
+    runningMode: Purchasely.RunningMode.full, // or observer; v6 default is observer
+  },
   success => {},
   error => {},
 );
 ```
 
-> **Cross-platform note.** React Native and Flutter are on the v6 API (default Observer; React Native `Purchasely.builder('key')....start()`, Flutter `PurchaselyBuilder.apiKey(...)....start()`), in the same v6 group as native iOS & Android. React Native passes the running mode as a string (`'full'` / `'observer'`); Flutter uses the `RunningMode` enum. The Cordova plugin is still on the v5 API (default Full, positional `start(...)`); its v6 migration is pending — keep its existing initialization. Always confirm the exact plugin signature in that platform's integration reference and in [`sdk-versions.md`](../sdk-versions.md).
+> **Cross-platform note.** React Native, Flutter, and Cordova are on the v6 API (default Observer), in the same v6 group as native iOS & Android. React Native uses the builder (`Purchasely.builder('key')....start()`) and string running modes (`'full'` / `'observer'`); Flutter uses `PurchaselyBuilder.apiKey(...)....start()` and the `RunningMode` enum; Cordova keeps method-based `start(...)` but now takes a single options object with `Purchasely.RunningMode.full` / `.observer`. Always confirm the exact plugin signature in that platform's integration reference and in [`sdk-versions.md`](../sdk-versions.md).
 
 ## Log Levels
 

@@ -2,7 +2,7 @@
 
 Applies to: **iOS, Android, React Native, Flutter, Cordova**.
 
-Every fetched/preloaded presentation carries a `type` field telling you what the dashboard returned. **You must check the type before displaying** — calling `display(...)` on a `DEACTIVATED` presentation is undefined behaviour and a `CLIENT` presentation isn't a real paywall at all. Native iOS/Android, React Native and Flutter v6 obtain the presentation with `PLYPresentationBuilder` / the `PLYPresentation { }` DSL / `Purchasely.presentation....build()` / `PresentationBuilder` + `preload`; the v5 Cordova bridge still calls `Purchasely.fetchPresentationForPlacement(...)`.
+Every fetched/preloaded presentation carries a `type` field telling you what the dashboard returned. **You must check the type before displaying** — calling `display(...)` on a `DEACTIVATED` presentation is undefined behaviour and a `CLIENT` presentation isn't a real paywall at all. Native iOS/Android, React Native and Flutter v6 obtain the presentation with `PLYPresentationBuilder` / the `PLYPresentation { }` DSL / `Purchasely.presentation....build()` / `PresentationBuilder` + `preload`; the method-based Cordova v6 bridge still calls `Purchasely.fetchPresentationForPlacement(...)`.
 
 ## The four types
 
@@ -136,7 +136,7 @@ Purchasely.fetchPresentationForPlacement(
       case 'FALLBACK':
         Purchasely.presentPresentation(
           presentation,
-          true,
+          Purchasely.TransitionType.fullScreen,
           null,
           result => handleResult(result),
           err => console.error(err),
@@ -171,7 +171,7 @@ Use `display()` / bridge `presentPresentation(...)` by default. Switch to contai
 | Android | `loaded.display(activity)` | `loaded.buildView(context) { outcome -> }` or `loaded.getFragment { outcome -> }` |
 | React Native | `request.display()` (on the built `PresentationRequest`) | `<PLYPresentationView placementId=… />` component |
 | Flutter | `request.display(const Transition.fullScreen())` | `PLYPresentationView(request: ...)` widget |
-| Cordova | `Purchasely.presentPresentation(presentation, isFullscreen, backgroundColor, success, error)` | no general-purpose inline bridge in the public JS API |
+| Cordova | `Purchasely.presentPresentation(presentation, displayMode, backgroundColor, success, error)` | no general-purpose inline bridge in the public JS API |
 
 ## See also
 

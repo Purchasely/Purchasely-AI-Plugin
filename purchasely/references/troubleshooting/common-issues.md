@@ -65,7 +65,7 @@ Annotated slice for one Observer-mode purchase (placement IDs are app-specific �
 The trace tells you, in order:
 1. **Receipt validated** (`RECEIPT_VALIDATED`, `IN_APP_RENEWED`) — purchase succeeded server-side.
 2. **Interceptor acknowledged** (`Skipping SDK execution`) — your `proceed(false)` was received.
-3. **Paywall dismissed** (`PRESENTATION_CLOSED`) — the platform's dismiss API ran (`closeAllScreens()` on native iOS/Android, `presentation.close()` on Flutter v6, `request.close()` on React Native v6, `closePresentation()` on Cordova v5).
+3. **Paywall dismissed** (`PRESENTATION_CLOSED`) — the platform's dismiss API ran (`closeAllScreens()` on native iOS/Android, `presentation.close()` on Flutter v6, `request.close()` on React Native v6, `closePresentation()` on Cordova v6).
 
 If you chain a follow-up placement after the purchase, expect an additional `Successfully retrieved presentation Optional("<your_followup_placement_id>")` → `PRESENTATION_LOADED` → `PRESENTATION_VIEWED` sequence at the end of the trace.
 
@@ -77,7 +77,7 @@ If any of those three is missing, you have a defined symptom — see the table b
 |-------------------|--------------|---------------|
 | No `RECEIPT_VALIDATED` event | Receipt failed server-side validation | Check `[Purchasely] Receipt status: …` — `failed` / `error` → check StoreKit config, sandbox account, server clock |
 | `IN_APP_PURCHASED` but no `IN_APP_RENEWED` | Receipt validated but no active subscription state | Dashboard → Subscribers → look up the transaction; check store product config |
-| `PRESENTATION_CLOSED` never fires after a successful purchase | Dismiss API not called, or called before the action was acknowledged | Verify the order: the action MUST be acknowledged before dismissal. Native iOS/Android use `closeAllScreens()`; Flutter v6 and React Native v6 use `presentation.close()` / `request.close()`; Cordova v5 uses `closePresentation()` |
+| `PRESENTATION_CLOSED` never fires after a successful purchase | Dismiss API not called, or called before the action was acknowledged | Verify the order: the action MUST be acknowledged before dismissal. Native iOS/Android use `closeAllScreens()`; Flutter v6 and React Native v6 use `presentation.close()` / `request.close()`; Cordova v6 uses `closePresentation()` |
 | `pendingSuccessfulPurchase=false` after a real purchase | The flag was never set (transaction handler didn't run, or wrong mode) | Check interceptor `.purchase` case took the Observer branch |
 | Follow-up `fetchPresentation` returns `type=deactivated` or `error=…` | The chained placement is missing / typo / deactivated on the dashboard | Dashboard → Placements → check the exact vendor ID. Common gotcha: typo in the placement_id string |
 | Follow-up placement returns a presentation, but renders "the previous paywall again" | The Flow hosting the original placement chains a post-purchase step that points to the wrong paywall | The event's `flow_id` and `displayed_presentation` reveal the chained step. Dashboard → Flows → inspect `<flow_id>` post-purchase branches |
@@ -212,9 +212,9 @@ Purchasely.start(withAPIKey: "KEY", storekitSettings: .storeKit2) { success, err
 
 **Symptoms:** Paywall buttons stop responding, spinner never dismisses, app appears frozen.
 
-**Cause:** the action was not acknowledged in all code paths of the interceptor — a returned `PLYInterceptResult` on native iOS/Android v6, a returned `InterceptResult` (`success` / `failed` / `notHandled`) on Flutter v6, a returned `'success' / 'failed' / 'notHandled'` string on React Native v6, or `onProcessAction(true/false)` on Cordova v5.
+**Cause:** the action was not acknowledged in all code paths of the interceptor — a returned `PLYInterceptResult` on native iOS/Android v6, a returned `InterceptResult` (`success` / `failed` / `notHandled`) on Flutter v6, a returned `'success' / 'failed' / 'notHandled'` string on React Native v6, or a returned/resolved `Purchasely.InterceptResult` on Cordova v6.
 
-**Solution:** Ensure every branch resolves exactly once. Native iOS/Android v6, Flutter v6 and React Native v6 return a result; Cordova v5 calls `onProcessAction(true/false)`.
+**Solution:** Ensure every branch resolves exactly once. Native iOS/Android v6, Flutter v6, React Native v6, and Cordova v6 all return or resolve a result.
 
 **Native iOS v6:**
 
@@ -243,17 +243,14 @@ Purchasely.interceptAction('login', async (info, payload) => {
 })
 ```
 
-**Cordova v5:**
+**Cordova v6:**
 
 ```ts
-Purchasely.setPaywallActionInterceptor(result => {
-  switch (result.action) {
-    case PLYPaywallAction.LOGIN:
-      showLogin().then(ok => Purchasely.onProcessAction(!ok));
-      return;
-    default:
-      Purchasely.onProcessAction(true);
-  }
+Purchasely.interceptAction(Purchasely.PresentationAction.login, async (info, parameters) => {
+  const ok = await showLogin();
+  return ok
+    ? Purchasely.InterceptResult.success
+    : Purchasely.InterceptResult.notHandled;
 });
 ```
 

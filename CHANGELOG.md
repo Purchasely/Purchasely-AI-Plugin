@@ -4,6 +4,24 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+## [2.0.0-rc.6] — 2026-07-07
+
+Cordova joins the **v6 line**. The plugin now treats native iOS, native Android, Flutter, React Native, and Cordova as SDK v6 platforms. Cordova guidance targets **`@purchasely/cordova-plugin-purchasely` `6.0.0-rc.1`**, which pulls the **`6.0.0-rc.2`** native SDKs.
+
+### Added
+
+- **`references/cordova/migration-v6.md`** — Cordova v5 → v6 migration mapping: options-object `start()`, per-action `interceptAction` + `InterceptResult`, `isFullscreen` → display mode, running mode Observer default, `allowDeeplink` / `handleDeeplink` (+ `allowCampaigns`), `setDefaultPresentationDismissHandler`, `synchronize(success, error)`, `closePaywall()` → `closePresentation()`, and removed `presentSubscriptions` / `presentProductWithIdentifier` / `presentPlanWithIdentifier` / `showPresentation` / `hidePresentation`.
+- **`references/cordova/v5-api-reference.md`** — legacy v5 Cordova tokens so `purchasely-migrate` can recognize and map them forward.
+
+### Changed
+
+- **`references/cordova/integration.md` rewritten as a v6 reference** — pins `6.0.0-rc.1` (iOS 13.4 / Android minSdk 23 / compileSdk 36; pulls the `6.0.0-rc.2` native SDKs), options-object `Purchasely.start(...)`, default running mode Observer, per-action `interceptAction` + `InterceptResult`, display-mode / `TransitionType` presentation, v6 deeplinks (`allowDeeplink` / `handleDeeplink` + `allowCampaigns`), `setDefaultPresentationDismissHandler`, `synchronize(success, error)`, removed `present*` / `show` / `hidePresentation` methods, and the new `PresentationAction` / `InterceptResult` / `TransitionType` / `DimensionType` / `Store` / `StorekitVersion` / `CloseReason` constants.
+- **`references/sdk-versions.md`** — Cordova row, package pins, and the transitive-version table move to the v6 generation (`6.0.0-rc.1` plugin → `6.0.0-rc.2` native SDKs).
+- **Shared references and skills updated for Cordova v6.** Cordova is now grouped with v6 platforms for options-object init, Observer default, per-action `interceptAction` + `InterceptResult`, display modes, `allowDeeplink` / `handleDeeplink` (+ `allowCampaigns`), and awaitable/callback `synchronize`.
+- **`purchasely-migrate`** now migrates Cordova v5.x → `6.0.0-rc.1`, alongside native iOS, native Android, Flutter, and React Native.
+- **`scripts/guard-known-bad-snippets.mjs`** — the Cordova `start` guard is inverted for v6: positional `Purchasely.start('APIKEY', …)` is flagged outside v5 migration examples, while the options-object form is allowed.
+- Marketplace/plugin manifests and `package.json` bumped to `2.0.0-rc.6`.
+
 ### Fixed
 
 - `.claude-plugin/plugin.json` no longer declares `hooks: "./hooks/hooks.json"`. Claude Code loads `hooks/hooks.json` automatically by convention, so the explicit reference caused a "duplicate hooks file" load error on install.
@@ -163,6 +181,7 @@ Initial release of the Purchasely AI Plugin for Claude Code, GitHub Copilot CLI,
 - Reference documentation for Purchasely SDK setup, paywall display, purchases, subscriptions, privacy/GDPR, promotional offers, campaigns, and troubleshooting across iOS, Android, React Native, Flutter, and Cordova.
 - Installation and marketplace metadata for supported agent environments.
 
+[2.0.0-rc.6]: https://github.com/Purchasely/Purchasely-AI-Plugin/releases/tag/2.0.0-rc.6
 [2.0.0-rc.5]: https://github.com/Purchasely/Purchasely-AI-Plugin/releases/tag/2.0.0-rc.5
 [2.0.0-rc.4]: https://github.com/Purchasely/Purchasely-AI-Plugin/releases/tag/2.0.0-rc.4
 [2.0.0-rc.3]: https://github.com/Purchasely/Purchasely-AI-Plugin/releases/tag/2.0.0-rc.3

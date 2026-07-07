@@ -6,7 +6,7 @@ Applies to: **iOS, Android, React Native, Flutter, Cordova**.
 
 ## The problem
 
-Fetching a presentation on every display hits the network each time. (Native iOS/Android v6 fetch with `PLYPresentationBuilder` / the `PLYPresentation { }` DSL + `preload`; React Native v6 builds a request with `Purchasely.presentation.placement(id).build()` then `request.preload()`; Flutter v6 builds a request with `PresentationBuilder.placement(id).build()` then `request.preload()`; the Cordova v5 bridge calls `Purchasely.fetchPresentationForPlacement(...)`.) If you display the same placement repeatedly (`onAppear` / `onViewWillAppear` firing multiple times, sheet/back navigation, recomposition, etc.), each fetch:
+Fetching a presentation on every display hits the network each time. (Native iOS/Android v6 fetch with `PLYPresentationBuilder` / the `PLYPresentation { }` DSL + `preload`; React Native v6 builds a request with `Purchasely.presentation.placement(id).build()` then `request.preload()`; Flutter v6 builds a request with `PresentationBuilder.placement(id).build()` then `request.preload()`; the method-based Cordova v6 bridge calls `Purchasely.fetchPresentationForPlacement(...)`.) If you display the same placement repeatedly (`onAppear` / `onViewWillAppear` firing multiple times, sheet/back navigation, recomposition, etc.), each fetch:
 
 1. Round-trips to Purchasely servers.
 2. **For flow placements**, accumulates a `flowSteps` entry in the SDK's internal `FlowsManager`.
@@ -137,7 +137,7 @@ fetchOrCached(placementId):
     #                        / PLYPresentation { placementId(...) }.preload()
     # React Native v6:       Purchasely.presentation.placement(placementId).build() → request.preload()
     # Flutter v6:            await PresentationBuilder.placement(placementId).build().preload()
-    # Cordova v5 bridge:     await Purchasely.fetchPresentationForPlacement(placementId)
+    # Cordova v6 bridge:     await Purchasely.fetchPresentationForPlacement(placementId)
     fresh = await preload(placementId)
     cache.set(placementId, fresh)
     return fresh
