@@ -83,6 +83,7 @@ If any of those three is missing, you have a defined symptom — see the table b
 | Follow-up placement returns a presentation, but renders "the previous paywall again" | The Flow hosting the original placement chains a post-purchase step that points to the wrong paywall | The event's `flow_id` and `displayed_presentation` reveal the chained step. Dashboard → Flows → inspect `<flow_id>` post-purchase branches |
 | `IN_APP_RESTORED` but premium UI doesn't update | `userSubscriptions(...)` not called after the purchase completes, or callback not wired to your premium state | Check your post-purchase refresh path |
 | `is_fallback_presentation: true` on `PRESENTATION_LOADED` | Audience targeting failed, SDK served the default — usually a stale presentation cache | Trigger an attribute change → invalidate cache. Or call `PresentationCache.shared.invalidateAll()` explicitly (iOS) |
+| Interceptor `billingPlanType` is `.unspecified` when you expected `.monthly` (iOS commitment) | US/Singapore storefront (auto-fallback), iOS < 26.4, plan not configured monthly, **or** several dynamic offerings mapping the same plan with different billing types | See §12. Check storefront + iOS version first; then whether the same plan is mapped by multiple offering references |
 
 ### Reading event property bags
 
@@ -507,3 +508,18 @@ PLYPresentationAction.CLOSE -> {
 **Why clients don't hit this in prod:** most customer paywalls created via the Screen Composer default to `.closeAll` on their dismiss button, because that matches the "exit paywall" user intent. The bug surfaces on legacy or hand-configured paywalls that use `.close` on a single-step flow.
 
 **Related defensive work:** see Purchasely-iOS-Sources PR #563 which adds SDK-level safeguards (`closeFlow()` called when no visible content remains) so misconfigured paywalls degrade gracefully instead of freezing.
+
+## 12. Dynamic Offering Billing Type Resolves to `.unspecified` (iOS Commitment)
+
+**Symptoms:** On iOS, a 12-month **monthly-commitment** plan is expected but the purchase interceptor reports `parameters.billingPlanType == .unspecified` (or the purchase runs up-front). Often reported as "I set `billingPlanType: .monthly` on the dynamic offering but the interceptor says `unspecified`."
+
+**Check in order:**
+
+1. **Storefront** — monthly commitment is not offered in the **US** or **Singapore** App Stores; the SDK falls back to up-front there. Test on another storefront (sandbox / TestFlight account).
+2. **iOS version** — the feature requires **iOS 26.4+** and **SDK v6+**.
+3. **Plan configuration** — the plan must carry the monthly commitment billing type (Screen Composer, or the dynamic offering's `billingPlanType`).
+4. **Same plan mapped by multiple offering references (most common when it "randomly" fails).** If you register more than one `setDynamicOffering` reference that resolves to the **same plan** in the same presentation, with **different** billing types (e.g. one `.monthly` and one `.upFront`), the plan appears more than once with conflicting billing types and the SDK can no longer pick the right one — it resolves to `.unspecified`.
+
+**Fix:** map a given plan to a **single** billing plan type per presentation. If you need both up-front and monthly-commitment variants on screen, back them with **two distinct plans/products**. Call `Purchasely.clearDynamicOfferings()` before re-registering so a leftover offering from a previous screen/session doesn't add a second mapping for the same plan. Register offerings **before** fetching/displaying the placement (they are applied server-side at fetch).
+
+See [dynamic-offerings.md](../concepts/dynamic-offerings.md) and [monthly-commitment.md](../concepts/monthly-commitment.md).

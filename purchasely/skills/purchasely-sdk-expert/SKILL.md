@@ -73,6 +73,8 @@ Load as needed:
 - `../../references/concepts/subscription-checks.md` — premium gating / restore
 - `../../references/concepts/subscription-management.md` — native subscription management pages
 - `../../references/concepts/promotional-offers.md` — Apple promos, Google offers, offer codes
+- `../../references/concepts/dynamic-offerings.md` — `setDynamicOffering` runtime plan/offer overrides (server-side at fetch); same-plan billing-type pitfall
+- `../../references/concepts/monthly-commitment.md` — Apple advance commitment (12-month billed monthly), `PLYBillingPlanType`, iOS 26.4+ eligibility (excl. US/SG)
 - `../../references/concepts/campaigns.md` — trigger / placement campaigns
 - `../../references/concepts/byos.md` — Bring Your Own Screen, iOS/Android only
 - `../../references/concepts/lottie-animations.md` — Lottie weak dependency bridge
@@ -156,6 +158,14 @@ For Lottie / animation questions, load `../../references/concepts/lottie-animati
 - iOS requires `lottie-ios` plus an `@objc(PLYLottieBridge)` bridge.
 - Android requires `PLYLottieInterface` and `Purchasely.lottieView`.
 - Cross-platform apps configure their underlying native host projects.
+
+### Dynamic offerings & commitment billing
+
+For `setDynamicOffering` / runtime plan overrides, load `../../references/concepts/dynamic-offerings.md` first; for 12-month commitment billed monthly, also load `../../references/concepts/monthly-commitment.md`.
+
+- Dynamic offerings are applied **server-side at fetch** — register them **before** fetching/displaying the placement; they persist until removed.
+- `billingPlanType` on `setDynamicOffering` is **iOS-only**; monthly commitment needs iOS 26.4+, SDK v6+, and a non-US/non-Singapore storefront (US/SG auto-fall back to up-front).
+- Pitfall: mapping the **same plan** to multiple offering references with **different** billing types in one presentation makes the billing type ambiguous → resolves to `.unspecified`. One plan → one billing type per presentation.
 
 ## Inline expert checkpoint
 
