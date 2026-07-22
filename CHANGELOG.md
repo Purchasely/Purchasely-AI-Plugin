@@ -8,6 +8,30 @@ All notable changes to this project are documented here. The format is based on 
 
 - `references/concepts/dynamic-offerings.md` — covers `setDynamicOffering` across platforms, server-side application at fetch time, one-plan-one-billing-type pitfall.
 - `references/concepts/monthly-commitment.md` — covers Apple 12-month advance commitment (iOS 26.4+), `PLYBillingPlanType`, eligibility rules.
+- `references/concepts/rendering-engine.md` — UIKit/Android Views rendering engines, image cache, Lottie bridge, known rendering bugs.
+- `references/concepts/12-month-commitment.md` — Apple monthly-with-commitment, Google installments, `INSTALLMENT_*` webhooks.
+- `references/concepts/web-checkout.md` — Stripe payment links, `WEB_CHECKOUT_*` events.
+- New debug known-issues: Lottie silent-nothing, stuck spinner after purchase cancel, Flutter `display()` hang, Indonesian locale pre-6.0.1, `PRESENTATION_VIEWED` eviction pre-rc.3, iPad campaign-close freeze, iOS 18.4/18.5 DEBUG image-cache bypass, video autoplay bug.
+- New review checks: stale rc-era `interceptAction` import, Android `close()`-closes-all semantics, `oneSignalPlayerId` removal, `allowCampaigns` default flip.
+- Android v6 additions documented: zero-code automatic deeplink handling, `themeMode()` at init, structured `PLYTransitionDimension`, bundled lint checks.
+- Release process section in `CLAUDE.md`.
+
+### Changed
+
+- **SDK pins updated to GA** across all skills and references: native iOS **6.0.0** (SPM install now primary), Android **6.0.1**, Flutter **6.0.0** (stable on pub.dev), React Native **6.0.0-rc.3**, Cordova **6.0.0-rc.3**.
+- Android toolchain updated (Kotlin 2.3.x).
+- Action-interceptor guidance updated: returning success on purchase/restore in Observer mode auto-synchronizes — no manual `synchronize()` inside the interceptor.
+
+### Fixed
+
+- React Native `allowDeeplink` default corrected (native default `true`, no RN exception).
+- Removed-API names corrected per platform: iOS `showController` / `PLYUIControllerType` (`presentSubscriptions()` never existed on iOS); Android `subscriptionsFragment()`; `displaySubscriptionCancellationInstruction()` is removed, not a no-op.
+- Android default dismiss handler name corrected (`setDefaultPresentationDismissHandler`).
+- Native iOS requirement corrected to 13.4+ (inherited from 5.x).
+- Flutter concept pages updated to `PLY`-prefixed Dart types.
+- Dead anchor in `debug-mode.md`.
+- Migrate-skill platform coverage now lists all 5 platforms in README, AGENTS.md, GEMINI.md, and the hooks intro.
+- `gemini-extension.json` version aligned with the other manifests.
 
 ## [2.0.0-rc.6] — 2026-07-07
 
