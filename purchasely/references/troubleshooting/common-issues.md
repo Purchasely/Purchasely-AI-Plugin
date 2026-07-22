@@ -58,13 +58,13 @@ Annotated slice for one Observer-mode purchase (placement IDs are app-specific �
 }
 [Purchasely] Event: IN_APP_RENEWED                 ← subscription confirmed active
 [Purchasely] Interceptor executed action purchase. Skipping SDK execution.
-                                                   ↑ proceed(false) acknowledged
+                                                   ↑ your resolved intercept result (e.g. `.success`) acknowledged
 [Purchasely] Event: PRESENTATION_CLOSED            ← paywall dismissed
 ```
 
 The trace tells you, in order:
 1. **Receipt validated** (`RECEIPT_VALIDATED`, `IN_APP_RENEWED`) — purchase succeeded server-side.
-2. **Interceptor acknowledged** (`Skipping SDK execution`) — your `proceed(false)` was received.
+2. **Interceptor acknowledged** (`Skipping SDK execution`) — your resolved intercept result (`PLYInterceptResult.success` / `'success'` / etc., see [paywall-actions.md](../concepts/paywall-actions.md)) was received.
 3. **Paywall dismissed** (`PRESENTATION_CLOSED`) — the platform's dismiss API ran (`closeAllScreens()` on native iOS/Android, `presentation.close()` on Flutter v6, `request.close()` on React Native v6, `closePresentation()` on Cordova v6).
 
 If you chain a follow-up placement after the purchase, expect an additional `Successfully retrieved presentation Optional("<your_followup_placement_id>")` → `PRESENTATION_LOADED` → `PRESENTATION_VIEWED` sequence at the end of the trace.
@@ -188,32 +188,34 @@ When a teammate says "paywall is broken", ask in this order:
 
 ## 1. Paywall Not Showing
 
-**Symptoms:** `presentationController` or `fetchPresentation` returns nil/null, paywall never appears.
+**Symptoms:** `PLYPresentationBuilder(...).build().preload()` returns nil/throws, or the presentation never displays.
 
 **Causes and Solutions:**
 
-- **SDK not initialized:** Ensure `Purchasely.start()` has completed successfully before calling any presentation method. Wait for the `success == true` callback.
+- **SDK not initialized:** Ensure `Purchasely.apiKey(...).start()` has completed successfully before calling any presentation method. Wait for the `start()` completion (`error == nil`) or the awaited call to return without throwing.
 - **Invalid placement ID:** Verify the placement vendor ID in the Purchasely dashboard matches exactly (case-sensitive).
-- **Presentation type is DEACTIVATED:** Always check `presentation.type` before displaying. A deactivated presentation returns valid data but should not be shown.
-- **Wrong thread (iOS):** On iOS, `Purchasely.start()` must be called on the main thread. Calling from a background queue can silently fail.
+- **Presentation type is DEACTIVATED:** Always check `presentation.type` before displaying — see [presentation-types.md](../concepts/presentation-types.md). A deactivated presentation returns valid data but should not be shown.
+- **Wrong thread (iOS):** On iOS, `start()` must be called on the main thread. Calling from a background queue can silently fail.
 - **No active presentation:** Ensure a presentation is assigned to the placement in the dashboard.
 
 ```swift
-// iOS: Verify initialization before presenting
-Purchasely.start(withAPIKey: "KEY", storekitSettings: .storeKit2) { success, error in
-    guard success else {
-        print("SDK not ready: \(error?.localizedDescription ?? "")")
+// iOS v6: Verify initialization before presenting
+Purchasely.apiKey("KEY").storekitSettings(.storeKit2).start { error in
+    guard error == nil else {
+        print("SDK not ready: \(error!.localizedDescription)")
         return
     }
-    // Now safe to present
+    // Now safe to build and preload a presentation
 }
 ```
+
+> **Legacy (v5).** `Purchasely.start(withAPIKey:storekitSettings:completion:)` with a `(success, error)` 2-parameter completion, and `Purchasely.presentationController(for:)`, were removed in v6 in favour of the builder (`Purchasely.apiKey(...).start { error in }`) and `PLYPresentationBuilder`.
 
 ## 2. UI Frozen / Paywall Stuck
 
 **Symptoms:** Paywall buttons stop responding, spinner never dismisses, app appears frozen.
 
-**Cause:** the action was not acknowledged in all code paths of the interceptor — a returned `PLYInterceptResult` on native iOS/Android v6, a returned `InterceptResult` (`success` / `failed` / `notHandled`) on Flutter v6, a returned `'success' / 'failed' / 'notHandled'` string on React Native v6, or a returned/resolved `Purchasely.InterceptResult` on Cordova v6.
+**Cause:** the action was not acknowledged in all code paths of the interceptor — a returned `PLYInterceptResult` (`success` / `failed` / `notHandled`) on native iOS/Android v6 and Flutter v6, a returned `'success' / 'failed' / 'notHandled'` string on React Native v6, or a returned/resolved `Purchasely.InterceptResult` on Cordova v6.
 
 **Solution:** Ensure every branch resolves exactly once. Native iOS/Android v6, Flutter v6, React Native v6, and Cordova v6 all return or resolve a result.
 
@@ -229,9 +231,9 @@ Purchasely.interceptAction(.login) { _, _ in
 **Flutter v6:**
 
 ```dart
-await Purchasely.interceptAction(PresentationActionKind.login, (info, payload) async {
+await Purchasely.interceptAction(PLYPresentationActionKind.login, (info, payload) async {
   final ok = await showLogin();
-  return ok ? InterceptResult.success : InterceptResult.notHandled;
+  return ok ? PLYInterceptResult.success : PLYInterceptResult.notHandled;
 });
 ```
 
@@ -308,20 +310,22 @@ override fun onCreate(savedInstanceState: Bundle?) {
 **Causes and Solutions:**
 
 - **`handleDeeplink` not called:** Ensure you call `Purchasely.handleDeeplink(url)` (iOS) or `Purchasely.handleDeeplink(uri, activity)` (Android) in your deeplink handler.
-- **`readyToOpenDeeplink` not set:** The SDK queues deeplinks until `readyToOpenDeeplink` is set to `true`. Call this when your root view controller / main activity is ready.
+- **`allowDeeplink` not set:** The SDK queues deeplinks until `allowDeeplink` is `true` (the v6 default, but check for an explicit `allowDeeplink(false)` left over from a gated onboarding flow that never flips back). Call `Purchasely.allowDeeplink(true)` when your root view controller / main activity is ready if you gated it.
 - **URL scheme not configured:** Verify the URL scheme or universal link / app link is properly configured in your app settings.
 - **SDK not initialized:** If the deeplink arrives before `start()` completes, it will be lost. Initialize the SDK as early as possible.
 
 ```swift
-// iOS: Handle deeplink in SceneDelegate
+// iOS v6: Handle deeplink in SceneDelegate
 func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
     guard let url = URLContexts.first?.url else { return }
     Purchasely.handleDeeplink(url)
 }
 
-// Signal ready
-Purchasely.readyToOpenDeeplink(true)
+// Only needed if you gated deeplinks with allowDeeplink(false) at init:
+Purchasely.allowDeeplink(true)
 ```
+
+> **Legacy (v5).** `Purchasely.readyToOpenDeeplink(true)` was renamed `Purchasely.allowDeeplink(true)` in v6 — see [campaigns.md](../concepts/campaigns.md#sdk-setup--gating-campaign-display).
 
 ## 7. User Attributes Not Syncing
 
@@ -332,18 +336,21 @@ Purchasely.readyToOpenDeeplink(true)
 **Solution:** Set attributes only after the SDK initialization callback confirms success:
 
 ```kotlin
+// v6: the builder's start() completion takes a single nullable PLYError
 Purchasely.Builder(applicationContext)
     .apiKey("KEY")
     .stores(listOf(GoogleStore()))
     .build()
-    .start { success, error ->
-        if (success) {
+    .start { error ->
+        if (error == null) {
             // NOW safe to set attributes
             Purchasely.setUserAttribute("tier", "premium")
             Purchasely.setUserAttribute("articles_read", 42)
         }
     }
 ```
+
+> **Legacy (v5).** The 2-parameter `start { success, error -> }` callback was replaced by a single nullable `error` parameter in the v6 builder's `start(...)`.
 
 **Related — campaign on a custom-attribute audience is hit-or-miss on the first launch:** `setUserAttribute(...)` saves the value but does **not** re-evaluate any campaign. A trigger-based campaign evaluates its audience when the trigger resolves (default `APP_STARTED` → shortly after start), using the attributes held at that moment. If the attribute is set after that, the audience won't match on the **first** launch; because the value is persisted in the SDK's disk cache, it matches **from the next session** (hence the "it worked once" symptom). To make it reliable on first launch, gate campaigns until attributes are set — `allowCampaigns(false)` → `setUserAttribute(...)` → `allowCampaigns(true)` (ordering: start → set attributes → allow campaigns). See [campaigns.md](../concepts/campaigns.md#custom-attribute-audiences-set-the-attribute-before-campaigns-are-evaluated).
 
@@ -355,23 +362,33 @@ Purchasely.Builder(applicationContext)
 
 **Solutions:**
 
-**iOS:** Hold a strong reference to the controller:
+**iOS:** Hold a strong reference to the controller. In v6, prefer `presentation.display(from:)` (the SDK owns the reference and Flow close controls); only reach for the raw `presentation.controller` when you need to embed it yourself:
 
 ```swift
-// BAD: Controller is deallocated immediately
-func showPaywall() {
-    let vc = Purchasely.presentationController(for: "ONBOARDING")
+// BAD: the raw controller is not retained, so it may be deallocated immediately
+func showPaywall() async throws {
+    let presentation = try await PLYPresentationBuilder.forPlacementId("ONBOARDING").build().preload()
+    let vc = presentation?.controller
     present(vc!, animated: true)  // vc may be deallocated
 }
 
-// GOOD: Present modally (UIKit retains it) or store as property
+// GOOD (preferred): let the SDK own display + retention
+func showPaywall() async throws {
+    let presentation = try await PLYPresentationBuilder.forPlacementId("ONBOARDING").build().preload()
+    presentation?.display(from: self)
+}
+
+// GOOD (if you must embed it yourself): store the controller as a property
 var paywallController: UIViewController?
 
-func showPaywall() {
-    paywallController = Purchasely.presentationController(for: "ONBOARDING")
+func showPaywall() async throws {
+    let presentation = try await PLYPresentationBuilder.forPlacementId("ONBOARDING").build().preload()
+    paywallController = presentation?.controller
     present(paywallController!, animated: true)
 }
 ```
+
+> **Legacy (v5).** `Purchasely.presentationController(for:)` was removed in v6 in favour of `PLYPresentationBuilder` + `preload()`, exposing `presentation.display(from:)` or `presentation.controller`.
 
 **Android:** Ensure the Fragment is properly attached to a container and the Activity is not finishing:
 
@@ -468,15 +485,18 @@ The SDK holds flow presentations inside a dedicated `PLYWindow` (iOS) / custom o
 **Diagnosis:** Look at the interceptor action and the flow's step count:
 
 ```swift
-// In your PaywallActionsInterceptor
-Purchasely.setPaywallActionsInterceptor { action, params, info, proceed in
-    print("Action: \(action) rawValue=\(action.rawValue)")
-    // rawValue 0 = .close, rawValue 1 = .closeAll
-    proceed(true)
+// iOS v6 — register per-action interceptors
+Purchasely.interceptAction(.close) { info, params in
+    print("Action: close")
+    return .notHandled   // let the SDK run its default behaviour while diagnosing
+}
+Purchasely.interceptAction(.closeAll) { info, params in
+    print("Action: closeAll")
+    return .notHandled
 }
 ```
 
-If you see `rawValue: 0` (`.close`) fired from what the user perceives as "exit the paywall", the **paywall is misconfigured**.
+If `.close` fires from what the user perceives as "exit the paywall", the **paywall is misconfigured**.
 
 **Solution (preferred): fix the Console configuration**
 
@@ -490,22 +510,25 @@ If you see `rawValue: 0` (`.close`) fired from what the user perceives as "exit 
 If you cannot modify the Console config (e.g. legacy paywalls, A/B tests), map `.close` to `.closeAll` in your interceptor:
 
 ```swift
-// iOS — in the paywall actions interceptor
-case .close:
+// iOS v6 — in the .close action interceptor
+Purchasely.interceptAction(.close) { info, params in
     // Treat X as full exit, not back navigation
-    proceed(false) // we handled it
     Purchasely.closeAllScreens()
+    return .success   // we handled it
+}
 ```
 
 ```kotlin
-// Android — in the paywall actions interceptor
-PLYPresentationAction.CLOSE -> {
-    processAction(false)
+// Android v6 — in the Close action interceptor
+Purchasely.interceptAction<PLYPresentationAction.Close> { info, _ ->
     Purchasely.closeAllScreens()
+    PLYInterceptResult.SUCCESS
 }
 ```
 
 **Why clients don't hit this in prod:** most customer paywalls created via the Screen Composer default to `.closeAll` on their dismiss button, because that matches the "exit paywall" user intent. The bug surfaces on legacy or hand-configured paywalls that use `.close` on a single-step flow.
+
+> **Legacy (v5).** `Purchasely.setPaywallActionsInterceptor { action, params, info, proceed in }` (one global callback, `action.rawValue` switch, `proceed(Bool)`) and the Android `processAction(Boolean)` companion were removed in v6 in favour of one `interceptAction(...)` registration per action kind, returning a `PLYInterceptResult` — see [paywall-actions.md](../concepts/paywall-actions.md).
 
 **Related defensive work:** see Purchasely-iOS-Sources PR #563 which adds SDK-level safeguards (`closeFlow()` called when no visible content remains) so misconfigured paywalls degrade gracefully instead of freezing.
 

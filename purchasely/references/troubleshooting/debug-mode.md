@@ -31,14 +31,14 @@ Enable both together when investigating "the wrong paywall appears" tickets.
 | iOS (Swift) | `Purchasely.logLevel = .debug` (or pass `logLevel: .debug` to `start`) |
 | Android (Kotlin) | `.logLevel(LogLevel.DEBUG)` on the `Purchasely.Builder` |
 | React Native (v6) | `.logLevel('debug')` on the `Purchasely.builder(...)` |
-| Flutter | `.logLevel(LogLevel.debug)` on the `PurchaselyBuilder` |
+| Flutter | `.logLevel(PLYLogLevel.debug)` on the `PurchaselyBuilder` |
 | Cordova | `Purchasely.LogLevel.DEBUG` as the 4th argument to `Purchasely.start(...)` |
 
 > **Gate behind a build flag.** Ship `LogLevel.ERROR` (or omit the parameter) in production. Debug logs include placement IDs, audience matches, and presentation IDs — keep them out of production binaries.
 
 ## Enabling Debug Mode
 
-> ⚠️ **Deeplink handling is required.** Your app must implement `Purchasely.handleDeeplink(...)` and call `Purchasely.readyToOpenDeeplink(true)` once the app's UI is ready. Without it, the QR code does nothing. See [campaigns.md](../concepts/campaigns.md#sdk-setup--readytoopendeeplink).
+> ⚠️ **Deeplink handling is required.** Your app must implement `Purchasely.handleDeeplink(...)` and ensure `allowDeeplink` is `true` (the v6 default — set `Purchasely.allowDeeplink(true)` once the app's UI is ready if you gated it). Without it, the QR code does nothing. See [campaigns.md](../concepts/campaigns.md#sdk-setup--gating-campaign-display).
 
 ### Step 1 — Get the preview QR code
 
@@ -78,7 +78,7 @@ Set its **priority** higher than any other audience the device might match — o
 ## Anti-patterns
 
 - ❌ **Forgetting to deactivate Debug Mode.** Devices left in Debug Mode keep matching Internal Testers — leading to "this user sees the test paywall in production" tickets.
-- ❌ **Skipping deeplink setup.** The QR is a deeplink. If `handleDeeplink` isn't wired and `readyToOpenDeeplink(true)` hasn't been called after the splash, nothing happens.
+- ❌ **Skipping deeplink setup.** The QR is a deeplink. If `handleDeeplink` isn't wired, or `allowDeeplink` was gated `false` at init and never flipped back to `true` after the splash, nothing happens.
 - ❌ **Using Debug Mode to bypass purchase validation.** Debug Mode previews draft Screens; it does **not** simulate purchases. Use [sandbox testing](../testing/README.md) for that.
 - ❌ **Testing Debug Mode in a release build with `logLevel = ERROR`.** The Debug Panel works either way, but the SDK debug log stream — your primary diagnostic tool — won't be visible.
 

@@ -155,11 +155,11 @@ Purchasely.restoreAllProducts(
 
 > On iOS, restore may prompt the user to sign in to the App Store. On Android, it queries Google Play Billing locally (no prompt). The user experience differs; account for that in your UI copy.
 
-> **Observer mode:** if you handle restores yourself, intercept the `restore` action in the [paywall actions interceptor](paywall-actions.md), run your own restore flow, then call `Purchasely.synchronize()` and resolve the interceptor (native iOS/Android v6 and Flutter v6: return `PLYInterceptResult.success` / `SUCCESS` / `InterceptResult.success`; React Native v6: return `'success'` / `'failed'`; Cordova v6: return or resolve `Purchasely.InterceptResult.success` / `.failed`).
+> **Observer mode:** if you handle restores yourself, intercept the `restore` action in the [paywall actions interceptor](paywall-actions.md), run your own restore flow, then resolve the interceptor (iOS: return `PLYInterceptResult.success` / `.failed`; Android: `PLYInterceptResult.SUCCESS` / `.FAILED`; Flutter: `PLYInterceptResult.success` / `.failed`; React Native v6: return `'success'` / `'failed'`; Cordova v6: return or resolve `Purchasely.InterceptResult.success` / `.failed`). Returning a success result auto-synchronizes with Purchasely's servers — do **not** call `Purchasely.synchronize()` yourself inside the interceptor (see [observer-mode-post-purchase.md](observer-mode-post-purchase.md)). Manual `synchronize()` is only for restores handled entirely outside the interceptor (e.g. a custom sale screen or [BYOS](byos.md)).
 
 ## Close paywalls programmatically
 
-After a manual gate-then-purchase flow, dismiss the paywall after resolving the action interceptor. Native iOS/Android use `Purchasely.closeAllScreens()`; React Native v6 dismisses via `request.close()` on the `PLYPresentationRequest` you built; Flutter v6 dismisses via `presentation.close()` on the loaded `Presentation`; Cordova v6 uses `Purchasely.closePresentation()` on the public JS bridge. See [observer-mode-post-purchase.md](observer-mode-post-purchase.md) for exact per-platform ordering.
+After a manual gate-then-purchase flow, dismiss the paywall after resolving the action interceptor. Native iOS/Android use `Purchasely.closeAllScreens()`; React Native v6 dismisses via `request.close()` on the `PLYPresentationRequest` you built; Flutter v6 dismisses via `presentation.close()` on the loaded `PLYPresentation`; Cordova v6 uses `Purchasely.closePresentation()` on the public JS bridge. See [observer-mode-post-purchase.md](observer-mode-post-purchase.md) for exact per-platform ordering.
 
 ## Anti-patterns
 

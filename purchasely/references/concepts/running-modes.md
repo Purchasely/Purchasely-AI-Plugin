@@ -30,6 +30,8 @@ Purchasely {
 }
 ```
 
+> **Other v6 defaults flipped to `true`.** Unlike `runningMode` (default flips to Observer), two unrelated v6 flags default to `true`: `allowCampaigns` (campaign display) and `allowDeeplink` (deeplink presentations) — both were `false`-by-default (or governed by a single legacy flag) pre-v6. See [campaigns.md](campaigns.md#sdk-setup--gating-campaign-display) for the full per-platform breakdown and the migration note.
+
 ## The two modes
 
 | Mode | Description | When to use |
@@ -113,9 +115,9 @@ await Purchasely.builder('YOUR_API_KEY')
 import 'package:purchasely_flutter/purchasely_flutter.dart';
 
 await PurchaselyBuilder.apiKey('YOUR_API_KEY')
-    .runningMode(RunningMode.full)              // or RunningMode.observer — default is observer in v6
-    .storekitVersion(StorekitVersion.storeKit2)
-    .logLevel(LogLevel.warn)
+    .runningMode(PLYRunningMode.full)              // or PLYRunningMode.observer — default is observer in v6
+    .storekitVersion(PLYStorekitVersion.storeKit2)
+    .logLevel(PLYLogLevel.warn)
     .stores([PLYStore.google])
     .start();
 ```
@@ -137,7 +139,7 @@ Purchasely.start(
 );
 ```
 
-> **Cross-platform note.** React Native, Flutter, and Cordova are on the v6 API (default Observer), in the same v6 group as native iOS & Android. React Native uses the builder (`Purchasely.builder('key')....start()`) and string running modes (`'full'` / `'observer'`); Flutter uses `PurchaselyBuilder.apiKey(...)....start()` and the `RunningMode` enum; Cordova keeps method-based `start(...)` but now takes a single options object with `Purchasely.RunningMode.full` / `.observer`. Always confirm the exact plugin signature in that platform's integration reference and in [`sdk-versions.md`](../sdk-versions.md).
+> **Cross-platform note.** React Native, Flutter, and Cordova are on the v6 API (default Observer), in the same v6 group as native iOS & Android. React Native uses the builder (`Purchasely.builder('key')....start()`) and string running modes (`'full'` / `'observer'`); Flutter uses `PurchaselyBuilder.apiKey(...)....start()` and the `PLYRunningMode` enum; Cordova keeps method-based `start(...)` but now takes a single options object with `Purchasely.RunningMode.full` / `.observer`. Always confirm the exact plugin signature in that platform's integration reference and in [`sdk-versions.md`](../sdk-versions.md).
 
 ## Log Levels
 
@@ -155,7 +157,7 @@ Enum names vary slightly by platform:
 | iOS | `LogLevel.debug` / `.info` / `.warn` / `.error` |
 | Android | `LogLevel.DEBUG` / `.INFO` / `.WARN` / `.ERROR` |
 | React Native | `.logLevel('debug')` / `'info'` / `'warn'` / `'error'` (string on the v6 builder) |
-| Flutter | `LogLevel.debug` / `.info` / `.warn` / `.error` |
+| Flutter | `PLYLogLevel.debug` / `.info` / `.warn` / `.error` |
 | Cordova | `Purchasely.LogLevel.DEBUG` / `.INFO` / `.WARN` / `.ERROR` |
 
 > On native Android v6, `Purchasely.logcatEnabled` controls Logcat output independently of `logLevel`, and custom loggers receive all messages regardless of level.

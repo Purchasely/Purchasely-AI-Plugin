@@ -16,6 +16,21 @@ The native subscription management page lets the user:
 
 Purchasely does not gate this — the SDK simply opens the OS-native URL.
 
+## The old SDK-native subscription screen is gone in v6
+
+Earlier SDK versions also shipped a **Purchasely-rendered** subscriptions screen (a UI built by the SDK itself, distinct from the OS-native page this doc covers). In v6 that in-SDK screen was **removed**, not deprecated to a no-op:
+
+| Platform | Removed method | Notes |
+|----------|-----------------|-------|
+| Android | `Purchasely.subscriptionsFragment()` | Removed entirely — the method no longer exists. |
+| Flutter | `Purchasely.presentSubscriptions()` | Removed entirely — no drop-in replacement. |
+| React Native | `Purchasely.presentSubscriptions()` | Removed entirely — no drop-in replacement. |
+| iOS | *(never had one)* | iOS never shipped a `presentSubscriptions()`-equivalent; the removed iOS API is the general-purpose `showController(_:type:from:)` / `PLYUIControllerType`, unrelated to the subscriptions screen specifically. |
+
+`displaySubscriptionCancellationInstruction()` (the cancellation-survey UI) is likewise **removed** on **Android and Flutter** in v6 — not a no-op.
+
+**Replacement:** there is no drop-in SDK screen. Build your own subscription-management UI from `Purchasely.userSubscriptions()` / `Purchasely.userSubscriptionsHistory()` (see [subscription-checks.md](subscription-checks.md)), and use the OS-native deeplinks documented below for the actual cancel/upgrade/downgrade actions — which is what Apple and Google require anyway (see [Anti-patterns](#anti-patterns)).
+
 ## iOS
 
 ### iOS 15+ (recommended)
