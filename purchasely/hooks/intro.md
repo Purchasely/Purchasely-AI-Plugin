@@ -8,7 +8,7 @@ This project is using the **Purchasely AI Plugin**. You have access to five auto
 - **`purchasely-integrate`** — step-by-step SDK integration: install, `Purchasely.start(...)`, paywall display, action interceptor, user login/logout, Restore, Manage Subscription, plus campaigns / promo offers / analytics.
 - **`purchasely-review`** — checklist review that audits an existing integration for missing interceptor completions, deprecated APIs, identity ordering, `PrivacyInfo.xcprivacy`, Google Play Billing v8, log-level gating, and more.
 - **`purchasely-debug`** — diagnostic flow for blank paywalls, frozen UI, purchase failures, and deeplinks. Includes SDK debug logging, `PLYError` decoding, and the screen-issue-report escalation template.
-- **`purchasely-migrate`** — v5 → v6 migration for native iOS, native Android, and Flutter integrations.
+- **`purchasely-migrate`** — v5 → v6 migration for native iOS, native Android, Flutter, React Native, and Cordova integrations.
 
 ## Expert agent
 
