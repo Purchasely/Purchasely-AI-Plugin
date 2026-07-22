@@ -1,6 +1,6 @@
 # iOS Common Integration Patterns
 
-> **Platform-specific elaborations for v6.0.0-rc.1.** This file covers iOS idioms (SwiftUI, UIKit, Swift 6 concurrency, external billing / StoreKit 2 bridging). Concepts that apply to **every** Purchasely SDK (Observer-mode post-purchase flow, presentation type guard, presentation cache, audience-targeting attributes, GDPR consent, subscription checks) live in `../concepts/`:
+> **Platform-specific elaborations for v6.0.0 (stable GA).** This file covers iOS idioms (SwiftUI, UIKit, Swift 6 concurrency, external billing / StoreKit 2 bridging). Concepts that apply to **every** Purchasely SDK (Observer-mode post-purchase flow, presentation type guard, presentation cache, audience-targeting attributes, GDPR consent, subscription checks) live in `../concepts/`:
 >
 > - [`../concepts/running-modes.md`](../concepts/running-modes.md), [`../concepts/paywall-actions.md`](../concepts/paywall-actions.md), [`../concepts/presentation-types.md`](../concepts/presentation-types.md), [`../concepts/presentation-cache.md`](../concepts/presentation-cache.md), [`../concepts/observer-mode-post-purchase.md`](../concepts/observer-mode-post-purchase.md), [`../concepts/user-attributes-targeting.md`](../concepts/user-attributes-targeting.md), [`../concepts/subscription-checks.md`](../concepts/subscription-checks.md). Migrating from v5? See [`migration-v6.md`](migration-v6.md).
 
@@ -148,21 +148,18 @@ Purchasely.interceptAction(.purchase) { info, params in
         return .notHandled
     }
     let error = await ExistingPurchaseManager.shared.purchase(productId: productId)
-    if error == nil {
-        Purchasely.synchronize(success: {}, failure: { _ in })   // notify Purchasely for analytics + receipt validation
-        return .success            // app handled the purchase
-    }
-    return .failed
+    return error == nil ? .success : .failed   // returning .success auto-synchronizes the receipt
 }
 
 Purchasely.interceptAction(.restore) { info, params in
     let error = await ExistingPurchaseManager.shared.restorePurchases()
-    Purchasely.synchronize(success: {}, failure: { _ in })
-    return error == nil ? .success : .failed
+    return error == nil ? .success : .failed   // returning .success auto-synchronizes
 }
 ```
 
 > 📘 `.notHandled` for `.purchase` / `.restore` in Observer mode logs a warning and skips — the SDK cannot execute purchases in Observer mode. Always return `.success` / `.failed` from your own flow.
+>
+> 📘 Returning `.success` for `.purchase` / `.restore` **auto-synchronizes** the receipt — do not call `Purchasely.synchronize()` from inside the interceptor. Call it manually only for purchases your app processes **outside** the interceptor flow (e.g. a "Restore Purchases" button on a settings screen, or a BYOS `.client` presentation).
 
 ## Observer Mode with StoreKit 2
 
@@ -184,10 +181,9 @@ Purchasely.interceptAction(.purchase) { info, params in
         let result = try await product.purchase()
         switch result {
         case .success:
-            Purchasely.synchronize(success: {}, failure: { _ in })
-            return .success
+            return .success        // returning .success auto-synchronizes the receipt
         case .pending, .userCancelled:
-            return .notHandled    // not an error — user backed out
+            return .notHandled     // not an error — user backed out
         @unknown default:
             return .failed
         }
@@ -199,8 +195,7 @@ Purchasely.interceptAction(.purchase) { info, params in
 Purchasely.interceptAction(.restore) { info, params in
     do {
         try await AppStore.sync()
-        Purchasely.synchronize(success: {}, failure: { _ in })
-        return .success
+        return .success             // returning .success auto-synchronizes
     } catch {
         return .failed
     }
@@ -211,9 +206,8 @@ Purchasely.interceptAction(.restore) { info, params in
 
 After a successful Observer-mode purchase, the recommended sequence is:
 
-1. **Await `synchronize()`** (only if you chain a follow-up placement that targets users based on subscription state — otherwise fire-and-forget is fine)
-2. **Return `.success`** from the interceptor — tells the SDK the action was handled
-3. **`Purchasely.closeAllScreens()`** — force-dismiss the paywall
+1. **Return `.success`** from the interceptor — tells the SDK the action was handled, and **auto-synchronizes** the receipt. Do not call `Purchasely.synchronize()` yourself here.
+2. **`Purchasely.closeAllScreens()`** — force-dismiss the paywall
 
 The order **return result → closeAllScreens** matters: the interceptor must learn the action was handled before the paywall tears down.
 
@@ -224,39 +218,30 @@ func handlePurchase(params: PLYPresentationActionParameters?) async -> PLYInterc
     let result = await PurchaseManager.shared.purchase(productId: productId)
     switch result {
     case .success:
-        try? await synchronizeReceipt()    // only await if you chain a placement that targets subscribers
         Purchasely.closeAllScreens()       // dismiss after returning .success
-        return .success
+        return .success                    // auto-synchronizes the receipt
     case .cancelled:
         return .notHandled                 // user backed out
     case .error:
         return .failed
     }
 }
-
-private func synchronizeReceipt() async throws {
-    try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
-        Purchasely.synchronize(
-            success: { cont.resume() },
-            failure: { error in
-                cont.resume(throwing: error ?? NSError(domain: "Purchasely", code: -1))
-            }
-        )
-    }
-}
 ```
 
 > `closeAllScreens()` is `@MainActor`-isolated. From a non-isolated context, wrap in `Task { @MainActor in Purchasely.closeAllScreens() }`. It replaces the removed `closeDisplayedPresentation()`.
+>
+> `Purchasely.synchronize()` remains useful for transactions your app processes **outside** the interceptor flow — e.g. a "Restore Purchases" button on a settings screen, or a BYOS `.client` presentation with its own purchase button. If a follow-up placement needs guaranteed fresh subscription state and you can't rely on the automatic sync's timing, call and await `synchronize()` yourself before fetching that placement (see below).
 
 ### Chaining a Follow-up Placement After Purchase (optional)
 
 Some apps display a follow-up paywall after a successful purchase — a thank-you screen, a premium onboarding tour, a one-tap upsell. This is **not part of the SDK contract**: it's just `PLYPresentationBuilder` called again with whatever placement ID you've configured on the Console (e.g. `"post_purchase"`, `"thank_you"` — pick your own).
 
-If you chain a placement whose audience targets users by subscription state, **`synchronize()` must complete first** — otherwise the fetch resolves against stale state and may return a deactivated/fallback presentation.
+If you chain a placement whose audience targets users by subscription state, **`synchronize()` must complete first** — otherwise the fetch resolves against stale state and may return a deactivated/fallback presentation. The interceptor's own `.success` return already auto-synchronizes, but that happens with no completion signal your app can observe — so here, called from *outside* the interceptor, awaiting your own `synchronize()` is the right call:
 
 ```swift
 @MainActor
-private func showPostPurchaseScreen() {
+private func showPostPurchaseScreen() async {
+    try? await synchronizeReceipt()   // wait for the auto-sync to have definitely landed
     PLYPresentationBuilder
         .forPlacementId("YOUR_POST_PURCHASE_PLACEMENT_ID")
         .onDismissed { _ in /* dismissed */ }
@@ -268,6 +253,17 @@ private func showPostPurchaseScreen() {
             else { return }
             presentation.display(from: topVC)
         }
+}
+
+private func synchronizeReceipt() async throws {
+    try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+        Purchasely.synchronize(
+            success: { cont.resume() },
+            failure: { error in
+                cont.resume(throwing: error ?? NSError(domain: "Purchasely", code: -1))
+            }
+        )
+    }
 }
 ```
 

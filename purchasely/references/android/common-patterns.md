@@ -162,8 +162,7 @@ Purchasely.interceptAction<PLYPresentationAction.Purchase> { info, purchase ->
 }
 
 fun onBillingSuccess() {
-    Purchasely.synchronize()
-    pendingResult?.invoke(PLYInterceptResult.SUCCESS)
+    pendingResult?.invoke(PLYInterceptResult.SUCCESS)   // resolving with SUCCESS auto-synchronizes — do not call Purchasely.synchronize() here
     pendingResult = null
     // Observer mode does not auto-close (the implicit close_all is Full-only). This handler
     // runs after the interceptor has resolved, so dismiss the paywall here — unless a
@@ -194,8 +193,7 @@ Purchasely.interceptAction(PLYPresentationAction.Purchase.class, (info, action, 
         purchase.getPlan().getStore_product_id(),
         purchase.getSubscriptionOffer() != null ? purchase.getSubscriptionOffer().getOfferToken() : null,
         billingResult -> {
-            Purchasely.synchronize();
-            result.invoke(PLYInterceptResult.SUCCESS);
+            result.invoke(PLYInterceptResult.SUCCESS);   // resolving with SUCCESS auto-synchronizes — do not call Purchasely.synchronize() here
         }
     );
 });
@@ -209,7 +207,9 @@ View view = loaded.buildView(getApplicationContext(), outcome -> { /* handle */ 
 container.addView(view);
 ```
 
-## Synchronize after a purchase (Observer mode)
+## Synchronize for a purchase processed outside the interceptor
+
+Resolving a `.purchase` / `.restore` interceptor with `PLYInterceptResult.SUCCESS` already **auto-synchronizes** the receipt — do not also call `Purchasely.synchronize()` from inside the interceptor. Call it manually only for transactions your app processes **outside** the interceptor flow, e.g. a "Restore Purchases" button on a settings screen, or a client-side (`PLYPresentationType.CLIENT`) presentation with its own purchase button:
 
 ```kotlin
 Purchasely.synchronize(

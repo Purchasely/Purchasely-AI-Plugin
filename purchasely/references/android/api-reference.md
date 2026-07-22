@@ -37,6 +37,7 @@ Purchasely {
     userId("user-123")                 // optional
     stores(listOf(GoogleStore()))
     runningMode(PLYRunningMode.Full)    // default is Observer — set Full for purchase handling/validation
+    themeMode(...)                      // optional, since 6.0.1 — system/light/dark (parity with iOS)
     logLevel(LogLevel.DEBUG)
     logcatEnabled(true)                 // optional, controls Logcat output independently
     allowDeeplink(true)
@@ -57,6 +58,7 @@ Purchasely.Builder(applicationContext)
     .userId("user-123")
     .stores(listOf(GoogleStore()))
     .runningMode(PLYRunningMode.Full)
+    .themeMode(...)                     // optional, since 6.0.1 — system/light/dark (parity with iOS)
     .logLevel(LogLevel.DEBUG)
     .logcatEnabled(true)
     .allowDeeplink(true)
@@ -77,6 +79,7 @@ Purchasely.Builder(applicationContext)
 | `userId(id)` | Optional anonymous-to-known mapping. |
 | `stores(stores)` | Billing store implementations (e.g. `GoogleStore()`). Optional — storeless start is supported. |
 | `runningMode(mode)` | `PLYRunningMode.Full` or `PLYRunningMode.Observer`. **Default is `Observer`.** |
+| `themeMode(mode)` | Since `6.0.1`, settable on **both** the DSL and the fluent Builder (parity with iOS `themeMode(_:)`). |
 | `logLevel(level)` | `LogLevel.DEBUG` / `WARN` / `ERROR` / … |
 | `logcatEnabled(enabled)` | Controls Logcat output independently of `logLevel` (default `true`). |
 | `allowDeeplink(allowed)` | Enables deeplink-driven display. Default `true` in v6 (was `false`). |
@@ -206,6 +209,15 @@ button.setOnClickListener { loaded?.display(this) }
 | `state` | `StateFlow<PLYPresentationState>` |
 
 `PLYPresentation.id` was renamed `screenId`; `toMap()["id"]` is now `toMap()["screenId"]`.
+
+### `PLYTransition` sizing — `heightPercentage` → `height`
+
+The old `heightPercentage: Float` field is **removed** (no alias). Sizing is now a structured `PLYTransitionDimension(type: PLYDimensionType, value: Float)`, supporting pixels **or** a percentage:
+
+```kotlin
+val drawerHeight = PLYTransitionDimension(PLYDimensionType.PERCENTAGE, 0.6f)  // 60% of screen height
+val popinHeight = PLYTransitionDimension(PLYDimensionType.PIXEL, 480f)        // fixed 480px
+```
 
 ### `PLYPresentationState`
 
@@ -379,6 +391,26 @@ Purchasely.handleDeeplink(uri, activity) // still works; deduped against auto-in
 
 `readyToOpenDeeplink` → `allowDeeplink`; `isDeeplinkHandled(uri, activity)` → `handleDeeplink(uri, activity)`.
 
+## Presentation Dismiss Handler
+
+### `Purchasely.setDefaultPresentationDismissHandler(handler)`
+
+A default handler for paywalls you do **not** instantiate yourself — chiefly deeplink- and campaign-opened screens, where no `onDismissed` callback was supplied. The handler receives a single `PLYPresentationOutcome`.
+
+```kotlin
+Purchasely.setDefaultPresentationDismissHandler { outcome ->
+    when (outcome.purchaseResult) {
+        PLYPurchaseResult.PURCHASED -> refreshAccess()
+        PLYPurchaseResult.RESTORED -> refreshAccess()
+        PLYPurchaseResult.CANCELLED, null -> Unit
+    }
+}
+```
+
+Since `6.0.1` the `handler` parameter is **nullable** — pass `null` to unregister the default handler (equivalent to a dedicated `remove...` call). It is mutually exclusive with per-presentation callbacks (`onDismissed`, the `display()` completion, `PLYPresentationState.Dismissed`).
+
+> `setDefaultPresentationResultHandler` never existed on Android as a name — `setDefaultPresentationDismissHandler` is, and always was, the correct Android name (unlike iOS, which renamed *from* `setDefaultPresentationResultHandler`).
+
 ## User Management
 
 ```kotlin
@@ -406,6 +438,8 @@ Purchasely.userSubscriptionsHistory { subscriptions -> /* history */ }
 
 The built-in subscription list and cancellation survey UI (`subscriptionsFragment()`, all `PLYSubscriptions*` / `PLYSubscriptionDetail*` / `PLYSubscriptionCancellation*`) were removed — build your own UI from the data APIs above. `purchaseHistory()` → `userSubscriptionsHistory()` (suspend, backend); `isPastSubscriber()` → derive from history.
 
+> `Purchasely.displaySubscriptionCancellationInstruction()` is also **removed** (dropped between `6.0.0-rc.2` and `6.0.0-rc.3`) — it is not mentioned in the upstream `MIGRATION_V6.md`, so this plugin is currently the only place documenting the removal. There is no Android API named `presentSubscriptions()` — if you see that name applied to Android, it's a cross-platform mix-up (RN/Cordova use that name, native Android does not).
+
 ## Close Screens
 
 ```kotlin
@@ -413,6 +447,8 @@ Purchasely.closeAllScreens()
 presentation.close()
 presentation.back()
 ```
+
+> `presentation.close()` **delegates to `Purchasely.closeAllScreens()`** — it closes every screen currently displayed, not just this presentation instance. There is no instance-scoped close API on Android (an upstream design choice); if a paywall is stacked over another Purchasely screen, calling `close()` on either one dismisses both.
 
 ## Synchronize
 

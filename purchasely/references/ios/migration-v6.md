@@ -1,8 +1,8 @@
-# iOS SDK v5.x → v6.0.0-rc.1 Migration
+# iOS SDK v5.x → v6.0.0 Migration
 
 This guide is iOS-only (Swift / SwiftUI / UIKit). Android, React Native, Flutter, and Cordova have their own migration notes — do not apply this one to them.
 
-Version 6.0.0-rc.1 introduces a fluent initialization builder, a granular per-action interceptor API, clearer naming, and a consolidated paywall display surface built around `PLYPresentationBuilder`. `PLYPresentation` becomes a protocol (most call sites compile unchanged). For the full v6 API surface see [`api-reference.md`](api-reference.md); for the legacy symbols this guide replaces see [`v5-api-reference.md`](v5-api-reference.md).
+Version 6.0.0 (stable GA) introduces a fluent initialization builder, a granular per-action interceptor API, clearer naming, and a consolidated paywall display surface built around `PLYPresentationBuilder`. `PLYPresentation` becomes a protocol (most call sites compile unchanged). For the full v6 API surface see [`api-reference.md`](api-reference.md); for the legacy symbols this guide replaces see [`v5-api-reference.md`](v5-api-reference.md).
 
 ## Summary of breaking changes
 
@@ -14,30 +14,37 @@ Version 6.0.0-rc.1 introduces a fluent initialization builder, a granular per-ac
 | `PLYPresentationInfo` | `PLYInterceptorInfo` |
 | `Purchasely.fetchPresentation(...)` | `PLYPresentationBuilder.…build().preload { … }` |
 | `Purchasely.display(for:displayMode:)` | `Purchasely.display(for:transition:)` |
+| `PLYDisplayMode` (type) | `PLYTransition` (type) |
 | `Purchasely.closeDisplayedPresentation()` | `Purchasely.closeAllScreens()` |
 | `controller.PresentationView` | `presentation.swiftUIView` (SwiftUI) / `presentation.controller` (UIKit) |
-| `Purchasely.productView(…)` / `planView(…)` / `presentationView(…)` | `PLYPresentationBuilder.…build().preload { … }` → `presentation.swiftUIView` |
+| `Purchasely.productView(…)` / `planView(…)` / `presentationView(…)` (8 factories) | `PLYPresentationBuilder.…build().preload { … }` → `presentation.swiftUIView` |
+| Builder `onClose` callback | `.onCloseRequested { … }` |
+| `presentation.id` | `presentation.screenId` (now non-optional) |
 | `readyToOpenDeeplink(_:)` | `allowDeeplink(_:)` |
 | `isDeeplinkHandled(deeplink:)` | `handleDeeplink(_:)` |
 | `ply/products/*` / `ply/plans/*` deeplinks | `ply/presentations/<id>` / `ply/placements/<id>` |
-| `PLYProductViewControllerResult` | `PLYPresentationOutcome` |
+| `PLYProductViewControllerResult` | `PLYPresentationOutcome` (the old type is internalized, not public) |
+| `PLYAttribute.oneSignalPlayerId` | `.oneSignalExternalId` / `.oneSignalUserId` |
+| `Purchasely.showController(_:type:from:)` / `PLYUIControllerType` / legacy "My Subscriptions" screen | removed — build your own from `userSubscriptions()` / `userSubscriptionsHistory()` |
 | Objective-C `PLYPresentation *` | `id<PLYPresentation>` |
 
 ## Dependency
 
-Bump the Purchasely iOS package to `6.0.0-rc.1`.
+Bump the Purchasely iOS package to `6.0.0` (stable GA).
 
-**Swift Package Manager** — in `Package.swift` or the Xcode package list:
+**Swift Package Manager** (primary) — in `Package.swift` or the Xcode package list:
 
 ```swift
-.package(url: "https://github.com/Purchasely/Purchasely-iOS", exact: "6.0.0-rc.1")
+.package(url: "https://github.com/Purchasely/Purchasely-iOS", from: "6.0.0")
 ```
 
 **CocoaPods** — in the `Podfile`:
 
 ```ruby
-pod 'Purchasely', '6.0.0-rc.1'
+pod 'Purchasely', '~> 6.0'
 ```
+
+CocoaPods and binary distribution are published from the `Purchasely/Purchasely-iOS` repo; the SDK's own dev repo is SPM-only.
 
 After bumping, resolve packages (`File ▸ Packages ▸ Resolve Package Versions`, or `pod install`) and clean the build folder before the first compile.
 
@@ -206,12 +213,14 @@ func handlePurchase(params: PLYPresentationActionParameters?) async -> PLYInterc
     guard let productId = params?.plan?.appleProductId else { return .notHandled }
     let result = await PurchaseManager.shared.purchase(productId: productId)
     switch result {
-    case .success:   try? await synchronizeReceipt(); return .success
+    case .success:   return .success       // returning .success auto-synchronizes the receipt
     case .cancelled: return .notHandled    // user backed out — not an error
     case .error:     return .failed
     }
 }
 ```
+
+> Returning `.success` for `.purchase` / `.restore` in Observer mode **auto-synchronizes** — do not call `Purchasely.synchronize()` from inside the interceptor. Call it manually only for transactions your app processes **outside** the interceptor flow (a "Restore Purchases" button on a settings screen, a BYOS `.client` presentation).
 
 Return `.notHandled` in Full mode so the SDK runs its own purchase/restore flow.
 
@@ -312,7 +321,9 @@ The v5 dismissal tuple `(PLYProductViewControllerResult, PLYPlan?)` becomes a si
 
 ## 4. `PLYPresentation` is now a protocol
 
-`PLYPresentation` changed from a class to a public `@objc protocol`. **Reading members and calling methods works unchanged** — every property (`id`, `placementId`, `plans`, `metadata`, `isFlow`, …) and method (`display(from:)`, `close()`, `back()`, …) resolves identically. Swift may write `any PLYPresentation`.
+`PLYPresentation` changed from a class to a public `@objc protocol`. **Reading members and calling methods works unchanged** — every property (`screenId`, `placementId`, `plans`, `metadata`, `isFlow`, …) and method (`display(from:)`, `close()`, `back()`, …) resolves identically. Swift may write `any PLYPresentation`.
+
+> `.id` was renamed **`.screenId`** (no compatibility alias) and is now **non-optional** (`String`, not `String?`).
 
 ## 5. SwiftUI — `swiftUIView` (UIKit keeps `controller`)
 
@@ -365,6 +376,8 @@ let handled = Purchasely.handleDeeplink(url)
 
 In v6, deeplinks display **immediately** by default. Call `Purchasely.allowDeeplink(false)` to defer (e.g. during onboarding) and `allowDeeplink(true)` when ready. Hand a cold-start deeplink at init: `Purchasely.apiKey("…").handleDeeplink(url).start { error in }`. Unlike Android, iOS does **not** auto-intercept — keep passing deeplinks via `Purchasely.handleDeeplink(_:)` from your `AppDelegate` / `SceneDelegate`.
 
+`allowCampaigns(_:)` also **defaults to `true` in v6** (v5 defaulted to `false`). Opening a queued campaign deeplink is additionally gated on the SDK's configuration being ready — even with `allowCampaigns(true)`, a campaign will not display until `start()` has finished.
+
 ### Product / plan deeplinks removed (breaking)
 
 The `ply/products/*` and `ply/plans/*` deeplink formats are **removed** in v6, along with the internal `productController` factory that served them. A deeplink to one of these paths is no longer handled — deep-link to a placement or a presentation instead (configure the target screen in the Console):
@@ -400,6 +413,16 @@ PLYPresentationBuilder *builder = [PLYPresentationBuilder forPlacementId:@"ONBOA
 }];
 ```
 
+## 9. Subscriptions UI removed
+
+`Purchasely.showController(_:type:from:)` (the v5 entry point for the built-in "My Subscriptions" screen) and `PLYUIControllerType` are **removed**, along with the legacy screen itself and the `PLYEvent` cases `.subscriptionsListViewed` / `.cancellationReasonPublished`. There is no drop-in replacement — build your own subscription management UI from `Purchasely.userSubscriptions(success:failure:)` / `Purchasely.userSubscriptionsHistory(success:failure:)`.
+
+> There has never been a `presentSubscriptions()` method on iOS — if you see that name in iOS code or docs, it is a mix-up with Android/React Native/Cordova (which do have that name). The iOS v5 entry point was `showController`.
+
+## 10. OneSignal attribute renamed
+
+`PLYAttribute.oneSignalPlayerId` is **removed** (no alias) — use `.oneSignalExternalId` or `.oneSignalUserId`. The backend attribute key also changed, from `onesignal_player_id` to `onesignal_external_id`; any audience rule still targeting the old key stops receiving data **silently** once the app updates.
+
 ## Unchanged APIs (no migration needed)
 
 These v5 signatures are identical in v6 — leave them alone:
@@ -427,6 +450,11 @@ These v5 signatures are identical in v6 — leave them alone:
 - [ ] Update `Purchasely.display(for:displayMode:)` to `Purchasely.display(for:transition:)`
 - [ ] Replace the `(PLYProductViewControllerResult, PLYPlan?)` tuple with `PLYPresentationOutcome` (`purchaseResult` / `plan` / `closeReason`)
 - [ ] In Objective-C, change `PLYPresentation *` to `id<PLYPresentation>` and `PLYRunningModePaywallObserver` to `PLYRunningModeObserver`
+- [ ] Replace `presentation.id` with `presentation.screenId` (now non-optional)
+- [ ] Replace any builder `onClose` callback with `.onCloseRequested { … }`
+- [ ] Replace `PLYAttribute.oneSignalPlayerId` with `.oneSignalExternalId` / `.oneSignalUserId`, and audit any audience rule keyed on `onesignal_player_id`
+- [ ] Remove `Purchasely.showController(_:type:from:)` / `PLYUIControllerType` calls; build your own subscription screen from `userSubscriptions()` / `userSubscriptionsHistory()`
+- [ ] Stop calling `Purchasely.synchronize()` from inside `.purchase` / `.restore` interceptors — returning `.success` auto-synchronizes; keep manual `synchronize()` only for out-of-interceptor transactions
 
 ### Deprecated (fix before v7)
 
@@ -440,7 +468,7 @@ These v5 signatures are identical in v6 — leave them alone:
 Search must return no v5-only API usages in app source/tests:
 
 ```bash
-rg "paywallObserver|readyToOpenDeeplink|isDeeplinkHandled|setPaywallActionsInterceptor|fetchPresentation|presentationController|productController|planController|PresentationView|productView|planView|presentationView|PLYProductViewControllerResult|PLYPresentationInfo|closeDisplayedPresentation|start\(withAPIKey|ply/products|ply/plans" Sources
+rg "paywallObserver|readyToOpenDeeplink|isDeeplinkHandled|setPaywallActionsInterceptor|fetchPresentation|presentationController|productController|planController|PresentationView|productView|planView|presentationView|PLYProductViewControllerResult|PLYPresentationInfo|closeDisplayedPresentation|start\(withAPIKey|ply/products|ply/plans|showController|PLYUIControllerType|oneSignalPlayerId|PLYDisplayMode" Sources
 ```
 
 > An app may keep a wrapper method *named* `isDeeplinkHandled` that internally calls `Purchasely.handleDeeplink` — that is fine; only the `Purchasely.isDeeplinkHandled(...)` SDK call must be gone.

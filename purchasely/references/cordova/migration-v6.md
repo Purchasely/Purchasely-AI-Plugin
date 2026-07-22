@@ -3,10 +3,10 @@
 > **In-repo migration guide.** This is the Cordova-specific v5 → v6 mapping for the
 > Purchasely plugin. The companion integration reference is
 > [`integration.md`](./integration.md); cross-platform concepts live in
-> [`../concepts/`](../concepts/). Pin to `6.0.0-rc.1` (see [`../sdk-versions.md`](../sdk-versions.md)).
+> [`../concepts/`](../concepts/). Pin to `6.0.0-rc.3` (see [`../sdk-versions.md`](../sdk-versions.md)).
 
-The Cordova plugin v6 (`6.0.0-rc.1`) wraps the **Purchasely 6.0 native SDKs** (iOS
-`Purchasely 6.0.0-rc.2`, Android `io.purchasely:core 6.0.0-rc.2`). Unlike the React Native /
+The Cordova plugin v6 (`6.0.0-rc.3`) wraps the **Purchasely 6.0 native SDKs** (iOS
+`Purchasely 6.0.0-rc.3`, Android `io.purchasely:core 6.0.0-rc.3`). Unlike the React Native /
 Flutter v6 plugins — which introduced a builder API — the **Cordova JavaScript surface stays
 method-based**: the native bridges were rewired to the v6 SDKs behind the existing
 `cordova.exec` actions. Most methods keep their name and signature, but there are **three
@@ -34,7 +34,7 @@ isFullscreen                    closePaywall
 ```
 
 > The plugin version itself (`@purchasely/cordova-plugin-purchasely`) is the clearest signal:
-> `5.7.x` = v5, `6.0.0-rc.1` = v6.
+> `5.7.x` = v5, `6.0.0-rc.3` = v6.
 
 ---
 
@@ -70,9 +70,13 @@ isFullscreen                    closePaywall
 ## 1. Update the plugins
 
 ```bash
-cordova plugin add @purchasely/cordova-plugin-purchasely@6.0.0-rc.1
-cordova plugin add @purchasely/cordova-plugin-purchasely-google@6.0.0-rc.1
+cordova plugin add @purchasely/cordova-plugin-purchasely@6.0.0-rc.3
+cordova plugin add @purchasely/cordova-plugin-purchasely-google@6.0.0-rc.3
 ```
+
+> npm's `latest` dist-tag still resolves to `5.7.3` — `6.0.0-rc.3` is published under the `next`
+> dist-tag. Always give an explicit version (as above) or `--tag next`; a bare `cordova plugin add
+> @purchasely/cordova-plugin-purchasely` silently installs v5.
 
 Both plugins must be on the **same** version. Minimum OS: **iOS 13.4**, **Android API 23**
 (`compileSdk 36`). There is no video player plugin on Cordova.
@@ -251,6 +255,13 @@ Purchasely.synchronize(function(ok) {}, function(error) {});
 ```
 
 `Purchasely.synchronize()` with no arguments still works.
+
+> **Interceptor guidance.** Resolving a `.purchase` / `.restore` interceptor with `success`
+> already **auto-synchronizes** the receipt — do not call `Purchasely.synchronize()` from inside
+> that handler (see "Observer Mode — Processing Transactions Yourself" in
+> [`integration.md`](./integration.md)). Reserve manual `synchronize()` calls for purchases
+> processed **outside** the interceptor flow (a "Restore Purchases" button, a client-side/BYOS
+> presentation).
 
 ---
 

@@ -1,6 +1,6 @@
 # iOS SDK v5.x API — reference for MIGRATION ONLY (replaced in v6)
 
-> **Do not write new v5 code.** This is a compact snapshot of the legacy v5.x public API so the `purchasely-migrate` skill can **recognize** existing v5 code in a project and map it forward. Every symbol below is **removed or deprecated in v6.0.0-rc.1**. For the v6 surface, see [`api-reference.md`](api-reference.md); for the step-by-step migration, see [`migration-v6.md`](migration-v6.md).
+> **Do not write new v5 code.** This is a compact snapshot of the legacy v5.x public API so the `purchasely-migrate` skill can **recognize** existing v5 code in a project and map it forward. Every symbol below is **removed or deprecated in v6.0.0** (stable GA). For the v6 surface, see [`api-reference.md`](api-reference.md); for the step-by-step migration, see [`migration-v6.md`](migration-v6.md).
 
 ## How to recognize a v5 iOS integration
 
@@ -14,7 +14,8 @@ productView           planView               presentationView
 ply/products          ply/plans
 PLYProductViewControllerResult               readyToOpenDeeplink
 isDeeplinkHandled     closeDisplayedPresentation                displayMode:
-PLYPaywallActionsInterceptor
+PLYPaywallActionsInterceptor                 PLYDisplayMode
+showController        PLYUIControllerType    oneSignalPlayerId
 ```
 
 > `PLYPresentationActionParameters` is **not** a v5-only token on iOS: v6 still passes it to each interceptor as `params`. Only the `PLYPaywallActionsInterceptor` typealias and the `paywallActionsInterceptor:` start parameter were removed.
@@ -160,6 +161,18 @@ let handled = Purchasely.isDeeplinkHandled(deeplink: url)
 ```
 
 → **v6 equivalent:** `Purchasely.handleDeeplink(_:)` (still returns `Bool`). Cold-start variant: `Purchasely.apiKey("…").handleDeeplink(url).start { error in }`.
+
+### `Purchasely.showController(_:type:from:)` / `PLYUIControllerType` (built-in subscriptions UI) — **removed**
+
+```swift
+Purchasely.showController(.subscriptions, type: .subscriptions, from: self)
+```
+
+→ **v6 equivalent:** removed, no replacement. The legacy "My Subscriptions" screen and the `PLYEvent` cases `.subscriptionsListViewed` / `.cancellationReasonPublished` are removed too. Build your own subscription screen from `userSubscriptions(success:failure:)` / `userSubscriptionsHistory(success:failure:)`. (Note: `showController` — not `presentSubscriptions()` — was the real iOS v5 entry point; `presentSubscriptions()` never existed on iOS.)
+
+### `PLYAttribute.oneSignalPlayerId` — **removed**
+
+→ **v6 equivalent:** `.oneSignalExternalId` / `.oneSignalUserId`. The backend attribute key also changed (`onesignal_player_id` → `onesignal_external_id`) — audit audience rules keyed on the old value.
 
 ### `ply/products/*` and `ply/plans/*` deeplink formats — **removed**
 

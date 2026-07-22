@@ -1,4 +1,4 @@
-# Android SDK v5.x -> v6.0.0-rc.1 Migration
+# Android SDK v5.x -> v6.0.1 Migration
 
 This guide is Android-only. Do not apply it to iOS, React Native, Flutter, or Cordova until their v6 migrations are ready.
 
@@ -6,24 +6,28 @@ To recognize legacy v5 code in a project before rewriting it, see [v5-api-refere
 
 ## Build And Dependency Changes
 
-Pin every native Android Purchasely artifact to `6.0.0-rc.1`:
+Pin every native Android Purchasely artifact to `6.0.1` (stable GA — chronology was `rc.1` → `rc.2` → `rc.3` → `6.0.1`; no `6.0.0` tag was ever cut):
 
 ```kotlin
-implementation("io.purchasely:core:6.0.0-rc.1")
-implementation("io.purchasely:google-play:6.0.0-rc.1")      // Google Play
-implementation("io.purchasely:player:6.0.0-rc.1")           // optional video support
+implementation("io.purchasely:core:6.0.1")
+implementation("io.purchasely:google-play:6.0.1")      // Google Play
+implementation("io.purchasely:player:6.0.1")           // optional video support
 // alternative stores (only if used):
-implementation("io.purchasely:huawei-services:6.0.0-rc.1")  // Huawei AppGallery
-implementation("io.purchasely:amazon:6.0.0-rc.1")           // Amazon Appstore
+implementation("io.purchasely:huawei-services:6.0.1")  // Huawei AppGallery
+implementation("io.purchasely:amazon:6.0.1")           // Amazon Appstore
 ```
 
-There is **no** `presentation-compose` artifact. For Compose embedding, wrap the Android `View` from `buildView(...)` in an `AndroidView`.
+`io.purchasely:core` is a **fat AAR** — internal modules (`:common`, `:network`, `:storage`, …) are fused into it, so there are no separate Maven coordinates to add for them and their `io.purchasely.*` FQNs are unaffected. There is **no** `presentation-compose` artifact and no Compose composable (a Compose renderer is in active development for a future release). For Compose embedding today, wrap the Android `View` from `buildView(...)` in an `AndroidView`.
 
-If `6.0.0-rc.1` is only installed on the developer machine, add `mavenLocal()` in `dependencyResolutionManagement.repositories` before `google()` and `mavenCentral()`.
+`io.purchasely:core` bundles a `lint.jar` (an internal `:core-lint` module) — it runs automatically for any consumer and flags missing `context()` / `apiKey()` in the DSL/Builder, and `runningMode(PLYRunningMode.Full)` configured without `stores(...)`.
 
-SDK v6 uses the modern Android toolchain: Gradle 9.3.0+, AGP 9.x, Kotlin 2.2.x (K2 compiler), JDK 17 to build, minSdk 23, compileSdk 36.
+If `6.0.1` is only installed on the developer machine, add `mavenLocal()` in `dependencyResolutionManagement.repositories` before `google()` and `mavenCentral()`.
 
-The reified entry points `interceptAction<T> { … }` / `removeActionInterceptor<T>()` are `inline` member functions of `Purchasely` targeting JVM 11 — no separate import beyond `io.purchasely.ext.Purchasely` is needed. Compile your Kotlin module with `jvmTarget = 11`, or use the `Class`-based overload.
+SDK v6 uses the modern Android toolchain: Gradle **≥ 9.3** (floor; the SDK's own dev wrapper runs 9.6.1), AGP **9.0.1**, Kotlin **2.3.21** (K2 compiler — fixes issues present in the 2.2.x line used by early v6 release candidates), JDK 17 to build, `minSdk 23`, `compileSdk 36`, `targetSdk 35`.
+
+The reified entry points `interceptAction<T> { … }` / `removeActionInterceptor<T>()` are `inline` **member functions of `Purchasely`** (since `6.0.0-rc.3`) targeting JVM 11 — no separate import beyond `io.purchasely.ext.Purchasely` is needed. Compile your Kotlin module with `jvmTarget = 11`, or use the `Class`-based overload.
+
+> If you integrated against `6.0.0-rc.1` or `6.0.0-rc.2`, `interceptAction<T>` / `removeActionInterceptor<T>()` were **top-level extension functions** requiring `import io.purchasely.ext.interceptAction`. Remove that now-dead import when you upgrade to `6.0.1` — the member-function form resolves without it.
 
 With AGP 9, remove the explicit `org.jetbrains.kotlin.android` plugin; AGP provides Android Kotlin support directly. Keep specialized Kotlin plugins such as Compose or Serialization when the app uses them. Also remove `android { kotlinOptions { ... } }` once `kotlin-android` is gone.
 
@@ -56,6 +60,7 @@ Purchasely {
     apiKey(apiKey)
     stores(listOf(GoogleStore()))
     runningMode(PLYRunningMode.Full)  // default is Observer
+    themeMode(...)                    // optional, since 6.0.1 — system/light/dark (parity with iOS)
     logLevel(LogLevel.DEBUG)
     logcatEnabled(true)               // optional, independent of logLevel
     allowDeeplink(true)
@@ -75,6 +80,7 @@ Purchasely.Builder(applicationContext)
     .apiKey(apiKey)
     .stores(listOf(GoogleStore()))
     .runningMode(PLYRunningMode.Full)
+    .themeMode(...)                  // optional, since 6.0.1 — system/light/dark (parity with iOS)
     .logLevel(LogLevel.DEBUG)
     .logcatEnabled(true)
     .allowDeeplink(true)
@@ -391,7 +397,7 @@ Purchasely.allowCampaigns = true    // queued campaigns display immediately
 
 ## synchronize() now accepts callbacks (Observer mode)
 
-`Purchasely.synchronize()` — called after a purchase completes in your own billing flow — gains optional callbacks and refreshes the subscriptions cache before firing `onSuccess`. Both default to `null`, so existing fire-and-forget calls keep working.
+`Purchasely.synchronize()` gains optional callbacks and refreshes the subscriptions cache before firing `onSuccess`. Both default to `null`, so existing fire-and-forget calls keep working.
 
 ```kotlin
 // Fire-and-forget (still valid)
@@ -403,6 +409,8 @@ Purchasely.synchronize(
     onError = { error -> /* surface failure */ }
 )
 ```
+
+> Resolving a `.purchase` / `.restore` interceptor with `PLYInterceptResult.SUCCESS` **auto-synchronizes** the receipt — do not call `Purchasely.synchronize()` from inside the interceptor. Reserve manual `synchronize()` calls for transactions processed **outside** the interceptor flow (a "Restore Purchases" button, a client-side presentation with its own purchase button).
 
 ## User Attributes
 
@@ -433,6 +441,8 @@ Remove or replace:
 
 `Purchasely.subscriptionsFragment()`, all `PLYSubscriptions*` / `PLYSubscriptionDetail*` / `PLYSubscriptionCancellation*` fragments/views, the deeplinks `ply/subscriptions` and `ply/cancellation_survey[/PRODUCT_VENDOR_ID]`, and their `PLYEvent` subclasses (`SubscriptionListViewed`, `SubscriptionDetailsViewed`, `SubscriptionPlanTapped`, `SubscriptionCancelTapped`, `CancellationReasonPublished`) were removed. Build your own UI from `Purchasely.userSubscriptions { … }` / `Purchasely.userSubscriptionsHistory { … }`.
 
+`Purchasely.displaySubscriptionCancellationInstruction()` is **also removed**, dropped between `6.0.0-rc.2` and `6.0.0-rc.3`. It is not called out in the upstream `MIGRATION_V6.md` — this plugin is currently the only documentation flagging the removal. There is no `presentSubscriptions()` on Android (that name belongs to React Native / Cordova, not native Android).
+
 ### Plan offers — `intro*` / `INTRO_*` / `TRIAL_*` removed
 
 All `intro*` / `introductory*` methods and `INTRO_*` / `TRIAL_*` tags were removed in favor of unified `offer*` / `OFFER_*` equivalents (direct renames, identical behavior):
@@ -448,8 +458,8 @@ All `intro*` / `introductory*` methods and `INTRO_*` / `TRIAL_*` tags were remov
 
 Mechanical, in order:
 
-1. **Dependencies** pinned to `6.0.0-rc.1`; no `presentation-compose` artifact; alt-store artifacts use `huawei-services` / `amazon`.
-2. **Toolchain**: Gradle 9.3.0+, AGP 9.x, Kotlin 2.2.x, JDK 17 to build, `minSdk 23`, `compileSdk 36`; `org.jetbrains.kotlin.android` plugin and `kotlinOptions {}` removed under AGP 9; Kotlin module on `jvmTarget = 11` (or interceptors use the `Class`-based overload).
+1. **Dependencies** pinned to `6.0.1`; no `presentation-compose` artifact; alt-store artifacts use `huawei-services` / `amazon`.
+2. **Toolchain**: Gradle ≥ 9.3, AGP 9.0.1, Kotlin 2.3.21, JDK 17 to build, `minSdk 23`, `compileSdk 36`, `targetSdk 35`; `org.jetbrains.kotlin.android` plugin and `kotlinOptions {}` removed under AGP 9; Kotlin module on `jvmTarget = 11` (or interceptors use the `Class`-based overload).
 3. **Init**: `runningMode(PLYRunningMode.Full)` set if the app needs purchase validation / auto-close; `PaywallObserver` -> `Observer`; init callback is `start { error -> }`.
 4. **Imports** moved to `io.purchasely.ext.presentation.*`.
 5. **Builder** has no `flowId(...)` / `productId(...)` / `planId(...)`; Flows shown via `app_scheme://ply/flows/FLOW_ID`.

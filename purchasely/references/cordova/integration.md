@@ -1,6 +1,6 @@
 # Cordova Integration
 
-> **Cross-platform reference.** This file covers Cordova-specific syntax for the **v6** SDK (`6.0.0-rc.1`). Many concepts (Observer-mode post-purchase flow, presentation type guard, presentation cache, programmatic purchases, audience-targeting attributes, GDPR consent, subscription checks) are **universal across iOS / Android / RN / Flutter / Cordova** and live in `../concepts/`. Load:
+> **Cross-platform reference.** This file covers Cordova-specific syntax for the **v6** SDK (`6.0.0-rc.3`). Many concepts (Observer-mode post-purchase flow, presentation type guard, presentation cache, programmatic purchases, audience-targeting attributes, GDPR consent, subscription checks) are **universal across iOS / Android / RN / Flutter / Cordova** and live in `../concepts/`. Load:
 >
 > - [`../concepts/running-modes.md`](../concepts/running-modes.md) — Full vs Observer + log levels
 > - [`../concepts/paywall-actions.md`](../concepts/paywall-actions.md) — per-action `interceptAction` + `InterceptResult` rules
@@ -11,24 +11,26 @@
 > - [`../concepts/user-attributes-targeting.md`](../concepts/user-attributes-targeting.md) — audience targeting + GDPR consent
 > - [`../concepts/privacy-settings.md`](../concepts/privacy-settings.md) — `revokeDataProcessingConsent` and privacy purposes
 > - [`../concepts/subscription-checks.md`](../concepts/subscription-checks.md) — gating premium content, restore purchases
-> - [`../sdk-versions.md`](../sdk-versions.md) — latest stable versions (pin to **6.0.0-rc.1** for Cordova)
+> - [`../sdk-versions.md`](../sdk-versions.md) — latest stable versions (pin to **6.0.0-rc.3** for Cordova)
 > - [`migration-v6.md`](migration-v6.md) — v5 → v6 migration mapping for Cordova
 
 > **v6 keeps a method-based JS API — but the surface changed.** Unlike native iOS/Android and the React Native / Flutter SDKs, the Cordova plugin does **not** introduce a builder API — the native bridges were rewired to the v6 SDKs behind `cordova.exec` actions. Most methods keep their name and signature, but there are **three breaking surfaces**: `start()` now takes a **single options object** (was positional); the action interceptor is now **per-action** (`interceptAction(kind, handler)` returning an `InterceptResult` — `setPaywallActionInterceptor` + `onProcessAction` were **removed**); and the presentation `isFullscreen` boolean became a **display mode**. Smaller changes: default running mode is now **Observer**, deeplinks use `allowDeeplink` / `handleDeeplink` (+ new `allowCampaigns`), the default dismiss handler is `setDefaultPresentationDismissHandler`, `synchronize` reports completion, and `presentSubscriptions` / `presentProductWithIdentifier` / `presentPlanWithIdentifier` / `showPresentation` / `hidePresentation` were **removed**.
 
 ## Installation
 
-Requirements: iOS 13.4+, Android minSdk 23, compileSdk 36. Pin all packages to **6.0.0-rc.1** (see [`../sdk-versions.md`](../sdk-versions.md)). The `6.0.0-rc.1` plugin pulls the **6.0.0-rc.2 native SDKs** (iOS `Purchasely`, Android `io.purchasely:core`).
+Requirements: iOS 13.4+, Android minSdk 23, compileSdk 36. Pin all packages to **6.0.0-rc.3** (see [`../sdk-versions.md`](../sdk-versions.md)). The `6.0.0-rc.3` plugin pulls the **6.0.0-rc.3 native SDKs** (iOS `Purchasely`, Android `io.purchasely:core` — both confirmed pinned in `plugin.xml` at the published tag).
+
+> **npm's `latest` dist-tag still points to `5.7.3`.** `6.0.0-rc.3` is published under the `next` dist-tag, so `cordova plugin add @purchasely/cordova-plugin-purchasely` with no version pulls the old v5 plugin. Always install an explicit version (or `--tag next`).
 
 ```bash
 # Core plugin
-cordova plugin add @purchasely/cordova-plugin-purchasely@6.0.0-rc.1
+cordova plugin add @purchasely/cordova-plugin-purchasely@6.0.0-rc.3
 
 # Google Play — required if targeting Google Play Store
-cordova plugin add @purchasely/cordova-plugin-purchasely-google@6.0.0-rc.1
+cordova plugin add @purchasely/cordova-plugin-purchasely-google@6.0.0-rc.3
 ```
 
-**CRITICAL: All Purchasely packages must be at the exact same version.** A stray `6.0.0` (release) outranks `6.0.0-rc.1` in Gradle and silently upgrades `io.purchasely:core`, causing a runtime `NoSuchMethodError`. There is **no video player plugin on Cordova**.
+**CRITICAL: All Purchasely packages must be at the exact same version.** A stray `6.0.0` (release) outranks `6.0.0-rc.3` in Gradle and silently upgrades `io.purchasely:core`, causing a runtime `NoSuchMethodError`. There is **no video player plugin on Cordova**.
 
 ### Android Setup
 
@@ -218,14 +220,9 @@ Purchasely.interceptAction(Purchasely.PresentationAction.purchase, function(info
   var storeProductId = parameters.plan.productId;
 
   return MyPurchaseSystem.purchase(storeProductId).then(function(ok) {
-    if (!ok) return Purchasely.InterceptResult.failed;
-
-    return new Promise(function(resolve) {
-      Purchasely.synchronize(
-        function() { resolve(Purchasely.InterceptResult.success); },
-        function() { resolve(Purchasely.InterceptResult.failed); }
-      );
-    });
+    // Resolving with `success` auto-synchronizes the receipt — do not call
+    // Purchasely.synchronize() here.
+    return ok ? Purchasely.InterceptResult.success : Purchasely.InterceptResult.failed;
   });
 });
 
@@ -234,7 +231,7 @@ function onPurchaseSuccess() {
 }
 ```
 
-`Purchasely.synchronize(success, error)` now reports completion (the v5 fire-and-forget behavior is gone); calling `Purchasely.synchronize()` with no arguments still works.
+`Purchasely.synchronize(success, error)` now reports completion (the v5 fire-and-forget behavior is gone); calling `Purchasely.synchronize()` with no arguments still works. Reserve manual `synchronize()` calls for purchases processed **outside** the interceptor flow (a "Restore Purchases" button, a client-side/BYOS presentation) — resolving `.purchase` / `.restore` with `success` already synchronizes automatically.
 
 ## Programmatic Purchases
 
