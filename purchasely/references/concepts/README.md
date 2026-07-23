@@ -24,6 +24,8 @@ When a topic also has a deeper platform-specific take (e.g. SwiftUI lifecycle, J
 | [subscription-checks.md](subscription-checks.md) | Gating content via `userSubscriptions`, restoring purchases (with Purchasely-paywall caveat) |
 | [subscription-management.md](subscription-management.md) | Opening the native Manage Subscription page (App Store / Play Store) |
 | [promotional-offers.md](promotional-offers.md) | Offer types, Apple promo offers, Google developer-determined offers, offer codes, win-back |
+| [dynamic-offerings.md](dynamic-offerings.md) | `setDynamicOffering` runtime plan/offer overrides — applied server-side at fetch, register-before-fetch rule, same-plan billing-type pitfall |
+| [monthly-commitment.md](monthly-commitment.md) | Apple advance-commitment (12-month billed monthly) `PLYBillingPlanType` — iOS 26.4+, eligibility (excl. US/SG), setup |
 | [campaigns.md](campaigns.md) | No-code Console automations (trigger / placement-based), `allowCampaigns` + `allowDeeplink` (native iOS/Android, React Native, Flutter v6, and Cordova v6), SDK ≥ 5.1.0 |
 | [analytics-integration.md](analytics-integration.md) | Forwarding UI events to Firebase / Amplitude / AppsFlyer + analytics wrapper pattern |
 
@@ -37,6 +39,8 @@ When a topic also has a deeper platform-specific take (e.g. SwiftUI lifecycle, J
 | Adding app-side purchase buttons | `programmatic-purchases.md`, `subscription-checks.md` |
 | Adding subscription gating | `subscription-checks.md`, `subscription-management.md` |
 | Adding retention / win-back paywalls | `promotional-offers.md`, `campaigns.md` |
+| Overriding a paywall's plan/offer at runtime (remote config, cohorts, experiments) | `dynamic-offerings.md` |
+| Setting up 12-month commitment billed monthly (iOS) | `monthly-commitment.md`, `dynamic-offerings.md` |
 | Adding scheduled or event-driven paywalls | `campaigns.md` |
 | Wiring analytics / tracking | `analytics-integration.md`, `user-identity.md` |
 | Improving paywall perceived performance | `presentation-cache.md` (preload pattern) |
