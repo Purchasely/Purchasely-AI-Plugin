@@ -40,7 +40,7 @@ Check, in order:
 
 1. **Storefront** is not US / Singapore (those fall back to `.upFront`, and if the plan isn't set up as up-front either, you'll see `.unspecified`).
 2. **iOS version** is 26.4+.
-3. You did **not** map the **same plan to multiple offering references with different billing types** in one presentation — that ambiguity resolves to `.unspecified`. See the pitfall in [Dynamic offerings](dynamic-offerings.md#️-pitfall-one-plan--one-billing-type-per-presentation).
+3. You did **not** map the **same plan to multiple offering references with different billing types** in one presentation — that ambiguity resolves to `.unspecified`. See the pitfall in [Dynamic offerings](dynamic-offerings.md#pitfall-one-plan--one-billing-type-per-presentation).
 4. The plan actually carries the monthly commitment type in the Console / dynamic offering.
 
 ## Related

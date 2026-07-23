@@ -61,7 +61,7 @@ final ok = await Purchasely.setDynamicOffering(
 
 > **Note:** the `billingPlanType` argument is **iOS-only** at this time. Android, React Native, Flutter, and Cordova take `reference` / `planVendorId` / `offerVendorId` only.
 
-## ⚠️ Pitfall: one plan → one billing type per presentation
+## Pitfall: one plan → one billing type per presentation
 
 Do **not** register several offering references that all resolve to the **same plan** within a single presentation while carrying **different billing plan types** (for example one `.monthly` and one `.upFront` on the same plan).
 

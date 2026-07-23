@@ -4,6 +4,11 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Added
+
+- `references/concepts/dynamic-offerings.md` — covers `setDynamicOffering` across platforms, server-side application at fetch time, one-plan-one-billing-type pitfall.
+- `references/concepts/monthly-commitment.md` — covers Apple 12-month advance commitment (iOS 26.4+), `PLYBillingPlanType`, eligibility rules.
+
 ## [2.0.0-rc.6] — 2026-07-07
 
 Cordova joins the **v6 line**. The plugin now treats native iOS, native Android, Flutter, React Native, and Cordova as SDK v6 platforms. Cordova guidance targets **`@purchasely/cordova-plugin-purchasely` `6.0.0-rc.1`**, which pulls the **`6.0.0-rc.2`** native SDKs.

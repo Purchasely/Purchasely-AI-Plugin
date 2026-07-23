@@ -164,7 +164,7 @@ For Lottie / animation questions, load `../../references/concepts/lottie-animati
 For `setDynamicOffering` / runtime plan overrides, load `../../references/concepts/dynamic-offerings.md` first; for 12-month commitment billed monthly, also load `../../references/concepts/monthly-commitment.md`.
 
 - Dynamic offerings are applied **server-side at fetch** — register them **before** fetching/displaying the placement; they persist until removed.
-- `billingPlanType` on `setDynamicOffering` is **iOS-only**; monthly commitment needs iOS 26.4+, SDK v6+, and a non-US/non-Singapore storefront (US/SG auto-fall back to up-front).
+- `billingPlanType` on `setDynamicOffering` is **iOS-only**; monthly commitment needs iOS 26.4+, SDK v6+, and a non-US/non-Singapore storefront (US/SG auto-falls back to up-front).
 - Pitfall: mapping the **same plan** to multiple offering references with **different** billing types in one presentation makes the billing type ambiguous → resolves to `.unspecified`. One plan → one billing type per presentation.
 
 ## Inline expert checkpoint
