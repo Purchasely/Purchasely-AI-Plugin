@@ -8,7 +8,7 @@ Every PR that adds, changes, removes, or deprecates anything user-visible **must
 
 1. Add the entry under the top-level `## [Unreleased]` section, in the appropriate sub-section: `Added`, `Changed`, `Removed`, `Deprecated`, `Fixed`, `Security`.
 2. Keep entries short, factual, and user-facing. Example: `Added references/concepts/promotional-offers.md — covers Apple promo offers, Google developer-determined offers, offer codes` — not `Reworked the references directory`.
-3. When cutting a release, rename `[Unreleased]` to `[X.Y.Z] — YYYY-MM-DD`, bump `version` in `.claude-plugin/plugin.json` + `package.json`, then add a fresh empty `[Unreleased]` section at the top.
+3. When cutting a release, rename `[Unreleased]` to `[X.Y.Z] — YYYY-MM-DD` and add a fresh empty `[Unreleased]` section at the top — see **Release process** below for the full, authoritative list of manifests to bump.
 4. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning follows [SemVer](https://semver.org/spec/v2.0.0.html).
 
 **Rule of thumb:** if you wouldn't write the change in the release notes a client reads, you probably don't need a CHANGELOG entry. Otherwise, write one.

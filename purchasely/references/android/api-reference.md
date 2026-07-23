@@ -24,6 +24,8 @@ import io.purchasely.ext.presentation.display
 import io.purchasely.ext.presentation.buildView
 import io.purchasely.ext.presentation.getFragment
 // or simply: import io.purchasely.ext.presentation.*
+
+import io.purchasely.views.presentation.PLYThemeMode
 ```
 
 ## Initialization
@@ -37,7 +39,7 @@ Purchasely {
     userId("user-123")                 // optional
     stores(listOf(GoogleStore()))
     runningMode(PLYRunningMode.Full)    // default is Observer — set Full for purchase handling/validation
-    themeMode(...)                      // optional, since 6.0.1 — system/light/dark (parity with iOS)
+    themeMode(PLYThemeMode.SYSTEM)       // optional, since 6.0.1 — SYSTEM/LIGHT/DARK (parity with iOS)
     logLevel(LogLevel.DEBUG)
     logcatEnabled(true)                 // optional, controls Logcat output independently
     allowDeeplink(true)
@@ -58,7 +60,7 @@ Purchasely.Builder(applicationContext)
     .userId("user-123")
     .stores(listOf(GoogleStore()))
     .runningMode(PLYRunningMode.Full)
-    .themeMode(...)                     // optional, since 6.0.1 — system/light/dark (parity with iOS)
+    .themeMode(PLYThemeMode.SYSTEM)     // optional, since 6.0.1 — SYSTEM/LIGHT/DARK (parity with iOS)
     .logLevel(LogLevel.DEBUG)
     .logcatEnabled(true)
     .allowDeeplink(true)
@@ -79,7 +81,7 @@ Purchasely.Builder(applicationContext)
 | `userId(id)` | Optional anonymous-to-known mapping. |
 | `stores(stores)` | Billing store implementations (e.g. `GoogleStore()`). Optional — storeless start is supported. |
 | `runningMode(mode)` | `PLYRunningMode.Full` or `PLYRunningMode.Observer`. **Default is `Observer`.** |
-| `themeMode(mode)` | Since `6.0.1`, settable on **both** the DSL and the fluent Builder (parity with iOS `themeMode(_:)`). |
+| `themeMode(mode)` | Since `6.0.1`, settable on **both** the DSL and the fluent Builder (parity with iOS `themeMode(_:)`). `mode` is a `PLYThemeMode` (`SYSTEM` / `LIGHT` / `DARK`); default `SYSTEM`. |
 | `logLevel(level)` | `LogLevel.DEBUG` / `WARN` / `ERROR` / … |
 | `logcatEnabled(enabled)` | Controls Logcat output independently of `logLevel` (default `true`). |
 | `allowDeeplink(allowed)` | Enables deeplink-driven display. Default `true` in v6 (was `false`). |
