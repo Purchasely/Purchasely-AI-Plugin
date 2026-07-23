@@ -155,7 +155,7 @@ Tools that read the repository-level `AGENTS.md` should use this repository dire
 | `/purchasely:integrate` | Step-by-step SDK integration from scratch — installation, initialization, paywall display, action interceptor, user management |
 | `/purchasely:review` | Automated checklist review of your existing integration — finds bugs, deprecated APIs, and missing best practices |
 | `/purchasely:debug` | Diagnostic trees for common issues — blank paywalls, frozen UI, purchase failures, deeplink problems |
-| `/purchasely:migrate` | Upgrade an existing native iOS, native Android, or Flutter integration from SDK v5 to v6 |
+| `/purchasely:migrate` | Upgrade an existing native iOS, native Android, Flutter, React Native, or Cordova integration from SDK v5 to v6 |
 
 ## Usage Examples
 
@@ -265,18 +265,18 @@ Purchasely-AI-Plugin/
 | `/purchasely:integrate` | Slash command + matching `purchasely-integrate` skill | The command launches the skill; the skill is also auto-invoked when Claude detects an SDK integration task |
 | `/purchasely:review` | Slash command + matching `purchasely-review` skill | Same as above |
 | `/purchasely:debug` | Slash command + matching `purchasely-debug` skill | Same as above |
-| `/purchasely:migrate` | Slash command + matching `purchasely-migrate` skill | Migrates native iOS, native Android, Flutter, and React Native integrations from SDK v5 to v6 |
+| `/purchasely:migrate` | Slash command + matching `purchasely-migrate` skill | Migrates native iOS, native Android, Flutter, React Native, and Cordova integrations from SDK v5 to v6 |
 | Natural Purchasely SDK question | Portable `purchasely-sdk-expert` skill + Claude Code `purchasely-sdk-expert` agent when available | No slash command needed — ask normally and the expert guidance can be used directly for free-form Purchasely SDK Q&A |
 
 ## Supported Platforms
 
 | Platform | SDK line | Init | Paywalls | Interceptor | Deeplinks | User Mgmt |
 |----------|----------|------|----------|-------------|-----------|-----------|
-| iOS (Swift / Obj-C) | v6 (`6.0.0-rc.1`) | `Purchasely.apiKey(...).runningMode(...).start()` | `PLYPresentationBuilder...build().preload()` → `display(from:)` | per-action `interceptAction` returning `PLYInterceptResult` | `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
-| Android (Kotlin / Java) | v6 (`6.0.0-rc.1`) | `Purchasely { ... }` or `Purchasely.Builder(...)` | `PLYPresentation { ... }.preload()` → `display(context)` | per-action `interceptAction` returning `PLYInterceptResult` | auto-intercept + `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
-| Flutter | v6 (`6.0.0-rc.1`) | `PurchaselyBuilder.apiKey(...).start()` | `PresentationBuilder...build()` → `preload()` / `display(...)` | per-action `interceptAction` returning `InterceptResult` | `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
-| React Native | v6 (`6.0.0-rc.2`) | `Purchasely.builder(...).runningMode(...).start()` | `Purchasely.presentation.placement(...).build()` → `preload()` / `display(transition?)` | per-action `interceptAction` returning `'success' \| 'failed' \| 'notHandled'` | `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
-| Cordova | v6 (`6.0.0-rc.1`) | `Purchasely.start(options, success, error)` | `fetchPresentationForPlacement` + `presentPresentation` (display-mode arg) | per-action `interceptAction` returning `InterceptResult` | `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
+| iOS (Swift / Obj-C) | v6 (`6.0.0`, GA) | `Purchasely.apiKey(...).runningMode(...).start()` | `PLYPresentationBuilder...build().preload()` → `display(from:)` | per-action `interceptAction` returning `PLYInterceptResult` | `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
+| Android (Kotlin / Java) | v6 (`6.0.1`, GA) | `Purchasely { ... }` or `Purchasely.Builder(...)` | `PLYPresentation { ... }.preload()` → `display(context)` | per-action `interceptAction` returning `PLYInterceptResult` | auto-intercept + `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
+| Flutter | v6 (`6.0.0`, stable on pub.dev) | `PurchaselyBuilder.apiKey(...).start()` | `PresentationBuilder...build()` → `preload()` / `display(...)` | per-action `interceptAction` returning `InterceptResult` | `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
+| React Native | v6 (`6.0.0-rc.3`) | `Purchasely.builder(...).runningMode(...).start()` | `Purchasely.presentation.placement(...).build()` → `preload()` / `display(transition?)` | per-action `interceptAction` returning `'success' \| 'failed' \| 'notHandled'` | `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
+| Cordova | v6 (`6.0.0-rc.3`) | `Purchasely.start(options, success, error)` | `fetchPresentationForPlacement` + `presentPresentation` (display-mode arg) | per-action `interceptAction` returning `InterceptResult` | `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
 
 ## Requirements
 
@@ -318,7 +318,16 @@ When a new SDK version is released:
 1. **Update `purchasely/references/sdk-versions.md`** — single source of truth for pinned versions.
 2. Update version references in `purchasely/skills/purchasely-integrate/SKILL.md` and each platform's `purchasely/references/<platform>/`.
 3. Update `purchasely/references/` with new/changed APIs.
-4. Bump `version` in `.claude-plugin/plugin.json`, `purchasely/.claude-plugin/plugin.json`, `purchasely/.codex-plugin/plugin.json`, and `package.json`.
+4. Bump `version` in **every** manifest:
+   - `.claude-plugin/plugin.json`
+   - `.claude-plugin/marketplace.json`
+   - `.cursor-plugin/plugin.json`
+   - `.cursor-plugin/marketplace.json`
+   - `purchasely/.claude-plugin/plugin.json`
+   - `purchasely/.cursor-plugin/plugin.json`
+   - `purchasely/.codex-plugin/plugin.json`
+   - `package.json`
+   - `gemini-extension.json`
 5. Add an entry to [CHANGELOG.md](CHANGELOG.md).
 6. Tag and release.
 

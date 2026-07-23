@@ -26,7 +26,7 @@ For workflow tasks, use the dedicated skills instead:
 
 ### SDK generation rules
 
-- **Native iOS, native Android, Flutter, React Native, and Cordova use SDK v6** (React Native pins `6.0.0-rc.2`; Cordova pins `6.0.0-rc.1` and pulls native `6.0.0-rc.2`; native iOS / Android / Flutter pin `6.0.0-rc.1`).
+- **Native iOS, native Android, Flutter, React Native, and Cordova use SDK v6** (native iOS is stable GA at `6.0.0`; native Android is stable GA at `6.0.1` — Android never had a `6.0.0` tag, the release line went rc.1 → rc.2 → rc.3 → `6.0.1`; Flutter pins `6.0.0`, pulling native iOS `6.0.0` + Android core `6.0.1`; React Native pins `6.0.0-rc.3` (npm `latest` tag; GA `6.0.0` in preparation); Cordova pins `6.0.0-rc.3` (npm dist-tag `next` — `latest` is still `5.7.3`, install the version explicitly) and pulls native iOS/Android `6.0.0-rc.3`).
 - Always answer iOS / Android / Flutter / React Native / Cordova with v6 APIs.
 - Never invent signatures. If exact syntax matters, load the matching reference file before answering.
 
@@ -40,7 +40,7 @@ On native iOS, native Android, Flutter, React Native, and Cordova v6, the defaul
 - React Native: `.runningMode('full')` (string)
 - Cordova: `runningMode: Purchasely.RunningMode.full` in the `start` options object
 
-Observer mode means the app owns billing and must call `Purchasely.synchronize()` after successful purchases. Native iOS/Android Observer presentations do not auto-close after purchase/restore; dismiss explicitly with `closeAllScreens()`. Flutter v6 dismisses via `presentation.close()`. React Native v6 dismisses via `request.close()`. Cordova v6 dismisses via `closePresentation()`.
+Observer mode means the app owns billing. Returning `SUCCESS` from the purchase/restore interceptor already triggers Purchasely's synchronization automatically — do **not** call `Purchasely.synchronize()` manually inside the interceptor. Manual `synchronize()` is only needed for purchases made **outside** the interceptor (a custom sell screen, BYOS). Native iOS/Android Observer presentations do not auto-close after purchase/restore; dismiss explicitly with `closeAllScreens()`. Flutter v6 dismisses via `presentation.close()`. React Native v6 dismisses via `request.close()`. Cordova v6 dismisses via `closePresentation()`.
 
 ## Answering workflow
 
@@ -74,11 +74,13 @@ Load as needed:
 - `../../references/concepts/subscription-management.md` — native subscription management pages
 - `../../references/concepts/promotional-offers.md` — Apple promos, Google offers, offer codes
 - `../../references/concepts/dynamic-offerings.md` — `setDynamicOffering` runtime plan/offer overrides (server-side at fetch); same-plan billing-type pitfall
-- `../../references/concepts/monthly-commitment.md` — Apple advance commitment (12-month billed monthly), `PLYBillingPlanType`, iOS 26.4+ eligibility (excl. US/SG)
+- `../../references/concepts/monthly-commitment.md` — Apple advance commitment (12-month billed monthly), `PLYBillingPlanType`, iOS 26.4+ eligibility (excl. US/SG), and Google Play native installment subscriptions
 - `../../references/concepts/campaigns.md` — trigger / placement campaigns
 - `../../references/concepts/byos.md` — Bring Your Own Screen, iOS/Android only
 - `../../references/concepts/lottie-animations.md` — Lottie weak dependency bridge
 - `../../references/concepts/analytics-integration.md` — forwarding SDK events
+- `../../references/concepts/rendering-engine.md` — UIKit / Android Views rendering engine and gotchas
+- `../../references/concepts/web-checkout.md` — Web Checkout action/flow
 - `../../references/architecture-patterns.md` — optional wrapper / gateway architecture
 
 ### Platform references
@@ -111,6 +113,8 @@ Load the matching platform before giving exact setup or API signatures:
 - Cordova v6: `fetchPresentationForPlacement(...)` then `presentPresentation(..., displayMode, ...)`.
 - For Flows, prefer build/fetch → type guard → display. Avoid placement shorthand when Flow behavior matters.
 - For embedded / nested rendering, only use container APIs when the user explicitly wants to own the container.
+- Android: `Purchasely.setDefaultPresentationDismissHandler(handler)` is, and always was, the correct Android name — `setDefaultPresentationResultHandler` never existed there (only iOS renamed *from* that name in v6). Since `6.0.1` the `handler` parameter is nullable — pass `null` to unregister it.
+- Android: `presentation.close()` delegates to `Purchasely.closeAllScreens()` — there is no instance-scoped close on Android (unlike iOS, which closes only the targeted presentation); it dismisses every currently displayed screen.
 
 ### Interceptors
 
@@ -120,16 +124,21 @@ Load the matching platform before giving exact setup or API signatures:
 - Every React Native v6 handler must return the string `'success' | 'failed' | 'notHandled'` on every path.
 - Every Cordova v6 handler must return or resolve `Purchasely.InterceptResult` on every path.
 - Missing completion freezes the paywall.
+- Android: `interceptAction` / `removeActionInterceptor` are **member functions of `Purchasely`** since rc.3 (previously top-level extension functions requiring `import io.purchasely.ext.interceptAction`). No import is needed on current SDKs; a leftover import is harmless dead code, not a bug.
+- Returning `SUCCESS` from the `purchase`/`restore` interceptor already triggers synchronization automatically in Observer mode — do not also call `synchronize()` inside the interceptor. Manual `synchronize()` is only for purchases made outside the interceptor (custom sell screen, BYOS).
 
 ### Removed / wrong APIs
 
 Do not generate these for v6 native, Flutter, React Native, or Cordova:
 
 - native `fetchPresentation`, `setPaywallActionsInterceptor`, `presentationView` / `presentationController`
+- native iOS: `Purchasely.showController(_:type:from:)`, `PLYUIControllerType`, the legacy `PLYSubscriptionViewController` ("My Subscriptions" screen), `PLYEvent.subscriptionsListViewed` / `.cancellationReasonPublished` — iOS never had a `presentSubscriptions()` method, don't invent one
+- native Android: `Purchasely.subscriptionsFragment()`, `PLYSubscriptionsFragment`, the `ply/subscriptions` and `ply/cancellation_survey` deeplinks
 - Flutter `Purchasely.start(...)`, `fetchPresentation`, `presentPresentation*`, `setPaywallActionInterceptorCallback`, `onProcessAction`, `closePresentation()`, `closeAllScreens()`, `presentSubscriptions()`
 - React Native `Purchasely.start({...})`, `fetchPresentation`, `presentPresentation*`, `setPaywallActionInterceptor`, `onProcessAction`, `closePresentation()`, `closeAllScreens()`, `presentSubscriptions()`, `readyToOpenDeeplink`, `isDeeplinkHandled`, `setDefaultPresentationResultCallback`/`Handler`. ⚠️ **`isDeeplinkHandled(uri)` was renamed to `Purchasely.handleDeeplink(uri)` on React Native** (removed with no alias, matching native iOS/Android and Flutter) — generate `handleDeeplink`, never `isDeeplinkHandled`.
 - Cordova positional `Purchasely.start('API_KEY', ...)`, `setPaywallActionInterceptor`, `onProcessAction`, `PaywallAction`, `readyToOpenDeeplink`, `isDeeplinkHandled`, `presentSubscriptions()`, `presentProductWithIdentifier()`, `presentPlanWithIdentifier()`, `showPresentation()`, `hidePresentation()`
 - Do not generate `purchase(planId:)`, `Purchasely.purchase({ planId })`, or generic `Purchasely.purchase(...)`
+- `PLYAttribute.oneSignalPlayerId` — removed with no alias; use `.oneSignalExternalId` / `.oneSignalUserId`. The backend audience key also changed (`onesignal_player_id` → `onesignal_external_id`) — any audience rule still keyed on the old value stops receiving data silently.
 
 Use `purchaseWithPlanVendorId(...)` for React Native / Flutter / Cordova programmatic purchases; use native `PLYPlan` purchase APIs on iOS / Android.
 
@@ -139,7 +148,8 @@ For any campaign / trigger / `APP_STARTED` / launch display question, load `../.
 
 - Trigger-based campaigns are SDK-managed. The app does not manually build or fetch the campaign paywall.
 - Placement-based campaigns override the placement when the app displays that placement.
-- Mention deeplink display readiness: v6 native / Flutter / Cordova use `allowDeeplink` (default true); React Native v6 also uses `.allowDeeplink(true)` but it defaults to **false** (set it on the `Purchasely.builder(...)` chain). Cordova v6 also exposes `allowCampaigns` separately from `allowDeeplink`.
+- Mention deeplink display readiness: v6 native / Flutter / React Native / Cordova all use `allowDeeplink`, and it defaults to **true** everywhere. On React Native the builder simply **omits** the key when `.allowDeeplink(...)` isn't called, and the native default (`true`) applies — there is no RN-specific exception. Cordova v6 also exposes `allowCampaigns` separately from `allowDeeplink`.
+- **`allowCampaigns` default flip (v6):** defaults to **true** on iOS/Android/Flutter (v5 default was `false`). If a client migrating to v6 suddenly sees campaigns firing that never showed before, this default change is the cause, not a regression. Campaign deeplink opening is additionally conditioned on the SDK being config-ready.
 
 ### BYOS
 
@@ -176,7 +186,7 @@ Use this checklist when another Purchasely workflow asks for expert validation a
 3. Running mode is explicit when Purchasely must process purchases.
 4. Presentation path matches the platform generation and handles `DEACTIVATED` / `FALLBACK` where relevant.
 5. Interceptor completion is guaranteed on every branch.
-6. Observer-mode purchases call `synchronize()` and use the correct dismissal API.
+6. Observer-mode purchases that go through the interceptor rely on the SDK's automatic post-`SUCCESS` synchronization — `synchronize()` is only called manually for purchases made outside the interceptor (custom sell screen, BYOS) — and dismissal uses the correct platform API.
 7. User identity (`userLogin`) and attributes are set before audience-dependent presentation loading.
 8. Deeplinks / campaigns use the correct readiness and handling API for the platform.
 9. Programmatic purchases use exact platform APIs, never invented `purchase(planId)` forms.

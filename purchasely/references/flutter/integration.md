@@ -1,6 +1,6 @@
 # Flutter Integration
 
-Purchasely Flutter is on the **v6 API**, the same generation as the native iOS and Android SDKs. The plugin pins the **6.0.0-rc.1** Dart packages (`purchasely_flutter`, `purchasely_google`, `purchasely_android_player` are all `6.0.0-rc.1`), which pull the published **6.0.0-rc.2** native SDKs (iOS `Purchasely 6.0.0-rc.2` on the CocoaPods trunk, Android `io.purchasely:core 6.0.0-rc.2` on Maven Central). All public Dart types carry the **`PLY` prefix** (`PLYPresentationBuilder`, `PLYPresentationRequest`, `PLYPresentationOutcome`, `PLYTransition`, …), aligning with the iOS/Android naming convention. The one exception is **SDK initialization**: the builder is started via `Purchasely.apiKey(...)` (a static method on `Purchasely` that returns a `PurchaselyBuilder`). This renaming landed on **2026-06-24** and is a **source-breaking change** for any existing v6 code that used unprefixed names.
+Purchasely Flutter is on the **v6 API**, the same generation as the native iOS and Android SDKs, and is **GA / stable** (no longer a pre-release). The plugin pins the **6.0.0** Dart packages (`purchasely_flutter`, `purchasely_google`, `purchasely_android_player` are all `6.0.0`, published on pub.dev), which pull the published **native SDKs** — iOS `Purchasely 6.0.0` on the CocoaPods trunk, Android `io.purchasely:core 6.0.1` on Maven Central. All public Dart types carry the **`PLY` prefix** (`PLYPresentationBuilder`, `PLYPresentationRequest`, `PLYPresentationOutcome`, `PLYTransition`, …), aligning with the iOS/Android naming convention. The one exception is **SDK initialization**: the builder is started via `Purchasely.apiKey(...)` (a static method on `Purchasely` that returns a `PurchaselyBuilder`).
 
 Three areas changed shape from v5: **starting the SDK** (`Purchasely.apiKey(...)`), **displaying / preloading / closing a presentation** (`PLYPresentationBuilder` + `PLYPresentationRequest`), and the **action interceptor** (`Purchasely.interceptAction`). Everything else on the `Purchasely` class — purchases, restore, identity, catalog, subscriptions data, user attributes, events, dynamic offerings, consent and config — remains source-compatible. See [`migration-v6.md`](./migration-v6.md) for the full v5 → v6 old→new mapping.
 
@@ -15,33 +15,33 @@ Three areas changed shape from v5: **starting the SDK** (`Purchasely.apiKey(...)
 > - [`../concepts/user-attributes-targeting.md`](../concepts/user-attributes-targeting.md) — audience targeting + GDPR consent
 > - [`../concepts/privacy-settings.md`](../concepts/privacy-settings.md) — `revokeDataProcessingConsent` and privacy purposes
 > - [`../concepts/subscription-checks.md`](../concepts/subscription-checks.md) — gating premium content, restore purchases
-> - [`../sdk-versions.md`](../sdk-versions.md) — latest versions (pin Flutter to **6.0.0-rc.1**)
+> - [`../sdk-versions.md`](../sdk-versions.md) — latest versions (Flutter is **6.0.0**, stable)
 
 ## Installation
 
-Pin all three packages to the exact same version, `6.0.0-rc.1`:
+**Requires Dart ≥ 3.0.0.** Pin all three packages to the exact same version, `6.0.0` (now stable, a caret range like `^6.0.0` is fine for reproducible builds, but pin exactly if you prefer to control upgrades manually):
 
 ```bash
 # Core SDK
-flutter pub add purchasely_flutter:6.0.0-rc.1
+flutter pub add purchasely_flutter:6.0.0
 
 # Google Play — required if targeting Google Play Store
-flutter pub add purchasely_google:6.0.0-rc.1
+flutter pub add purchasely_google:6.0.0
 
 # Video Player — optional, for video support in paywalls on Android
-flutter pub add purchasely_android_player:6.0.0-rc.1
+flutter pub add purchasely_android_player:6.0.0
 ```
 
-**CRITICAL: All Purchasely packages must be at the exact same version, pinned exactly (never floating).** Check `pubspec.yaml`:
+**CRITICAL: All Purchasely packages must be at the exact same version.** Check `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  purchasely_flutter: 6.0.0-rc.1
-  purchasely_google: 6.0.0-rc.1
-  purchasely_android_player: 6.0.0-rc.1
+  purchasely_flutter: ^6.0.0
+  purchasely_google: ^6.0.0
+  purchasely_android_player: ^6.0.0
 ```
 
-> **Native dependency.** `purchasely_flutter 6.0.0-rc.1` pulls the **6.0.0-rc.2** native SDKs transitively — iOS `Purchasely 6.0.0-rc.2` (CocoaPods trunk) and Android `io.purchasely:core 6.0.0-rc.2` (Maven Central). Both are published, so the project builds from the public repositories with no `mavenLocal()` and no development pod. You do not bump the native pods/gradle dependencies yourself; the plugin's pinning is correct.
+> **Native dependency.** `purchasely_flutter 6.0.0` pulls the native SDKs transitively — iOS `Purchasely 6.0.0` (CocoaPods trunk) and Android `io.purchasely:core 6.0.1` (Maven Central). Both are stable, published GA releases, so the project builds from the public repositories with no `mavenLocal()` and no development pod. You do not bump the native pods/gradle dependencies yourself; the plugin's pinning is correct.
 
 ### iOS Setup
 
@@ -160,6 +160,8 @@ final request = PLYPresentationBuilder.placement('ONBOARDING')
     .build();
 ```
 
+> **Callbacks are mutable and reassignable.** `onPresented` / `onCloseRequested` / `onDismissed` set on the builder are copied onto the loaded `PLYPresentation` as a **fallback** once `preload()` resolves. You can also set or replace any of them directly on the loaded `PLYPresentation` between `preload()` and `display()` — the last value set before `display()` wins. This lets you build/preload a request early (e.g. at app start) and attach the real callbacks later, once the screen that will display it is actually mounted.
+
 ### Transitions
 
 `display([PLYTransition])` accepts an optional `PLYTransition`. Named factory constructors:
@@ -192,7 +194,7 @@ const PLYTransition.popin(
 | `closeReason` | `PLYCloseReason?` | `button` \| `backSystem` \| `programmatic` (when no purchase) |
 | `error` | `PLYPresentationError?` | Display error; mutually exclusive with `closeReason` |
 
-> **iOS / Android `closeReason` parity.** Both native 6.0 SDKs expose `closeReason` on the outcome, and Flutter surfaces it on both platforms. iOS maps its interactive dismiss (swipe-down / nav-pop) to `backSystem` to stay aligned with Android's `BACK_SYSTEM`.
+> **iOS parity gap — `closeReason` and `contentId` are `null` on iOS.** The iOS 6.0 native SDK does not expose `closeReason`, nor `contentId`, for a loaded presentation — only Android does. Flutter surfaces both fields on the outcome/presentation object on every platform, but on iOS they come back `null` because there is nothing for the bridge to forward; this is a native iOS SDK gap, **not a Flutter bridge bug**. Do not build iOS-only logic that assumes either field is populated.
 
 > **`PLYPlan` fields.** `outcome.plan` is a fully-typed `PLYPlan?` — the same model returned by `planWithIdentifier`. Access fields directly: `outcome.plan?.vendorId`, `outcome.plan?.name`, `outcome.plan?.amount`. The v6 SDK also exposes offer-price fields: `hasOfferPrice`, `offerPrice`, `offerAmount`, `offerDuration`, `offerPeriod` (the old `intro*` fields remain as deprecated aliases).
 
@@ -226,6 +228,8 @@ class InlinePaywallScreen extends StatelessWidget {
   }
 }
 ```
+
+> **Android: hybrid composition is mandatory for `PLYPresentationView`.** The paywall content is rendered by the native Android view, and a plain virtual-display `AndroidView` does not reliably deliver taps into it (buttons silently no-op or intercept touches meant for Flutter). Enable hybrid composition for this view in your Android embedding configuration — do not fall back to virtual display to "simplify" the integration.
 
 ## Action Interceptor
 
@@ -298,6 +302,12 @@ Purchasely.userLogin('user_123');
 Purchasely.userLogout();
 ```
 
+`userLogout({bool clearUserAttributes = true})` takes an optional parameter (new in v6): pass `clearUserAttributes: false` if you want to keep the custom attributes set on the anonymous/previous user across the logout instead of clearing them.
+
+```dart
+Purchasely.userLogout(clearUserAttributes: false);
+```
+
 ## Programmatic Purchases
 
 For app-side purchase buttons in Full mode, use `purchaseWithPlanVendorId` (unchanged). Do not use `Purchasely.purchase(planId: ...)`; that API is not exposed by the Flutter bridge.
@@ -357,7 +367,7 @@ for (final sub in subscriptions) {
 
 > **`presentSubscriptions()` is REMOVED in v6 (BREAKING).** The native subscriptions screen was removed from the 6.0 SDKs on **both** platforms, so `Purchasely.presentSubscriptions()` has been **removed entirely** from the Flutter API — it is not a no-op, the method no longer exists. There is no drop-in replacement: build your own subscriptions screen from `userSubscriptions()` / `userSubscriptionsHistory()`.
 >
-> The cancellation survey UI was likewise removed, so `Purchasely.displaySubscriptionCancellationInstruction()` is kept for source compatibility but is a **no-op on both Android and iOS**.
+> The cancellation survey UI was likewise removed. `Purchasely.displaySubscriptionCancellationInstruction()` is **removed entirely** from the Flutter API on both Android and iOS — it is not kept as a no-op; the method no longer exists, so any remaining call site fails to compile.
 
 ## Pre-fetching Screens
 
@@ -421,7 +431,11 @@ presentation.back();     // navigate back inside a multi-step (Flow) presentatio
 
 ## Deeplinks
 
-v6 displays deeplinks and campaigns immediately by default. Allow or gate them on the builder, feed a **cold-start** deeplink via the builder's `handleDeeplink(...)`, and feed **runtime** deeplinks via `Purchasely.handleDeeplink(...)`.
+v6 displays deeplinks and campaigns immediately by default (native default `true` on every platform). There are **three distinct mechanisms** — do not conflate them:
+
+1. **`PurchaselyBuilder.allowDeeplink(bool)`** — authorisation gate on the start builder (+ its runtime twin `Purchasely.allowDeeplink(bool)`). Controls whether the SDK is *allowed* to display deeplink/campaign presentations at all.
+2. **`PurchaselyBuilder.handleDeeplink(String?)`** — replays the **cold-start** deeplink (the one that launched the app), resolved once `start()` completes. Not a general handler — it only exists to hand the SDK the URL the app was launched with.
+3. **`Purchasely.handleDeeplink(String) → Future<bool>`** — the **runtime** call for a deeplink received while the app is already running (e.g. from your app's own deeplink/router callback).
 
 ### Allow Deeplinks
 
@@ -430,11 +444,15 @@ Deeplink display is allowed via the start builder; `Purchasely.allowDeeplink(boo
 ```dart
 await Purchasely.apiKey('YOUR_API_KEY')
     .allowDeeplink(true)
+    .allowCampaigns(true)
     .start();
 
-// Toggle later at runtime:
+// Toggle later at runtime — independent flags:
 await Purchasely.allowDeeplink(true);
+await Purchasely.allowCampaigns(true);
 ```
+
+> **`automaticDeeplinkHandling(bool)` — Android-only.** Builder modifier, defaults to `true`. When `true` (default), the Android native SDK auto-intercepts incoming deeplinks without the app forwarding them through `Purchasely.handleDeeplink(...)`. It is a **no-op on iOS** — iOS always requires the app to forward the URL explicitly.
 
 ### Cold-Start Deeplink (deeplink that launched the app)
 
@@ -463,7 +481,7 @@ if (handled) {
 }
 ```
 
-> **Events on a deeplink open:** `DEEPLINK_OPENED` → `PRESENTATION_LOADED` → `PRESENTATION_VIEWED`. `PRESENTATION_OPENED` is **not** emitted for a deeplink (only for in-paywall action opens).
+> **Events on a deeplink open:** `DEEPLINK_OPENED`, `PRESENTATION_LOADED`, and `PRESENTATION_VIEWED` all fire, but **the relative order of `DEEPLINK_OPENED` vs `PRESENTATION_LOADED` differs between iOS and Android** — do not write event-listener logic that assumes one fires strictly before the other across platforms. `PRESENTATION_OPENED` is **not** emitted for a deeplink (only for in-paywall action opens).
 
 > **`readyToOpenDeeplink` and `isDeeplinkHandled` were removed in v6.** Use `allowDeeplink` / `handleDeeplink` instead.
 
@@ -480,12 +498,13 @@ await Purchasely.setDefaultPresentationDismissHandler((outcome) {
 
 ## Synchronize Purchases
 
-Force synchronization with Purchasely servers. In v6 `synchronize()` returns `Future<bool>` — it **resolves with `true` when synchronization completes** and **throws a `PlatformException` on failure** (the v5 fire-and-forget behaviour is gone). `await` it (and optionally `try/catch`) before chaining a follow-up presentation that targets subscribers:
+Force synchronization with Purchasely servers. In v6 `synchronize()` returns `Future<bool>` — it **resolves `true` when synchronization completes** and **throws a `PlatformException` on failure** (the v5 fire-and-forget behaviour is gone). A resolved value of **`false` means the receipt is still pending store-side validation — it is not a failure** and does not throw; treat it as "not ready yet", not as an error to surface to the user. `await` it (and optionally `try/catch`) before chaining a follow-up presentation that targets subscribers:
 
 ```dart
 try {
   final ok = await Purchasely.synchronize();
-  // ok == true when synchronization completed successfully
+  // ok == true: synchronization completed. ok == false: receipt still pending
+  // validation store-side — not a failure, just not resolved yet.
 } on PlatformException catch (e) {
   print('Synchronize failed: ${e.message}');
 }
@@ -494,7 +513,7 @@ try {
 ## Bridge & version alignment notes
 
 - The Dart ↔ native bridge is still **MethodChannel** (`purchasely`) + **EventChannels** (`purchasely-events`, `purchasely-purchases`, `purchasely-user-attributes`). v6 changes the public Dart surface, not the bridge transport.
-- **All three `purchasely_*` packages MUST be the exact same version** (`6.0.0-rc.1`). Mixing versions causes runtime crashes. Pin exactly — never floating (`^6.0.0`, `6.+`).
+- **All three `purchasely_*` packages MUST be the exact same version** (`6.0.0`). Mixing versions causes runtime crashes. Now that the release is stable, a caret range (`^6.0.0`) applied consistently to all three is fine; pin exactly if you prefer to control upgrades manually.
 - Run a fresh install after pinning: `flutter clean && flutter pub get`, then `pod install --repo-update` (iOS) and `./gradlew --refresh-dependencies` (Android) as needed.
 - See [`../sdk-versions.md`](../sdk-versions.md) for the canonical version table and [`./migration-v6.md`](./migration-v6.md) for the full v5 → v6 old→new mapping.
 

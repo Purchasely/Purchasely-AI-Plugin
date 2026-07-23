@@ -102,11 +102,11 @@ Purchasely.interceptAction<PLYPresentationAction.Purchase> { info, purchase ->
     val offerId = purchase.subscriptionOffer?.offerId
     val offerToken = purchase.subscriptionOffer?.offerToken
 
-    // Trigger your own Google Play Billing purchase with offerToken, then synchronize
+    // Trigger your own Google Play Billing purchase with offerToken
     // …
-    Purchasely.synchronize(onSuccess = { }, onError = { })
 
-    PLYInterceptResult.SUCCESS   // app handled the purchase
+    PLYInterceptResult.SUCCESS   // app handled the purchase — returning success auto-synchronizes
+                                 // with Purchasely; do NOT call Purchasely.synchronize() yourself here
 }
 ```
 
@@ -134,8 +134,8 @@ Purchasely.interceptAction('purchase', async (info, payload) => {
   const ok = await yourBillingSystem.purchase(/* fields above */);
   if (!ok) return 'failed';
 
-  await Purchasely.synchronize(); // upload the new receipt after a successful purchase
-  return 'success';               // app handled the purchase
+  return 'success'; // app handled the purchase — returning success auto-synchronizes with
+                     // Purchasely; do NOT call Purchasely.synchronize() yourself here
   // Observer mode does not auto-close; dismiss with request.close() after this resolves.
 });
 ```
@@ -158,25 +158,20 @@ Purchasely.interceptAction(Purchasely.PresentationAction.purchase, async (info, 
   // to get { identifier, signature, keyIdentifier, timestamp } and pass them to your purchase flow
 
   const ok = await yourBillingSystem.purchase(/* fields above */);
-  if (!ok) return Purchasely.InterceptResult.failed;
-
-  return new Promise(function (resolve) {
-    Purchasely.synchronize(
-      function () { resolve(Purchasely.InterceptResult.success); },
-      function () { resolve(Purchasely.InterceptResult.failed); },
-    );
-  });
+  // Returning success auto-synchronizes with Purchasely — do NOT call
+  // Purchasely.synchronize() yourself here.
+  return ok ? Purchasely.InterceptResult.success : Purchasely.InterceptResult.failed;
   // Observer mode does not auto-close; dismiss with closePresentation() after this resolves.
 });
 ```
 
-#### Flutter (Dart) — `PurchasePayload` from the per-action interceptor
+#### Flutter (Dart) — `PLYPurchasePayload` from the per-action interceptor
 
-In v6 Flutter mirrors the native per-action model: register `Purchasely.interceptAction` for the purchase kind and return an `InterceptResult`. `PurchasePayload` carries real Dart model objects (`PLYPlan`, nullable `PLYSubscriptionOffer`, nullable `PLYPromoOffer`), so read properties instead of indexing maps.
+In v6 Flutter mirrors the native per-action model: register `Purchasely.interceptAction` for the purchase kind and return a `PLYInterceptResult`. `PLYPurchasePayload` carries real Dart model objects (`PLYPlan`, nullable `PLYSubscriptionOffer`, nullable `PLYPromoOffer`), so read properties instead of indexing maps.
 
 ```dart
-Purchasely.interceptAction(PresentationActionKind.purchase, (info, payload) async {
-  if (payload is! PurchasePayload) return InterceptResult.notHandled;
+Purchasely.interceptAction(PLYPresentationActionKind.purchase, (info, payload) async {
+  if (payload is! PLYPurchasePayload) return PLYInterceptResult.notHandled;
 
   // Cross-store generic fields
   final storeProductId = payload.plan?.productId;
@@ -200,14 +195,13 @@ Purchasely.interceptAction(PresentationActionKind.purchase, (info, payload) asyn
     googleOfferToken: googleOfferToken,
     // appleSignature: ...,
   );
-  if (!ok) return InterceptResult.failed;
-
-  // Upload the new receipt to Purchasely only after a successful purchase:
-  await Purchasely.synchronize();
+  if (!ok) return PLYInterceptResult.failed;
 
   // Observer mode does not auto-close; dismiss after the handler resolves.
   // Call presentation.close() from your post-resolution success callback.
-  return InterceptResult.success; // app handled the purchase
+  return PLYInterceptResult.success; // app handled the purchase — returning success
+                                      // auto-synchronizes with Purchasely; do NOT call
+                                      // Purchasely.synchronize() yourself here
 });
 ```
 

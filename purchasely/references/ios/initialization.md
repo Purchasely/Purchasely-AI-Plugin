@@ -1,26 +1,12 @@
 # iOS SDK Initialization
 
-> Documents the **v6.0.0-rc.1** fluent initialization builder. Migrating from v5? See [`migration-v6.md`](migration-v6.md). Universal concepts (running modes, log levels, etc.) also live in [`../concepts/`](../concepts/README.md).
+> Documents the **v6.0.0** (stable GA) fluent initialization builder. Migrating from v5? See [`migration-v6.md`](migration-v6.md). Universal concepts (running modes, log levels, etc.) also live in [`../concepts/`](../concepts/README.md).
 
 ## Installation
 
-### CocoaPods
+### Swift Package Manager (primary)
 
-Add to your `Podfile`:
-
-```ruby
-pod 'Purchasely', '6.0.0-rc.1'
-```
-
-Then run:
-
-```bash
-pod install
-```
-
-### Swift Package Manager
-
-Add the package URL in Xcode (File ▸ Add Packages ▸ enter the URL):
+Add the package URL in Xcode (File ▸ Add Packages ▸ enter the URL), selecting **Up to Next Major Version** `from: "6.0.0"`:
 
 ```
 https://github.com/Purchasely/Purchasely-iOS
@@ -30,16 +16,32 @@ Or add to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Purchasely/Purchasely-iOS", exact: "6.0.0-rc.1")
+    .package(url: "https://github.com/Purchasely/Purchasely-iOS", from: "6.0.0")
 ]
 ```
+
+### CocoaPods
+
+Add to your `Podfile`:
+
+```ruby
+pod 'Purchasely', '~> 6.0'
+```
+
+Then run:
+
+```bash
+pod install
+```
+
+CocoaPods and binary distribution are published from the `Purchasely/Purchasely-iOS` repo — the SDK's own dev repo is now SPM-only.
 
 ### Carthage
 
 Add to your `Cartfile`:
 
 ```
-binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json" == 6.0.0-rc.1
+binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json" ~> 6.0
 ```
 
 Then run:
@@ -47,8 +49,6 @@ Then run:
 ```bash
 carthage update
 ```
-
-Pin **exactly** (`== 6.0.0-rc.1`) — a floating constraint will not resolve a pre-release.
 
 ## Import
 
@@ -146,7 +146,7 @@ struct MyApp: App {
 | `environment(_:)` | `.prod` | |
 | `themeMode(_:)` | `.system` | |
 | `allowDeeplink(_:)` | `true` | Deeplinks display immediately; pass `false` to defer until `Purchasely.allowDeeplink(true)` |
-| `allowCampaigns(_:)` | `true` | Campaigns display immediately; pass `false` to defer until `Purchasely.allowCampaigns(true)` |
+| `allowCampaigns(_:)` | `true` ⚠️ | **Was `false` in v5.** Campaigns display immediately; pass `false` to defer until `Purchasely.allowCampaigns(true)`. Opening a queued campaign is additionally gated on the SDK's configuration being ready. |
 | `handleDeeplink(_:)` | unset | Pass a cold-start deeplink to display once the SDK has started |
 
 > 📘 The pre-`start` class funcs `setEnvironment(_:)`, `setShowPromotedInAppPurchasePaywall(_:)`, `setAppTechnology(_:)`, `setSdkBridgeVersion(_:)`, `setThemeMode(_:)` are **deprecated** (removal in v7). Use the chain modifiers above instead.

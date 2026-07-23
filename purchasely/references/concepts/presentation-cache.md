@@ -6,7 +6,7 @@ Applies to: **iOS, Android, React Native, Flutter, Cordova**.
 
 ## The problem
 
-Fetching a presentation on every display hits the network each time. (Native iOS/Android v6 fetch with `PLYPresentationBuilder` / the `PLYPresentation { }` DSL + `preload`; React Native v6 builds a request with `Purchasely.presentation.placement(id).build()` then `request.preload()`; Flutter v6 builds a request with `PresentationBuilder.placement(id).build()` then `request.preload()`; the method-based Cordova v6 bridge calls `Purchasely.fetchPresentationForPlacement(...)`.) If you display the same placement repeatedly (`onAppear` / `onViewWillAppear` firing multiple times, sheet/back navigation, recomposition, etc.), each fetch:
+Fetching a presentation on every display hits the network each time. (Native iOS/Android v6 fetch with `PLYPresentationBuilder` / the `PLYPresentation { }` DSL + `preload`; React Native v6 builds a request with `Purchasely.presentation.placement(id).build()` then `request.preload()`; Flutter v6 builds a request with `PLYPresentationBuilder.placement(id).build()` then `request.preload()`; the method-based Cordova v6 bridge calls `Purchasely.fetchPresentationForPlacement(...)`.) If you display the same placement repeatedly (`onAppear` / `onViewWillAppear` firing multiple times, sheet/back navigation, recomposition, etc.), each fetch:
 
 1. Round-trips to Purchasely servers.
 2. **For flow placements**, accumulates a `flowSteps` entry in the SDK's internal `FlowsManager`.
@@ -28,7 +28,7 @@ The cached presentation can become stale. Invalidate (clear all entries) when an
 
 Invalidation is intentionally coarse-grained (clear-all) because the SDK doesn't expose attribute→audience dependencies.
 
-> On native iOS/Android v6 you can also preload once and display later without a second network call: keep the loaded `PLYPresentation` reference and call `presentation.display(from:)` / `loaded.display(context)` when the user acts. **React Native v6 and Flutter v6 do the same at the request level:** build the `PresentationRequest` once (`Purchasely.presentation.placement(id).build()` / `PresentationBuilder.placement(id).build()`), call `request.preload()` early, then reuse the *same* request and call `request.display()` when the user acts — no second fetch. This covers the common preload-early/display-late case without a custom cache; an app-side cache is still useful when you key by `placementId[/contentId]` across many call sites.
+> On native iOS/Android v6 you can also preload once and display later without a second network call: keep the loaded `PLYPresentation` reference and call `presentation.display(from:)` / `loaded.display(context)` when the user acts. **React Native v6 and Flutter v6 do the same at the request level:** build the `PLYPresentationRequest` once (`Purchasely.presentation.placement(id).build()` / `PLYPresentationBuilder.placement(id).build()`), call `request.preload()` early, then reuse the *same* request and call `request.display()` when the user acts — no second fetch. This covers the common preload-early/display-late case without a custom cache; an app-side cache is still useful when you key by `placementId[/contentId]` across many call sites.
 
 ## Skeleton implementations
 
@@ -72,7 +72,7 @@ object PresentationCache {
 ### React Native (TypeScript)
 
 ```ts
-// Cache the built PresentationRequest so preload() + display() reuse the same one
+// Cache the built PLYPresentationRequest so preload() + display() reuse the same one
 // (no second network fetch). Key by placementId[/contentId].
 const cache = new Map<string, any>();
 
@@ -136,7 +136,7 @@ fetchOrCached(placementId):
     # native iOS/Android v6: PLYPresentationBuilder.forPlacementId(placementId).build().preload()
     #                        / PLYPresentation { placementId(...) }.preload()
     # React Native v6:       Purchasely.presentation.placement(placementId).build() → request.preload()
-    # Flutter v6:            await PresentationBuilder.placement(placementId).build().preload()
+    # Flutter v6:            await PLYPresentationBuilder.placement(placementId).build().preload()
     # Cordova v6 bridge:     await Purchasely.fetchPresentationForPlacement(placementId)
     fresh = await preload(placementId)
     cache.set(placementId, fresh)

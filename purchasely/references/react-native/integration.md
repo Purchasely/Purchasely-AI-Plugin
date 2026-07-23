@@ -1,6 +1,6 @@
 # React Native Integration
 
-Purchasely React Native is on the **v6 API**, the same generation as the native iOS and Android SDKs. The plugin pins the **6.0.0-rc.2** pre-release on every layer: all five npm packages (`react-native-purchasely`, `@purchasely/react-native-purchasely-google`, `@purchasely/react-native-purchasely-android-player`, `@purchasely/react-native-purchasely-amazon`, `@purchasely/react-native-purchasely-huawei`) are `6.0.0-rc.2`, and they pull the published native SDKs (iOS `Purchasely 6.0.0-rc.2` on the CocoaPods trunk, Android `io.purchasely:core 6.0.0-rc.2` on Maven Central). The public JS/TS symbols are **`PLY`-prefixed** (`Purchasely.builder`, `PLYPresentationBuilder`, `PLYPresentationRequest`, `PLYLoadedPresentation`, `PLYPresentationOutcome`, `PLYTransition`, …) — there are no `v6` / `V6` symbols.
+Purchasely React Native is on the **v6 API**, the same generation as the native iOS and Android SDKs. The plugin pins the **6.0.0-rc.3** pre-release (npm dist-tag `latest`; GA `6.0.0` is in preparation) on every layer: all five npm packages (`react-native-purchasely`, `@purchasely/react-native-purchasely-google`, `@purchasely/react-native-purchasely-android-player`, `@purchasely/react-native-purchasely-amazon`, `@purchasely/react-native-purchasely-huawei`) are `6.0.0-rc.3`, and they pull the published native SDKs (iOS `Purchasely 6.0.0-rc.3` on the CocoaPods trunk, Android `io.purchasely:core 6.0.0-rc.3` on Maven Central — both confirmed pinned in the published `6.0.0-rc.3` tag). The public JS/TS symbols are **`PLY`-prefixed** (`Purchasely.builder`, `PLYPresentationBuilder`, `PLYPresentationRequest`, `PLYLoadedPresentation`, `PLYPresentationOutcome`, `PLYTransition`, …) — there are no `v6` / `V6` symbols.
 
 Three areas changed shape from v5: **starting the SDK** (`Purchasely.builder(apiKey)`), **displaying / preloading / closing a presentation** (`Purchasely.presentation` + `PLYPresentationRequest`), and the **action interceptor** (`Purchasely.interceptAction`). Everything else on the `Purchasely` default export — purchases, restore, identity, catalog, subscriptions data, user attributes, events, dynamic offerings, consent and config — remains source-compatible. Note the **deeplink API changed**: `isDeeplinkHandled` / `readyToOpenDeeplink` are **removed** (no alias) — use `Purchasely.handleDeeplink(uri)` and `Purchasely.allowDeeplink(bool)`. See [`migration-v6.md`](./migration-v6.md) for the full v5 → v6 old→new mapping.
 
@@ -15,27 +15,27 @@ Three areas changed shape from v5: **starting the SDK** (`Purchasely.builder(api
 > - [`../concepts/user-attributes-targeting.md`](../concepts/user-attributes-targeting.md) — audience targeting + GDPR consent
 > - [`../concepts/privacy-settings.md`](../concepts/privacy-settings.md) — `revokeDataProcessingConsent` and privacy purposes
 > - [`../concepts/subscription-checks.md`](../concepts/subscription-checks.md) — gating premium content, restore purchases
-> - [`../sdk-versions.md`](../sdk-versions.md) — latest versions (pin React Native to **6.0.0-rc.2**)
+> - [`../sdk-versions.md`](../sdk-versions.md) — latest versions (pin React Native to **6.0.0-rc.3**)
 
 ## Installation
 
-Pin all packages to the exact same version, `6.0.0-rc.2`. Use `--save-exact` — `6.0.0-rc.2` is a pre-release, so a floating range (`^6.0.0`, `6.x`) will not resolve it.
+Pin all packages to the exact same version, `6.0.0-rc.3`. Use `--save-exact` — `6.0.0-rc.3` is a pre-release, so a floating range (`^6.0.0`, `6.x`) will not resolve it.
 
 ```bash
 # Core SDK
-npm install react-native-purchasely@6.0.0-rc.2 --save-exact
+npm install react-native-purchasely@6.0.0-rc.3 --save-exact
 
 # Google Play — required if targeting Google Play Store
-npm install @purchasely/react-native-purchasely-google@6.0.0-rc.2 --save-exact
+npm install @purchasely/react-native-purchasely-google@6.0.0-rc.3 --save-exact
 
 # Video Player — optional, for video support in paywalls on Android
-npm install @purchasely/react-native-purchasely-android-player@6.0.0-rc.2 --save-exact
+npm install @purchasely/react-native-purchasely-android-player@6.0.0-rc.3 --save-exact
 
 # Amazon Appstore — optional, Android alt store
-npm install @purchasely/react-native-purchasely-amazon@6.0.0-rc.2 --save-exact
+npm install @purchasely/react-native-purchasely-amazon@6.0.0-rc.3 --save-exact
 
 # Huawei AppGallery — optional, Android alt store
-npm install @purchasely/react-native-purchasely-huawei@6.0.0-rc.2 --save-exact
+npm install @purchasely/react-native-purchasely-huawei@6.0.0-rc.3 --save-exact
 ```
 
 **CRITICAL: All Purchasely packages must be at the exact same version, pinned exactly (never floating).** Check `package.json`:
@@ -43,16 +43,16 @@ npm install @purchasely/react-native-purchasely-huawei@6.0.0-rc.2 --save-exact
 ```json
 {
   "dependencies": {
-    "react-native-purchasely": "6.0.0-rc.2",
-    "@purchasely/react-native-purchasely-google": "6.0.0-rc.2",
-    "@purchasely/react-native-purchasely-android-player": "6.0.0-rc.2"
+    "react-native-purchasely": "6.0.0-rc.3",
+    "@purchasely/react-native-purchasely-google": "6.0.0-rc.3",
+    "@purchasely/react-native-purchasely-android-player": "6.0.0-rc.3"
   }
 }
 ```
 
 > **Toolchain.** The v6 React Native SDK is built and tested against **React Native 0.86** and **Node 22** (`.nvmrc` → `v22`).
 
-> **Native dependency.** `react-native-purchasely 6.0.0-rc.2` pulls the **6.0.0-rc.2** native SDKs transitively — iOS `Purchasely 6.0.0-rc.2` (CocoaPods trunk) and Android `io.purchasely:core 6.0.0-rc.2` (Maven Central). Both are published, so the project builds from the public repositories. You do not bump the native pods/gradle dependencies yourself; the plugin's pinning is correct.
+> **Native dependency.** `react-native-purchasely 6.0.0-rc.3` pulls the **6.0.0-rc.3** native SDKs transitively — iOS `Purchasely 6.0.0-rc.3` (CocoaPods trunk) and Android `io.purchasely:core 6.0.0-rc.3` (Maven Central). Both are published, so the project builds from the public repositories. You do not bump the native pods/gradle dependencies yourself; the plugin's pinning is correct.
 
 ### iOS Setup
 
@@ -478,6 +478,8 @@ console.log(request.requestId); // string | null — used to correlate the embed
 
 v6 displays deeplinks and campaigns immediately by default. Allow or gate them on the builder with `allowDeeplink` (or the standalone `Purchasely.allowDeeplink(bool)`), and feed runtime deeplinks with **`Purchasely.handleDeeplink(uri)`**.
 
+> **`.allowDeeplink()` is an optional chain modifier, not a required one.** If you omit it from the builder chain, the flag is simply never sent to the native side, and the **native default (`true`)** applies — the same as iOS, Android, and Flutter. There is no RN-specific default of `false`; only call `.allowDeeplink(false)` if you actually want to defer deeplink display (e.g. during onboarding).
+
 > **API change from v5.** `Purchasely.isDeeplinkHandled(uri)` and `Purchasely.readyToOpenDeeplink(bool)` are **removed** in React Native v6 — there is **no alias**. Use `Purchasely.handleDeeplink(uri)` (returns `Promise<boolean>`) and `.allowDeeplink(true)` on the builder (or `Purchasely.allowDeeplink(true)`).
 
 ### Allow Deeplinks
@@ -541,12 +543,12 @@ try {
 }
 ```
 
-> In Observer mode after a host-side purchase, `await Purchasely.synchronize()` before chaining a follow-up placement so the receipt is uploaded first.
+> **Resolving a `.purchase` / `.restore` interceptor with `'success'` already auto-synchronizes the receipt** — do not also call `Purchasely.synchronize()` from inside that handler. Reserve manual `synchronize()` calls for purchases processed **outside** the interceptor flow (e.g. a "Restore Purchases" button, or a client-side/BYOS presentation). If you need to chain a follow-up placement that targets users by subscription state, `await Purchasely.synchronize()` yourself first so the receipt is guaranteed to have landed before the fetch.
 
 ## Bridge & version alignment notes
 
 - The JS ↔ native bridge is still **NativeModules** (`Purchasely`) + event emitters. v6 changes the public JS surface, not the bridge transport.
-- **All Purchasely npm packages MUST be the exact same version** (`6.0.0-rc.2`). Mixing versions causes runtime crashes. Pin exactly — never floating (`^6.0.0`, `6.x`).
+- **All Purchasely npm packages MUST be the exact same version** (`6.0.0-rc.3`). Mixing versions causes runtime crashes. Pin exactly — never floating (`^6.0.0`, `6.x`).
 - Run a fresh install after pinning: `rm -rf node_modules && npm install`, then `pod install --repo-update` (iOS) and `./gradlew --refresh-dependencies` (Android) as needed.
 - See [`../sdk-versions.md`](../sdk-versions.md) for the canonical version table and [`./migration-v6.md`](./migration-v6.md) for the full v5 → v6 old→new mapping.
 

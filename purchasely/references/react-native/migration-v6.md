@@ -1,10 +1,10 @@
 # React Native — Migrating to the Purchasely 6.0 API
 
 > **Published as a pre-release.** The React Native v6 API ships in
-> `react-native-purchasely: 6.0.0-rc.2` (and the matching
+> `react-native-purchasely: 6.0.0-rc.3` (and the matching
 > `@purchasely/react-native-purchasely-google` / `-android-player` / `-amazon` /
-> `-huawei` packages), live on npm alongside the native iOS `Purchasely 6.0.0-rc.2`
-> and Android `io.purchasely:core 6.0.0-rc.2` pre-releases. The builder-based API
+> `-huawei` packages), live on npm alongside the native iOS `Purchasely 6.0.0-rc.3`
+> and Android `io.purchasely:core 6.0.0-rc.3` pre-releases. The builder-based API
 > documented below (`Purchasely.builder`, `Purchasely.presentation`,
 > `Purchasely.interceptAction`) is the current published surface — the v5
 > paywall API (`Purchasely.start({...})`, `fetchPresentation` /
@@ -19,7 +19,7 @@
 > [`../concepts/`](../concepts/).
 
 This release **adapts the Purchasely React Native plugin to the Purchasely 6.0
-native SDKs** (iOS `Purchasely 6.0.0-rc.2`, Android `io.purchasely:core 6.0.0-rc.2`).
+native SDKs** (iOS `Purchasely 6.0.0-rc.3`, Android `io.purchasely:core 6.0.0-rc.3`).
 The public paywall symbols are **`PLY`-prefixed** — `Purchasely.builder`,
 `PLYPresentationBuilder`, `PLYPresentationRequest`, `PLYLoadedPresentation`,
 `PLYPresentationOutcome`, `PLYTransition`, `PLYInterceptResult`, … No `v6` / `V6`
@@ -68,7 +68,7 @@ A paywall is now called a **Presentation** (or *Screen*).
 
 ## Migration checklist
 
-1. Bump all five npm packages to **`6.0.0-rc.2`** exactly (`--save-exact`); never
+1. Bump all five npm packages to **`6.0.0-rc.3`** exactly (`--save-exact`); never
    floating. `rm -rf node_modules && npm install`, then `pod install --repo-update`.
    Bump the Android host `minSdkVersion` to **23** (was 21) and `compileSdk` to 35.
 2. Replace `Purchasely.start({...})` / `startWithAPIKey(...)` with the
@@ -381,6 +381,10 @@ await Purchasely.builder('YOUR_API_KEY').allowDeeplink(true).start();
 const handled = await Purchasely.handleDeeplink('app://ply/presentations/');
 ```
 
+> `.allowDeeplink()` is an **optional** chain modifier — if you don't call it, the
+> flag is never sent to native and the **native default (`true`)** applies, same
+> as iOS/Android/Flutter. There is no RN-specific default of `false`.
+
 There are **two distinct paywall flows** — don't conflate them:
 
 ### 1. Paywalls **you** display
@@ -449,8 +453,14 @@ try {
 }
 ```
 
-> In Observer mode after a host-side purchase, `await Purchasely.synchronize()`
-> before chaining a follow-up placement so the receipt is uploaded first.
+> **Interceptor guidance.** Resolving a `.purchase` / `.restore` interceptor with
+> `'success'` already **auto-synchronizes** the receipt — do not call
+> `Purchasely.synchronize()` from inside that handler. Reserve manual
+> `synchronize()` calls for purchases processed **outside** the interceptor flow
+> (a "Restore Purchases" button, a client-side/BYOS presentation). If you need to
+> chain a follow-up placement that targets users by subscription state,
+> `await Purchasely.synchronize()` yourself first so the receipt has definitely
+> landed before the fetch.
 
 ---
 
@@ -495,10 +505,10 @@ exactly as in v5:
 > `userSubscriptionsHistory()`.
 
 > **Native dependency.** This React Native release targets the Purchasely v6 native
-> SDKs (iOS `Purchasely 6.0.0-rc.2`, Android `io.purchasely:core 6.0.0-rc.2`),
+> SDKs (iOS `Purchasely 6.0.0-rc.3`, Android `io.purchasely:core 6.0.0-rc.3`),
 > published as pre-releases on CocoaPods / Maven Central — see
 > [`../sdk-versions.md`](../sdk-versions.md) for the canonical pins. The published
-> **React Native** packages are all `6.0.0-rc.2`, pinned exactly to those native
+> **React Native** packages are all `6.0.0-rc.3`, pinned exactly to those native
 > versions.
 
 ---

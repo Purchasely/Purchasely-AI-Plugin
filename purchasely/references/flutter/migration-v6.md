@@ -1,14 +1,15 @@
 # Flutter — Migrating to the Purchasely 6.0 API
 
-> **Published as a pre-release.** The Flutter v6 API ships in
-> `purchasely_flutter: 6.0.0-rc.1` (and the matching `purchasely_google` /
-> `purchasely_android_player` packages), live on pub.dev alongside the native
-> iOS `Purchasely 6.0.0-rc.2` and Android `io.purchasely:core 6.0.0-rc.2`
-> pre-releases. The builder-based API documented below (`Purchasely.apiKey(...)`,
-> `PLYPresentationBuilder`, `Purchasely.interceptAction`) is the current published
-> surface — the v5 API (`Purchasely.start(...)`, `fetchPresentation` /
-> `presentPresentation[ForPlacement]`, `setPaywallActionInterceptorCallback` +
-> `onProcessAction`, `closePresentation()`) is gone.
+> **GA / stable.** The Flutter v6 API ships in
+> `purchasely_flutter: 6.0.0` (and the matching `purchasely_google` /
+> `purchasely_android_player` packages, also `6.0.0`), published stable on
+> pub.dev alongside the native iOS `Purchasely 6.0.0` and Android
+> `io.purchasely:core 6.0.1` GA releases. The builder-based API documented below
+> (`Purchasely.apiKey(...)`, `PLYPresentationBuilder`, `Purchasely.interceptAction`)
+> is the current published surface — the v5 API (`Purchasely.start(...)`,
+> `fetchPresentation` / `presentPresentation[ForPlacement]`,
+> `setPaywallActionInterceptorCallback` + `onProcessAction`, `closePresentation()`)
+> is gone.
 
 > **In-repo migration guide.** This is the Flutter-specific old→new mapping for the
 > Purchasely 6.0 plugin. The companion integration reference is
@@ -16,7 +17,7 @@
 > [`../concepts/`](../concepts/).
 
 This release **adapts the Purchasely Flutter plugin to the Purchasely 6.0 native
-SDKs** (iOS `Purchasely 6.0.0-rc.2`, Android `io.purchasely:core 6.0.0-rc.2`).
+SDKs** (iOS `Purchasely 6.0.0`, Android `io.purchasely:core 6.0.1`).
 
 Three areas are breaking changes: **starting the SDK**, **displaying / preloading /
 closing a presentation**, and the **action interceptor**. Everything else on the
@@ -392,7 +393,7 @@ await Purchasely.setDefaultPresentationDismissHandler((outcome) {
 final handled = await Purchasely.handleDeeplink('app://ply/presentations/');
 ```
 
-> **`readyToOpenDeeplink` and `isDeeplinkHandled` were removed in v6.** Use `allowDeeplink` / `handleDeeplink` instead.
+> **`readyToOpenDeeplink` and `isDeeplinkHandled` were removed in v6.** Use `allowDeeplink` / `handleDeeplink` instead. Deeplink handling is actually **three distinct mechanisms** (authorisation via `allowDeeplink`, cold-start replay via the builder's `handleDeeplink(String?)`, and the runtime `Purchasely.handleDeeplink(String)`), plus the Android-only `automaticDeeplinkHandling(bool)` (default `true`, no-op on iOS) — see [`integration.md`](./integration.md#deeplinks) for the full breakdown, including the iOS/Android event-order gotcha.
 
 ---
 
@@ -425,11 +426,12 @@ name, signature and behaviour:
 - **Purchases**: `purchaseWithPlanVendorId`, `signPromotionalOffer`.
 - **Restore**: `restoreAllProducts`, `silentRestoreAllProducts`,
   `userDidConsumeSubscriptionContent`.
-- **Identity**: `userLogin`, `userLogout`, `isAnonymous`, `anonymousUserId`.
+- **Identity**: `userLogin`, `userLogout` (new optional `{bool clearUserAttributes = true}` parameter — pass `false` to keep custom attributes across logout), `isAnonymous`, `anonymousUserId`.
 - **Catalog**: `allProducts`, `productWithIdentifier`, `planWithIdentifier`,
   `isEligibleForIntroOffer`.
-- **Subscriptions data**: `userSubscriptions`, `userSubscriptionsHistory`,
-  `displaySubscriptionCancellationInstruction` (see callout below).
+- **Subscriptions data**: `userSubscriptions`, `userSubscriptionsHistory`
+  (`displaySubscriptionCancellationInstruction` is **not** in this unchanged
+  list — see the removal callout below).
 - **User attributes**: `setUserAttributeWithString` / `WithInt` / `WithDouble` /
   `WithBoolean` / `WithDate` / `WithStringArray` / `WithIntArray` /
   `WithDoubleArray` / `WithBooleanArray`, `incrementUserAttribute`,
@@ -449,8 +451,17 @@ name, signature and behaviour:
 > `Purchasely.synchronize()` now returns **`Future<bool>`** (was `Future<void>`):
 > it **resolves with `true` when synchronization actually completes** and
 > **throws a `PlatformException` on failure**, instead of the previous
-> fire-and-forget behaviour. `await` it (and optionally `try/catch`) before
-> chaining a follow-up presentation that targets subscribers.
+> fire-and-forget behaviour. A resolved **`false` means the receipt is still
+> pending store-side validation — it is not a failure**, so don't treat it as
+> one. `await` it (and optionally `try/catch`) before chaining a follow-up
+> presentation that targets subscribers.
+>
+> **Do not call `synchronize()` from inside the `purchase`/`restore` action
+> interceptor.** Returning a success result from that interceptor in Observer
+> mode already auto-synchronizes with Purchasely — see
+> [`../concepts/observer-mode-post-purchase.md`](../concepts/observer-mode-post-purchase.md).
+> Manual `synchronize()` is only for purchases handled entirely outside the
+> interceptor (a custom sale screen, or BYOS).
 
 > **Removed `presentSubscriptions()` (BREAKING).** The native subscriptions
 > screen was removed from the 6.0 SDKs on both platforms.
@@ -465,7 +476,7 @@ name, signature and behaviour:
 > were **removed** in v6. Use `allowDeeplink` / `handleDeeplink` instead.
 
 > **Native dependency.** This Flutter release targets the Purchasely v6 native SDKs
-> (iOS `Purchasely 6.0.0-rc.2`, Android `io.purchasely:core 6.0.0-rc.2`), published as pre-releases
+> (iOS `Purchasely 6.0.0`, Android `io.purchasely:core 6.0.1`), published as stable GA releases
 > on CocoaPods / Maven Central — see [`../sdk-versions.md`](../sdk-versions.md) for the canonical
-> pins. The published **Flutter** package is `purchasely_flutter: 6.0.0-rc.1`, which pulls those
+> pins. The published **Flutter** package is `purchasely_flutter: 6.0.0`, which pulls those
 > native versions transitively.

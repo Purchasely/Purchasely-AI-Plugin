@@ -1,6 +1,6 @@
 # React Native SDK v5.x API — reference for MIGRATION ONLY (removed in v6)
 
-> **Do not write new v5 code.** This is a compact snapshot of the legacy v5.x public React Native API so the `purchasely-migrate` skill can **recognize** existing v5 code in a project and map it forward. Every paywall symbol below is **removed in v6.0.0-rc.2** (not deprecated — it fails to compile and no longer exists at runtime). For the v6 surface, see [`integration.md`](integration.md); for the step-by-step migration, see [`migration-v6.md`](migration-v6.md).
+> **Do not write new v5 code.** This is a compact snapshot of the legacy v5.x public React Native API so the `purchasely-migrate` skill can **recognize** existing v5 code in a project and map it forward. Every paywall symbol below is **removed in v6.0.0-rc.3** (not deprecated — it fails to compile and no longer exists at runtime). For the v6 surface, see [`integration.md`](integration.md); for the step-by-step migration, see [`migration-v6.md`](migration-v6.md).
 
 Each entry adds a one-line `-> v6` pointer.
 

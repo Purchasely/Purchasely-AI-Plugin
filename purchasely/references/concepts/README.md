@@ -25,9 +25,11 @@ When a topic also has a deeper platform-specific take (e.g. SwiftUI lifecycle, J
 | [subscription-management.md](subscription-management.md) | Opening the native Manage Subscription page (App Store / Play Store) |
 | [promotional-offers.md](promotional-offers.md) | Offer types, Apple promo offers, Google developer-determined offers, offer codes, win-back |
 | [dynamic-offerings.md](dynamic-offerings.md) | `setDynamicOffering` runtime plan/offer overrides — applied server-side at fetch, register-before-fetch rule, same-plan billing-type pitfall |
-| [monthly-commitment.md](monthly-commitment.md) | Apple advance-commitment (12-month billed monthly) `PLYBillingPlanType` — iOS 26.4+, eligibility (excl. US/SG), setup |
+| [monthly-commitment.md](monthly-commitment.md) | Apple "Monthly with 12-Month Commitment" `PLYBillingPlanType` (iOS 26.4+, eligibility excl. US/SG) and Google Play native installment subscriptions — cross-platform pricing tags (`{{MONTHLY_AMOUNT}}`, `{{PRICE}}`, `{{AMOUNT}}`), `INSTALLMENT_*` webhooks |
+| [web-checkout.md](web-checkout.md) | Stripe Payment Links via the `webCheckout` action, audience targeting, `WEB_CHECKOUT_*` events |
 | [campaigns.md](campaigns.md) | No-code Console automations (trigger / placement-based), `allowCampaigns` + `allowDeeplink` (native iOS/Android, React Native, Flutter v6, and Cordova v6), SDK ≥ 5.1.0 |
 | [analytics-integration.md](analytics-integration.md) | Forwarding UI events to Firebase / Amplitude / AppsFlyer + analytics wrapper pattern |
+| [rendering-engine.md](rendering-engine.md) | How a Screen renders: iOS UIKit component tree + tolerant decoding, Android Views/fat-AAR, image cache, Lottie bridge, known rendering bugs |
 
 ## When to load
 
@@ -40,11 +42,13 @@ When a topic also has a deeper platform-specific take (e.g. SwiftUI lifecycle, J
 | Adding subscription gating | `subscription-checks.md`, `subscription-management.md` |
 | Adding retention / win-back paywalls | `promotional-offers.md`, `campaigns.md` |
 | Overriding a paywall's plan/offer at runtime (remote config, cohorts, experiments) | `dynamic-offerings.md` |
-| Setting up 12-month commitment billed monthly (iOS) | `monthly-commitment.md`, `dynamic-offerings.md` |
+| Setting up 12-month commitment billed monthly (Apple) or installment subscriptions (Google Play) | `monthly-commitment.md`, `dynamic-offerings.md` |
 | Adding scheduled or event-driven paywalls | `campaigns.md` |
+| Adding a Stripe / web checkout button | `web-checkout.md` |
 | Wiring analytics / tracking | `analytics-integration.md`, `user-identity.md` |
 | Improving paywall perceived performance | `presentation-cache.md` (preload pattern) |
 | Debugging stuck paywalls / blank presentations | `presentation-types.md`, `presentation-cache.md`, `paywall-actions.md` |
+| Debugging rendering issues (missing components, blank images, silent Lottie) | `rendering-engine.md` |
 | Embedding a native login / custom form / legacy paywall inside a Flow | `byos.md` (iOS + Android, SDK ≥ 5.6.0) |
 | Adding or debugging Lottie animations in Purchasely Screens | `lottie-animations.md` (iOS / Android native bridge; cross-platform apps configure host projects) |
 | Configuring multi-step buttons (purchase + next step, purchase + placement) | `paywall-actions.md` § Chaining multiple actions |

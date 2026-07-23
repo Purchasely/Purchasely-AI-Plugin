@@ -33,7 +33,7 @@ Thanks for helping make Purchasely easier to integrate. This guide covers how to
 
 - Keep examples **runnable**. If a snippet references an API, the API must exist in the current public SDK.
 - Use **placeholders** (`YOUR_API_KEY`, `PLACEMENT_ID`) — never commit real keys.
-- Prefer **direct SDK calls** in examples (`Purchasely.fetchPresentation(...)`). The wrapper pattern is recommended but optional — see `CLAUDE.md` for the full rule.
+- Prefer **direct SDK calls** in examples (`Purchasely.setUserAttribute(...)`). The wrapper pattern is recommended but optional — see `CLAUDE.md` for the full rule.
 - One concept per file when possible; cross-link with relative paths.
 - Markdown headings: `##` for sections, `###` for subsections; no `#` (reserved for the document title).
 

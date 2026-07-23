@@ -1,6 +1,6 @@
 # iOS API Reference
 
-> Documents the **v6.0.0-rc.1** public surface (Swift + Objective-C). Migrating from v5? See [`migration-v6.md`](migration-v6.md) and the legacy [`v5-api-reference.md`](v5-api-reference.md). Universal concepts (running modes, log levels, presentation types) also live in [`../concepts/`](../concepts/README.md).
+> Documents the **v6.0.0** (stable GA) public surface (Swift + Objective-C). Migrating from v5? See [`migration-v6.md`](migration-v6.md) and the legacy [`v5-api-reference.md`](v5-api-reference.md). Universal concepts (running modes, log levels, presentation types) also live in [`../concepts/`](../concepts/README.md).
 
 ## Initialization — fluent builder
 
@@ -165,12 +165,16 @@ do {
 |--------------------|------------|--------------|
 | `fetchCompletion:` | The presentation was fetched | `.preload { presentation, error in … }` |
 | `loadedCompletion:` | The paywall is on screen | `.onPresented { presentation, error in … }` |
+| — | The user requests a close (e.g. taps the X) | `.onCloseRequested { … }` (renamed from `onClose`; no compatibility alias) |
 | `completion:` | The paywall was dismissed | `.onDismissed { outcome in … }` |
+
+`.onCloseRequested` fires on the close *request*; the final dismissal with the outcome still arrives via `.onDismissed`. This mirrors the Android builder's `onCloseRequested { }` hook.
 
 ```swift
 PLYPresentationBuilder.from(placementId: "ONBOARDING")
     .backgroundColor(.systemBackground)            // optional color override
     .onPresented { presentation, error in /* paywall is on screen */ }
+    .onCloseRequested { /* user tapped the close/back control */ }
     .onDismissed { outcome in /* user closed; outcome carries the purchase result */ }
     .build()
     .display(completion: nil)
@@ -270,7 +274,9 @@ Objective-C reads the same fields on `PLYPresentationOutcome *`: `outcome.purcha
 
 ### `PLYPresentation` is now a protocol
 
-`PLYPresentation` changed from a class to a public `@objc protocol`. **Reading members and calling methods works unchanged** — every property (`id`, `placementId`, `plans`, `metadata`, `isFlow`, …) and method (`display(from:)`, `close()`, `back()`, …) is a protocol requirement that resolves identically.
+`PLYPresentation` changed from a class to a public `@objc protocol`. **Reading members and calling methods works unchanged** — every property (`screenId`, `placementId`, `plans`, `metadata`, `isFlow`, …) and method (`display(from:)`, `close()`, `back()`, …) is a protocol requirement that resolves identically.
+
+> `.id` was renamed **`.screenId`** (no compatibility alias) and is now **non-optional** (`String`, not `String?`).
 
 - **Objective-C** signatures `(PLYPresentation *)` → `(id<PLYPresentation>)`. Method bodies typically need no other edits.
 - **Swift** may write `any PLYPresentation` (both `PLYPresentation` and `any PLYPresentation` compile).
@@ -319,6 +325,8 @@ Purchasely.allowDeeplink(false)   // defer display
 Purchasely.allowDeeplink(true)    // any queued deeplink displays immediately
 Purchasely.allowCampaigns(false)  // independent flag for campaigns
 ```
+
+`allowCampaigns(_:)` defaults to **`true`** in v6 (v5 defaulted to `false`). Opening a queued campaign deeplink is also gated on the SDK's configuration being ready — even with `allowCampaigns(true)`, a campaign will not open until `start()` has finished configuring the SDK.
 
 ## Presentation Dismiss Handler
 
@@ -392,6 +400,12 @@ Purchasely.setUserAttributes([
 ])
 ```
 
+### Built-in attribute keys — `PLYAttribute`
+
+`PLYAttribute.oneSignalPlayerId` is **removed** (no alias) — use `.oneSignalExternalId` or `.oneSignalUserId` instead, matching OneSignal's current SDK identifiers.
+
+> **Gotcha — backend key rename.** The corresponding backend attribute key also changed, from `onesignal_player_id` to `onesignal_external_id`. Any audience targeting rule still pinned to the old `onesignal_player_id` key **stops receiving data silently** (no error) once the app updates to the new attribute — audit and update audience rules alongside the SDK bump.
+
 ## Subscriptions
 
 ### `Purchasely.userSubscriptions(success:failure:)`
@@ -410,6 +424,8 @@ Purchasely.userSubscriptions(
     }
 )
 ```
+
+> **Built-in subscriptions UI removed.** `Purchasely.showController(_:type:from:)`, `PLYUIControllerType`, and the legacy "My Subscriptions" screen are **removed** in v6, along with the `PLYEvent` cases `.subscriptionsListViewed` and `.cancellationReasonPublished`. There is no drop-in replacement — build your own subscription management screen from `userSubscriptions()` / `userSubscriptionsHistory()`. (There is no iOS API named `presentSubscriptions()` — that name never existed on iOS; `showController` was the v5 entry point for the built-in screen.)
 
 ## Programmatic Purchases
 
@@ -528,6 +544,9 @@ Purchasely.setUserAttributeDelegate(MyAttributeDelegate())
 | `PLYProductViewControllerResult` | `PLYPresentationOutcome *` (struct with `purchaseResult`, `plan`, `presentation`, `closeReason`, `error`) |
 | `[Purchasely closeDisplayedPresentation]` | `[Purchasely closeAllScreens]` |
 | `displayMode:` parameter | `transition:` parameter |
+| `PLYDisplayMode` (type) | `PLYTransition` (type) |
+
+> `PLYProductViewControllerResult` and its companion `PLYProductViewControllerCompletionBlock` are not deleted outright — they are **internalized** (kept for the SDK's own implementation, no longer part of the public API surface). App code must use `PLYPresentationOutcome`.
 
 ## `PLYPresentationAction` Enum
 
@@ -553,3 +572,7 @@ Type read from a loaded presentation:
 | `.fallback` | Fallback presentation (network issue, original not found) |
 | `.deactivated` | Presentation has been deactivated in the dashboard — do not display |
 | `.client` | Client-side presentation (render your own paywall with Purchasely data) |
+
+## Monthly Commitment (Apple)
+
+For Apple's "Monthly with 12-Month Commitment" billing plans (iOS 26.4+, StoreKit 2), the SDK exposes `PLYBillingPlanType`, `PLYCommitmentInfo`, and `PLYCommitmentProgress`. See [`../concepts/monthly-commitment.md`](../concepts/monthly-commitment.md) for the full plan-type and progress-tracking reference.

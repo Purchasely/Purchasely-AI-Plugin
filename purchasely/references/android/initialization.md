@@ -6,29 +6,35 @@ Native Android SDK v6 initializes with the Kotlin DSL (`Purchasely { … }`, rec
 
 ```kotlin
 dependencies {
-    implementation("io.purchasely:core:6.0.0-rc.1")
-    implementation("io.purchasely:google-play:6.0.0-rc.1")        // Google Play
-    implementation("io.purchasely:player:6.0.0-rc.1")             // optional video support
+    implementation("io.purchasely:core:6.0.1")
+    implementation("io.purchasely:google-play:6.0.1")        // Google Play
+    implementation("io.purchasely:player:6.0.1")             // optional video support
     // alternative stores:
-    implementation("io.purchasely:huawei-services:6.0.0-rc.1")    // Huawei AppGallery
-    implementation("io.purchasely:amazon:6.0.0-rc.1")             // Amazon Appstore
+    implementation("io.purchasely:huawei-services:6.0.1")    // Huawei AppGallery
+    implementation("io.purchasely:amazon:6.0.1")             // Amazon Appstore
 }
 ```
 
-There is **no** `presentation-compose` artifact. For Compose embedding, wrap the Android `View` from `buildView(...)` in an `AndroidView` (see [common-patterns.md](common-patterns.md)).
+`io.purchasely:core` is published as a **fat AAR** — internal modules (`:common`, `:network`, `:storage`, …) are fused into it. There are no separate Maven coordinates for them, and their `io.purchasely.*` FQNs are stable across the fusion. There is **no** `presentation-compose` artifact and no Compose composable today; a Compose renderer is in active development for a future release. For Compose embedding now, wrap the Android `View` from `buildView(...)` in an `AndroidView` (see [common-patterns.md](common-patterns.md)).
+
+`io.purchasely:core` also bundles a **lint.jar** (from an internal `:core-lint` module), so its checks run automatically for any consumer — no separate lint dependency to add. It flags: `context()` / `apiKey()` missing from the DSL/Builder, and `runningMode(PLYRunningMode.Full)` configured with no `stores(...)`.
 
 ## Toolchain
 
 | Requirement | Version |
 |-------------|---------|
-| Gradle | 9.3.0+ |
-| AGP | 9.x |
-| Kotlin | 2.2.x (K2 compiler) |
+| Gradle | ≥ 9.3 (floor; the SDK's own dev wrapper runs 9.6.1) |
+| AGP | 9.0.1 |
+| Kotlin | **2.3.21** (K2 compiler; fixes issues present in the 2.2.x line used by early v6 release candidates) |
 | JDK (to build) | 17 |
 | `minSdk` | 23 |
 | `compileSdk` | 36 |
+| `targetSdk` | 35 |
+| Google Play Billing | 8.3.0 (via `io.purchasely:google-play`) |
 
-The reified entry points `interceptAction<T> { … }` / `removeActionInterceptor<T>()` are `inline` functions targeting JVM 11. Compile your Kotlin module with `jvmTarget = 11`, or use the `Class`-based overload. With AGP 9, remove the explicit `org.jetbrains.kotlin.android` plugin and the `android { kotlinOptions { … } }` block (AGP provides Android Kotlin support directly).
+The reified entry points `interceptAction<T> { … }` / `removeActionInterceptor<T>()` are `inline` **member functions of `Purchasely`** (since `6.0.0-rc.3`) targeting JVM 11 — no separate import beyond `io.purchasely.ext.Purchasely` is needed. Compile your Kotlin module with `jvmTarget = 11`, or use the `Class`-based overload. With AGP 9, remove the explicit `org.jetbrains.kotlin.android` plugin and the `android { kotlinOptions { … } }` block (AGP provides Android Kotlin support directly).
+
+> Before `6.0.0-rc.3`, `interceptAction<T>` / `removeActionInterceptor<T>()` were **top-level extension functions** requiring `import io.purchasely.ext.interceptAction`. If you integrated against `rc.1` or `rc.2`, remove that now-dead import when you upgrade — the member-function form resolves without it.
 
 ## Default running mode is `Observer` ⚠️
 
@@ -51,6 +57,7 @@ class App : Application() {
             userId("user-123")               // optional
             stores(listOf(GoogleStore()))
             runningMode(PLYRunningMode.Full)  // default is Observer
+            themeMode(...)                    // optional, since 6.0.1 — system/light/dark (parity with iOS)
             logLevel(LogLevel.DEBUG)
             logcatEnabled(true)               // optional, independent of logLevel
             allowDeeplink(true)
@@ -77,6 +84,7 @@ Purchasely.Builder(applicationContext)
     .userId("user-123")
     .stores(listOf(GoogleStore()))
     .runningMode(PLYRunningMode.Full)
+    .themeMode(...)                    // optional, since 6.0.1 — system/light/dark (parity with iOS)
     .logLevel(LogLevel.DEBUG)
     .logcatEnabled(true)
     .allowDeeplink(true)
@@ -90,7 +98,7 @@ Purchasely.Builder(applicationContext)
     }
 ```
 
-The init callback is now `{ error -> }` (single nullable `PLYError`); the v5 `{ isConfigured, error -> }` two-argument form was removed.
+The init callback is now `{ error -> }` (single nullable `PLYError`); the v5 `{ isConfigured, error -> }` two-argument form was removed. `themeMode(...)` is settable on **both** the DSL and the fluent Builder since `6.0.1`, matching the iOS `themeMode(_:)` chain modifier.
 
 ## `apiKey` validation
 
