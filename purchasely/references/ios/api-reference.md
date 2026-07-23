@@ -575,4 +575,4 @@ Type read from a loaded presentation:
 
 ## Monthly Commitment (Apple)
 
-For Apple's "Monthly with 12-Month Commitment" billing plans (iOS 26.4+, StoreKit 2), the SDK exposes `PLYBillingPlanType`, `PLYCommitmentInfo`, and `PLYCommitmentProgress`. See [`../concepts/12-month-commitment.md`](../concepts/12-month-commitment.md) for the full plan-type and progress-tracking reference.
+For Apple's "Monthly with 12-Month Commitment" billing plans (iOS 26.4+, StoreKit 2), the SDK exposes `PLYBillingPlanType`, `PLYCommitmentInfo`, and `PLYCommitmentProgress`. See [`../concepts/monthly-commitment.md`](../concepts/monthly-commitment.md) for the full plan-type and progress-tracking reference.

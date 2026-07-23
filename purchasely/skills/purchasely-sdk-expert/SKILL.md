@@ -74,13 +74,12 @@ Load as needed:
 - `../../references/concepts/subscription-management.md` — native subscription management pages
 - `../../references/concepts/promotional-offers.md` — Apple promos, Google offers, offer codes
 - `../../references/concepts/dynamic-offerings.md` — `setDynamicOffering` runtime plan/offer overrides (server-side at fetch); same-plan billing-type pitfall
-- `../../references/concepts/monthly-commitment.md` — Apple advance commitment (12-month billed monthly), `PLYBillingPlanType`, iOS 26.4+ eligibility (excl. US/SG)
+- `../../references/concepts/monthly-commitment.md` — Apple advance commitment (12-month billed monthly), `PLYBillingPlanType`, iOS 26.4+ eligibility (excl. US/SG), and Google Play native installment subscriptions
 - `../../references/concepts/campaigns.md` — trigger / placement campaigns
 - `../../references/concepts/byos.md` — Bring Your Own Screen, iOS/Android only
 - `../../references/concepts/lottie-animations.md` — Lottie weak dependency bridge
 - `../../references/concepts/analytics-integration.md` — forwarding SDK events
 - `../../references/concepts/rendering-engine.md` — UIKit / Android Views rendering engine and gotchas
-- `../../references/concepts/12-month-commitment.md` — Apple monthly-with-commitment (iOS 26.4+) and Google installments
 - `../../references/concepts/web-checkout.md` — Web Checkout action/flow
 - `../../references/architecture-patterns.md` — optional wrapper / gateway architecture
 

@@ -37,4 +37,4 @@ The iOS `webCheckout` interceptor payload changed format between SDK versions �
 
 - [paywall-actions.md](paywall-actions.md) — per-action interceptor contract shared by every action kind, including `webCheckout`
 - [user-attributes-targeting.md](user-attributes-targeting.md) — building audiences on `Store country` / `Store name`
-- [12-month-commitment.md](12-month-commitment.md) — another store-billing variant surfaced through paywall actions
+- [monthly-commitment.md](monthly-commitment.md) — another store-billing variant surfaced through paywall actions
