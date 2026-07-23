@@ -56,7 +56,7 @@ Before writing integration code, run a Purchasely expert checkpoint. If the harn
 
 If that subagent is not available, do the checkpoint inline using the `purchasely-sdk-expert` guidance when available, or this fallback checklist:
 
-- Confirm the SDK generation: native iOS uses v6 (`6.0.0`, stable GA); native Android uses v6 (`6.0.1`, stable GA — Android never had a `6.0.0` tag); Flutter uses v6 (`6.0.0`, pulling native iOS `6.0.0` + Android core `6.0.1`); React Native uses v6 (`6.0.0-rc.3`, npm `latest`); Cordova uses v6 (`6.0.0-rc.3`, npm dist-tag `next`).
+- Confirm the SDK generation: native iOS uses v6 (`6.0.0`, stable GA); native Android uses v6 (`6.0.1`, stable GA — Android never had a `6.0.0` tag); Flutter uses v6 (`6.0.0`, pulling native iOS `6.0.0` + Android core `6.0.1`); React Native uses v6 (`6.0.0`, stable GA, npm `latest`); Cordova uses v6 (`6.0.0-rc.3`, npm dist-tag `next`).
 - Confirm versions are pinned from `../../references/sdk-versions.md` and no floating ranges are introduced.
 - Confirm Full mode is explicit when Purchasely must process and validate purchases.
 - Confirm the presentation path matches the platform generation and handles `DEACTIVATED` / `FALLBACK` where relevant.
@@ -102,10 +102,10 @@ Run the appropriate installation commands and modify project files as needed.
 | iOS (native) | **6.0.0** (stable GA) |
 | Android (native) | **6.0.1** (stable GA — Android never had a `6.0.0` tag; the line went rc.1 → rc.2 → rc.3 → `6.0.1`) |
 | Flutter | **6.0.0** (stable, pulls native iOS `6.0.0` + Android core `6.0.1`) |
-| React Native | **6.0.0-rc.3** (npm `latest` tag; GA `6.0.0` in preparation) |
+| React Native | **6.0.0** (stable GA, npm `latest` tag) |
 | Cordova | **6.0.0-rc.3** (npm dist-tag `next` — `latest` is still `5.7.3`; install the version explicitly) |
 
-**Pin exactly on Android, Flutter, React Native, and Cordova** — never floating (`5.+`, `6.+`, `^5.0.0`, `^6.0.0-rc.3`). Floating versions break reproducibility and silently pull regressions; React Native and Cordova are still pinned to a pre-release (`6.0.0-rc.3`), and a caret/range won't resolve a pre-release at all. **iOS is the exception**: it's stable GA, so a minor-range pin is the recommended form — SPM `from: "6.0.0"` (primary) or CocoaPods `pod 'Purchasely', '~> 6.0'` — see the iOS install section below.
+**Pin exactly on Android, Flutter, React Native, and Cordova** — never floating (`5.+`, `6.+`, `^5.0.0`, `^6.0.0-rc.3`). Floating versions break reproducibility and silently pull regressions; **Cordova** is the only platform still pinned to a pre-release (`6.0.0-rc.3`), and a caret/range won't resolve a pre-release at all. **iOS is the exception**: it's stable GA, so a minor-range pin is the recommended form — SPM `from: "6.0.0"` (primary) or CocoaPods `pod 'Purchasely', '~> 6.0'` — see the iOS install section below. React Native is also stable GA now, but keep the exact pin across all five `react-native-purchasely*` packages for cross-package alignment.
 
 **Before installing, ask the user these questions (adapt per platform):**
 
@@ -202,9 +202,9 @@ Then sync Gradle.
 
 ### React Native
 
-Requirements: iOS 13.4+, Android minSdkVersion 23, compileSdk 35 (align compileSdk/targetSdk on the existing app, 35+). Built and tested against React Native 0.86 / Node 22.
+Requirements: iOS 15.1+ (set by the `react-native-purchasely` podspec, aligned with RN 0.86), Android minSdkVersion 23, compileSdk 35 (align compileSdk/targetSdk on the existing app, 35+). Built and tested against React Native 0.86 / Node 22.
 
-> **React Native is on the v6 API** (same generation as native iOS / Android / Flutter — no longer grouped with Cordova). `react-native-purchasely 6.0.0-rc.3` pulls the 6.0.0-rc.3 native SDKs (iOS pod `Purchasely`, Android `io.purchasely:core`) and exposes the v6 TypeScript surface: `Purchasely.builder('key')…start()`, `Purchasely.presentation.placement(id).build()` → a `PLYPresentationRequest` (`preload()` / `display(transition?)`), and the per-action `Purchasely.interceptAction(kind, handler)` returning `'success' | 'failed' | 'notHandled'` strings. `../../references/react-native/integration.md` documents the v6 API.
+> **React Native is on the v6 API** (same generation as native iOS / Android / Flutter — no longer grouped with Cordova) and is now **stable GA**. `react-native-purchasely 6.0.0` pulls the native iOS 6.0.0 / Android 6.0.1 SDKs (iOS pod `Purchasely`, Android `io.purchasely:core`) and exposes the v6 TypeScript surface: `Purchasely.builder('key')…start()`, `Purchasely.presentation.placement(id).build()` → a `PLYPresentationRequest` (`preload()` / `display(transition?)`), and the per-action `Purchasely.interceptAction(kind, handler)` returning `'success' | 'failed' | 'notHandled'` strings. `../../references/react-native/integration.md` documents the v6 API.
 
 **1. Install the core SDK:**
 ```bash
@@ -248,16 +248,16 @@ allprojects {
 }
 ```
 
-**CRITICAL: All Purchasely packages must be at the exact same version.** Pin to the **exact** `6.0.0-rc.3` — never a caret / range, because it is a pre-release (see `../../references/sdk-versions.md`):
+**CRITICAL: All Purchasely packages must be at the exact same version.** Pin to the **exact** `6.0.0` — stable GA now, but keep the exact pin (never a caret / range) for cross-package alignment (see `../../references/sdk-versions.md`):
 ```json
 "dependencies": {
-  "react-native-purchasely": "6.0.0-rc.3",
-  "@purchasely/react-native-purchasely-google": "6.0.0-rc.3",
-  "@purchasely/react-native-purchasely-android-player": "6.0.0-rc.3"
+  "react-native-purchasely": "6.0.0",
+  "@purchasely/react-native-purchasely-google": "6.0.0",
+  "@purchasely/react-native-purchasely-android-player": "6.0.0"
 }
 ```
 
-> **Native dependency.** `react-native-purchasely 6.0.0-rc.3` pins the 6.0.0-rc.3 native SDKs — Android `io.purchasely:core` / `google-play` / `player` on **Maven Central**, iOS `Purchasely` on the **CocoaPods trunk** — so the project builds from the public repositories.
+> **Native dependency.** `react-native-purchasely 6.0.0` pins the native iOS 6.0.0 / Android 6.0.1 SDKs — Android `io.purchasely:core` / `google-play` / `player` on **Maven Central**, iOS `Purchasely` on the **CocoaPods trunk** — so the project builds from the public repositories.
 
 ### Flutter
 
@@ -1064,7 +1064,7 @@ When the interceptor receives a `PURCHASE` action in Observer mode, you run the 
 | iOS (native) | **6.0.0** — return `.success`, then call `Purchasely.closeAllScreens()` after the interceptor resolves (Observer mode does not auto-close; or wire a Console `close` action). It is `@MainActor`-isolated. Wrap in `Task { @MainActor in Purchasely.closeAllScreens() }` when called from a non-isolated synchronous context. |
 | Android (native) | **6.0.1** — return `PLYInterceptResult.SUCCESS`, then call `Purchasely.closeAllScreens()` after the interceptor resolves (Observer mode does not auto-close; or wire a Console `close` action). No threading constraint. |
 | Flutter | **6.0.0** — return `InterceptResult.success`, then dismiss with `presentation.close()` on the loaded `Presentation` after the handler resolves (Observer mode does not auto-close; or wire a Console `close` action). There is no `closePresentation()` in Flutter v6. |
-| React Native | **6.0.0-rc.3** — return `'success'`, then dismiss with `request.close()` on the held `PresentationRequest` after the handler resolves (Observer mode does not auto-close; or wire a Console `close` action). There is no `closePresentation()` / `closeAllScreens()` in React Native v6. |
+| React Native | **6.0.0** — return `'success'`, then dismiss with `request.close()` on the held `PresentationRequest` after the handler resolves (Observer mode does not auto-close; or wire a Console `close` action). There is no `closePresentation()` / `closeAllScreens()` in React Native v6. |
 | Cordova | **6.0.0-rc.3** — return `Purchasely.InterceptResult.success`, then dismiss with `Purchasely.closePresentation()` in the public JS bridge after the handler resolves (method-based; no `closeAllScreens()` on the JS side). |
 
 Full version list: `../../references/sdk-versions.md`.

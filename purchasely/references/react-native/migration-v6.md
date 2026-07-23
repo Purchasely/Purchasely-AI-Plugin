@@ -1,10 +1,10 @@
 # React Native — Migrating to the Purchasely 6.0 API
 
-> **Published as a pre-release.** The React Native v6 API ships in
-> `react-native-purchasely: 6.0.0-rc.3` (and the matching
+> **Published as stable GA.** The React Native v6 API ships in
+> `react-native-purchasely: 6.0.0` (and the matching
 > `@purchasely/react-native-purchasely-google` / `-android-player` / `-amazon` /
-> `-huawei` packages), live on npm alongside the native iOS `Purchasely 6.0.0-rc.3`
-> and Android `io.purchasely:core 6.0.0-rc.3` pre-releases. The builder-based API
+> `-huawei` packages), live on npm alongside the native iOS `Purchasely 6.0.0`
+> and Android `io.purchasely:core 6.0.1` stable SDKs. The builder-based API
 > documented below (`Purchasely.builder`, `Purchasely.presentation`,
 > `Purchasely.interceptAction`) is the current published surface — the v5
 > paywall API (`Purchasely.start({...})`, `fetchPresentation` /
@@ -19,7 +19,7 @@
 > [`../concepts/`](../concepts/).
 
 This release **adapts the Purchasely React Native plugin to the Purchasely 6.0
-native SDKs** (iOS `Purchasely 6.0.0-rc.3`, Android `io.purchasely:core 6.0.0-rc.3`).
+native SDKs** (iOS `Purchasely 6.0.0`, Android `io.purchasely:core 6.0.1`).
 The public paywall symbols are **`PLY`-prefixed** — `Purchasely.builder`,
 `PLYPresentationBuilder`, `PLYPresentationRequest`, `PLYLoadedPresentation`,
 `PLYPresentationOutcome`, `PLYTransition`, `PLYInterceptResult`, … No `v6` / `V6`
@@ -68,9 +68,11 @@ A paywall is now called a **Presentation** (or *Screen*).
 
 ## Migration checklist
 
-1. Bump all five npm packages to **`6.0.0-rc.3`** exactly (`--save-exact`); never
-   floating. `rm -rf node_modules && npm install`, then `pod install --repo-update`.
-   Bump the Android host `minSdkVersion` to **23** (was 21) and `compileSdk` to 35.
+1. Bump all five npm packages to **`6.0.0`** (`--save-exact` recommended —
+   `6.0.0` is stable GA so a caret range now resolves fine, but an exact pin
+   keeps every Purchasely package in lockstep). `rm -rf node_modules && npm
+   install`, then `pod install --repo-update`. Bump the Android host
+   `minSdkVersion` to **23** (was 21) and `compileSdk` to 35.
 2. Replace `Purchasely.start({...})` / `startWithAPIKey(...)` with the
    `Purchasely.builder(apiKey)…start()` chain. **Add `.runningMode('full')`
    explicitly** if you relied on the old implicit Full mode (default is now
@@ -88,10 +90,11 @@ A paywall is now called a **Presentation** (or *Screen*).
 6. Replace `setDefaultPresentationResultCallback` /
    `setDefaultPresentationResultHandler` with
    `Purchasely.setDefaultPresentationDismissHandler(outcome => …)`.
-7. Remove every call to `presentSubscriptions()`,
-   `displaySubscriptionCancellationInstruction()`, `clientPresentationDisplayed` /
-   `clientPresentationClosed` — they no longer exist. Build your own screen from
-   `userSubscriptions()` / `userSubscriptionsHistory()`.
+7. Remove every call to `presentSubscriptions()` and
+   `displaySubscriptionCancellationInstruction()` — they no longer exist. Build
+   your own screen from `userSubscriptions()` / `userSubscriptionsHistory()`.
+   `clientPresentationDisplayed` / `clientPresentationClosed` are **kept**
+   (BYOS) — pass the presentation from `preload()`.
 8. Replace `showPresentation` / `hidePresentation` / `closePresentation` with the
    request lifecycle (`request.display()` / `request.close()` / `request.back()`).
 9. Migrate `ProductResult` ordinal checks to the `purchaseResult` string union
@@ -123,7 +126,7 @@ They have been removed in favour of the builder API.
 | `Purchasely.readyToOpenDeeplink(true)` | `Purchasely.builder(apiKey).allowDeeplink(true).start()` (or `Purchasely.allowDeeplink(true)`) |
 | `Purchasely.isDeeplinkHandled(uri)` | `Purchasely.handleDeeplink(uri)` — **renamed, no alias.** Returns `Promise<boolean>`. |
 | `Purchasely.presentSubscriptions()` | **REMOVED — no replacement.** Build your own screen from `userSubscriptions()` / `userSubscriptionsHistory()`. |
-| `Purchasely.clientPresentationDisplayed(...)` / `clientPresentationClosed(...)` | **REMOVED — no replacement.** |
+| `Purchasely.clientPresentationDisplayed(...)` / `clientPresentationClosed(...)` | **Kept — NOT removed.** Same API JS; pass the `PLYPresentation` you got from `preload()` (BYOS screens). |
 | `PLYPaywallAction` / `Purchasely.PaywallAction.*` enum | **REMOVED.** Interceptor kinds are now string literals (`'purchase'`, `'navigate'`, …). |
 | `RunningMode.TRANSACTION_ONLY` / `RunningMode.PAYWALL_OBSERVER` | **REMOVED.** Only `'observer'` / `'full'` remain. |
 
@@ -480,7 +483,9 @@ exactly as in v5:
   `userSubscriptionsHistory`, `restoreAllProducts`, `silentRestoreAllProducts`,
   `userDidConsumeSubscriptionContent`.
 - **Attributes**: `setUserAttributeWith{String,Number,Int,Double,Boolean,Date,StringArray,NumberArray,IntArray,DoubleArray,BooleanArray}`
-  (`Int`/`Double` are aliases of `Number`), `incrementUserAttribute`,
+  (`Int`/`Double` are **distinct native overloads**, not aliases of `Number` —
+  `Number`/`NumberArray` still infer Int vs Double from the JS value),
+  `incrementUserAttribute`,
   `decrementUserAttribute`, `userAttributes`, `userAttribute`,
   `clearUserAttribute`, `clearUserAttributes`, `clearBuiltInAttributes`,
   `setAttribute`. Legal basis is `PLYDataProcessingLegalBasis.ESSENTIAL` / `.OPTIONAL`.
@@ -492,24 +497,59 @@ exactly as in v5:
   `addUserAttributeRemovedListener` / `removeUserAttributeRemovedListener`,
   `setUserAttributeListener` / `clearUserAttributeListener`.
 - **Misc**: `setLogLevel`, `setLanguage`, `setThemeMode`, `setDebugMode`,
-  `allowDeeplink`, `allowCampaigns`, `revokeDataProcessingConsent`, `getConstants`.
+  `allowDeeplink`, `allowCampaigns`, `revokeDataProcessingConsent`.
+  `clientPresentationDisplayed` / `clientPresentationClosed` are also kept
+  (BYOS) — pass the presentation from `preload()`.
+
+  > **`getConstants()` is no longer exposed publicly** — it was removed from
+  > the v6 public API.
 - **Embedded component**: `PLYPresentationView` — now also accepts a preloaded
-  `request` prop (see [`integration.md`](./integration.md)).
+  `request` prop (see [`integration.md`](./integration.md)). Its
+  `onPresentationClosed` emits the same 5-field `PLYPresentationOutcome`
+  (`presentation`, `purchaseResult`, `plan`, `closeReason`, `error`) as
+  `request.display()` — the earlier 2-field `PLYPresentationViewResult` is
+  gone.
 
 > **`presentSubscriptions()` is REMOVED in v6 (BREAKING).** The native
 > subscriptions screen was removed from **both** the iOS and Android SDKs, so
 > `Purchasely.presentSubscriptions()` no longer exists in React Native v6 — it is
 > not a no-op, the method is gone entirely. `displaySubscriptionCancellationInstruction()`
-> and `clientPresentationDisplayed` / `clientPresentationClosed` are gone too.
-> Build your own subscriptions screen from `userSubscriptions()` /
+> is gone too. `clientPresentationDisplayed` / `clientPresentationClosed` are
+> **kept** — build your own subscriptions screen from `userSubscriptions()` /
 > `userSubscriptionsHistory()`.
 
 > **Native dependency.** This React Native release targets the Purchasely v6 native
-> SDKs (iOS `Purchasely 6.0.0-rc.3`, Android `io.purchasely:core 6.0.0-rc.3`),
-> published as pre-releases on CocoaPods / Maven Central — see
+> SDKs (iOS `Purchasely 6.0.0`, Android `io.purchasely:core 6.0.1`),
+> published as stable GA releases on CocoaPods / Maven Central — see
 > [`../sdk-versions.md`](../sdk-versions.md) for the canonical pins. The published
-> **React Native** packages are all `6.0.0-rc.3`, pinned exactly to those native
-> versions.
+> **React Native** packages are all `6.0.0`, pinned exactly to those native
+> versions for cross-package alignment.
+
+---
+
+## New in 6.0.0
+
+GA added a few React Native surfaces that didn't exist at `6.0.0-rc.3`:
+
+- **`PLYPlan` offer-phase fields** — `hasOfferPrice`, `offerPrice`, `offerAmount`,
+  `offerDuration`, `offerPeriod`, `basePlanId`.
+- **`PLYPromoOffer.publicId`**.
+- **8 new `PLYEventName` values** — `IN_APP_RENEWED`, `PLACEMENT_OPENED`,
+  `PURCHASE_FROM_STORE_TAPPED`, `STORE_PRODUCT_FETCH_FAILED`, and the
+  `WEB_CHECKOUT_*` family.
+- **`userSubscriptionsHistory({ invalidateCache })`** — same cache-bypass
+  option as `userSubscriptions`.
+- **`restoreAllProducts` / `silentRestoreAllProducts({ timeout })`** — optional
+  timeout in **milliseconds**.
+- **`builder().automaticDeeplinkHandling(bool)`** — Android-only builder
+  option.
+- **`getDynamicOfferings()`** now round-trips `billingPlanType`.
+- **Commitment info** — `PLYCommitmentInfo` / `PLYCommitmentProgress` on plans
+  and subscriptions, **Apple-only**.
+
+> **`signPromotionalOffer` on Android** no longer fails — it's a no-op success
+> that resolves `null` (Android has no promotional-offer signing step; only
+> iOS needs a signature).
 
 ---
 

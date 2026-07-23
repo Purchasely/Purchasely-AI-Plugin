@@ -26,7 +26,7 @@ For workflow tasks, use the dedicated skills instead:
 
 ### SDK generation rules
 
-- **Native iOS, native Android, Flutter, React Native, and Cordova use SDK v6** (native iOS is stable GA at `6.0.0`; native Android is stable GA at `6.0.1` — Android never had a `6.0.0` tag, the release line went rc.1 → rc.2 → rc.3 → `6.0.1`; Flutter pins `6.0.0`, pulling native iOS `6.0.0` + Android core `6.0.1`; React Native pins `6.0.0-rc.3` (npm `latest` tag; GA `6.0.0` in preparation); Cordova pins `6.0.0-rc.3` (npm dist-tag `next` — `latest` is still `5.7.3`, install the version explicitly) and pulls native iOS/Android `6.0.0-rc.3`).
+- **Native iOS, native Android, Flutter, React Native, and Cordova use SDK v6** (native iOS is stable GA at `6.0.0`; native Android is stable GA at `6.0.1` — Android never had a `6.0.0` tag, the release line went rc.1 → rc.2 → rc.3 → `6.0.1`; Flutter pins `6.0.0`, pulling native iOS `6.0.0` + Android core `6.0.1`; React Native pins `6.0.0` (stable GA, npm `latest` tag), pulling native iOS `6.0.0` + Android `6.0.1`; Cordova pins `6.0.0-rc.3` (npm dist-tag `next` — `latest` is still `5.7.3`, install the version explicitly) and pulls native iOS/Android `6.0.0-rc.3`).
 - Always answer iOS / Android / Flutter / React Native / Cordova with v6 APIs.
 - Never invent signatures. If exact syntax matters, load the matching reference file before answering.
 

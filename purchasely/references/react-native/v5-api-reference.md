@@ -1,6 +1,6 @@
 # React Native SDK v5.x API — reference for MIGRATION ONLY (removed in v6)
 
-> **Do not write new v5 code.** This is a compact snapshot of the legacy v5.x public React Native API so the `purchasely-migrate` skill can **recognize** existing v5 code in a project and map it forward. Every paywall symbol below is **removed in v6.0.0-rc.3** (not deprecated — it fails to compile and no longer exists at runtime). For the v6 surface, see [`integration.md`](integration.md); for the step-by-step migration, see [`migration-v6.md`](migration-v6.md).
+> **Do not write new v5 code.** This is a compact snapshot of the legacy v5.x public React Native API so the `purchasely-migrate` skill can **recognize** existing v5 code in a project and map it forward. Every paywall symbol below is **removed in v6.0.0** (not deprecated — it fails to compile and no longer exists at runtime). For the v6 surface, see [`integration.md`](integration.md); for the step-by-step migration, see [`migration-v6.md`](migration-v6.md).
 
 Each entry adds a one-line `-> v6` pointer.
 
@@ -18,7 +18,6 @@ setPaywallActionInterceptorCallback              onProcessAction
 PaywallAction.               PLYPaywallAction
 setDefaultPresentationResultCallback             setDefaultPresentationResultHandler
 readyToOpenDeeplink          isDeeplinkHandled            presentSubscriptions
-clientPresentationDisplayed  clientPresentationClosed
 displaySubscriptionCancellationInstruction
 ProductResult.PRODUCT_RESULT_                     isFullscreen:
 RunningMode.TRANSACTION_ONLY  RunningMode.PAYWALL_OBSERVER
@@ -136,18 +135,17 @@ const handled = await Purchasely.isDeeplinkHandled('app://ply/...');
 
 - `Purchasely.isDeeplinkHandled(uri)` -> v6: **renamed** to `Purchasely.handleDeeplink(uri)` (returns `Promise<boolean>`). No alias — a hit on `isDeeplinkHandled` is a v5 token to migrate.
 
-## Subscriptions UI & client presentations (v5)
+## Subscriptions UI (v5)
 
 ```typescript
 Purchasely.presentSubscriptions();
 Purchasely.displaySubscriptionCancellationInstruction();
-Purchasely.clientPresentationDisplayed(presentation);
-Purchasely.clientPresentationClosed(presentation);
 ```
 
 - `Purchasely.presentSubscriptions()` -> v6: **REMOVED — no replacement.** The native subscriptions screen was dropped from both native SDKs. Build your own screen from `Purchasely.userSubscriptions()` / `Purchasely.userSubscriptionsHistory()` (both unchanged).
 - `Purchasely.displaySubscriptionCancellationInstruction()` -> v6: **REMOVED.**
-- `Purchasely.clientPresentationDisplayed(...)` / `clientPresentationClosed(...)` -> v6: **REMOVED — no replacement.**
+
+> `Purchasely.clientPresentationDisplayed(...)` / `clientPresentationClosed(...)` are **unchanged in v6** (kept, BYOS; pass the presentation from `preload()`) — see [Unchanged in v6](#unchanged-in-v6-do-not-flag), not a v5 token to migrate.
 
 ## Synchronize (v5)
 
@@ -164,10 +162,11 @@ These v5 APIs are identical in v6 — listed here only so the `purchasely-migrat
 - **Identity**: `userLogin`, `userLogout`, `getAnonymousUserId`, `isAnonymous`.
 - **Products / purchases**: `allProducts`, `productWithIdentifier`, `planWithIdentifier`, `purchaseWithPlanVendorId`, `signPromotionalOffer`, `isEligibleForIntroOffer`, `setDynamicOffering`, `getDynamicOfferings`, `removeDynamicOffering`, `clearDynamicOfferings`.
 - **Subscriptions data / restore**: `userSubscriptions` (`{ invalidateCache }`), `userSubscriptionsHistory`, `restoreAllProducts`, `silentRestoreAllProducts`, `userDidConsumeSubscriptionContent`.
-- **Attributes**: `setUserAttributeWithString` / `WithNumber` / `WithInt` / `WithDouble` / `WithBoolean` / `WithDate` / `WithStringArray` / `WithNumberArray` / `WithIntArray` / `WithDoubleArray` / `WithBooleanArray`, `incrementUserAttribute`, `decrementUserAttribute`, `userAttributes`, `userAttribute`, `clearUserAttribute`, `clearUserAttributes`, `clearBuiltInAttributes`, `setAttribute`.
+- **Attributes**: `setUserAttributeWithString` / `WithNumber` / `WithInt` / `WithDouble` / `WithBoolean` / `WithDate` / `WithStringArray` / `WithNumberArray` / `WithIntArray` / `WithDoubleArray` / `WithBooleanArray` (`Int`/`Double` are distinct native overloads, not aliases of `Number`), `incrementUserAttribute`, `decrementUserAttribute`, `userAttributes`, `userAttribute`, `clearUserAttribute`, `clearUserAttributes`, `clearBuiltInAttributes`, `setAttribute`.
 - **Listeners**: `addEventListener` / `removeEventListener` (aliases `listenToEvents` / `stopListeningToEvents`), `addPurchasedListener` / `removePurchasedListener` (aliases `listenToPurchases` / `stopListeningToPurchases`), `addUserAttributeSetListener` / `removeUserAttributeSetListener`, `addUserAttributeRemovedListener` / `removeUserAttributeRemovedListener`, `setUserAttributeListener` / `clearUserAttributeListener`.
-- **Config / misc**: `setLogLevel`, `setLanguage`, `setThemeMode`, `setDebugMode`, `allowDeeplink`, `allowCampaigns`, `revokeDataProcessingConsent`, `getConstants`.
-- **Embedded component**: `PLYPresentationView` (`placementId`, `presentation`, `request`, `flex`, `onPresentationClosed`). Its `onPresentationClosed` receives a `PLYPresentationViewResult` (`{ result: ProductResult, plan }`), not the 5-field outcome.
+- **Config / misc**: `setLogLevel`, `setLanguage`, `setThemeMode`, `setDebugMode`, `allowDeeplink`, `allowCampaigns`, `revokeDataProcessingConsent`. (`getConstants` is **not** on this list — it was removed from the public API in v6.)
+- **Client presentations**: `clientPresentationDisplayed(presentation)` / `clientPresentationClosed(presentation)` — kept, unchanged (BYOS; pass the presentation from `preload()`).
+- **Embedded component**: `PLYPresentationView` (`placementId`, `presentation`, `request`, `flex`, `onPresentationClosed`). Its `onPresentationClosed` now receives the 5-field `PLYPresentationOutcome` (`presentation`, `purchaseResult`, `plan`, `closeReason`, `error`), same as `request.display()`.
 - **`synchronize()`**: source-compatible (now awaitable; see above).
 
 ## See also

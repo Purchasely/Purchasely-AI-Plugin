@@ -1,6 +1,6 @@
 # React Native Integration
 
-Purchasely React Native is on the **v6 API**, the same generation as the native iOS and Android SDKs. The plugin pins the **6.0.0-rc.3** pre-release (npm dist-tag `latest`; GA `6.0.0` is in preparation) on every layer: all five npm packages (`react-native-purchasely`, `@purchasely/react-native-purchasely-google`, `@purchasely/react-native-purchasely-android-player`, `@purchasely/react-native-purchasely-amazon`, `@purchasely/react-native-purchasely-huawei`) are `6.0.0-rc.3`, and they pull the published native SDKs (iOS `Purchasely 6.0.0-rc.3` on the CocoaPods trunk, Android `io.purchasely:core 6.0.0-rc.3` on Maven Central — both confirmed pinned in the published `6.0.0-rc.3` tag). The public JS/TS symbols are **`PLY`-prefixed** (`Purchasely.builder`, `PLYPresentationBuilder`, `PLYPresentationRequest`, `PLYLoadedPresentation`, `PLYPresentationOutcome`, `PLYTransition`, …) — there are no `v6` / `V6` symbols.
+Purchasely React Native is on the **v6 API**, the same generation as the native iOS and Android SDKs. The plugin pins **`6.0.0`** (npm dist-tag `latest`, stable GA) on every layer: all five npm packages (`react-native-purchasely`, `@purchasely/react-native-purchasely-google`, `@purchasely/react-native-purchasely-android-player`, `@purchasely/react-native-purchasely-amazon`, `@purchasely/react-native-purchasely-huawei`) are `6.0.0`, and they pull the published native SDKs (iOS `Purchasely 6.0.0` on the CocoaPods trunk, Android `io.purchasely:core 6.0.1` on Maven Central — both confirmed pinned in the published `6.0.0` tag). The public JS/TS symbols are **`PLY`-prefixed** (`Purchasely.builder`, `PLYPresentationBuilder`, `PLYPresentationRequest`, `PLYLoadedPresentation`, `PLYPresentationOutcome`, `PLYTransition`, …) — there are no `v6` / `V6` symbols.
 
 Three areas changed shape from v5: **starting the SDK** (`Purchasely.builder(apiKey)`), **displaying / preloading / closing a presentation** (`Purchasely.presentation` + `PLYPresentationRequest`), and the **action interceptor** (`Purchasely.interceptAction`). Everything else on the `Purchasely` default export — purchases, restore, identity, catalog, subscriptions data, user attributes, events, dynamic offerings, consent and config — remains source-compatible. Note the **deeplink API changed**: `isDeeplinkHandled` / `readyToOpenDeeplink` are **removed** (no alias) — use `Purchasely.handleDeeplink(uri)` and `Purchasely.allowDeeplink(bool)`. See [`migration-v6.md`](./migration-v6.md) for the full v5 → v6 old→new mapping.
 
@@ -15,27 +15,27 @@ Three areas changed shape from v5: **starting the SDK** (`Purchasely.builder(api
 > - [`../concepts/user-attributes-targeting.md`](../concepts/user-attributes-targeting.md) — audience targeting + GDPR consent
 > - [`../concepts/privacy-settings.md`](../concepts/privacy-settings.md) — `revokeDataProcessingConsent` and privacy purposes
 > - [`../concepts/subscription-checks.md`](../concepts/subscription-checks.md) — gating premium content, restore purchases
-> - [`../sdk-versions.md`](../sdk-versions.md) — latest versions (pin React Native to **6.0.0-rc.3**)
+> - [`../sdk-versions.md`](../sdk-versions.md) — latest versions (pin React Native to **6.0.0**)
 
 ## Installation
 
-Pin all packages to the exact same version, `6.0.0-rc.3`. Use `--save-exact` — `6.0.0-rc.3` is a pre-release, so a floating range (`^6.0.0`, `6.x`) will not resolve it.
+Pin all packages to the exact same version, `6.0.0`. Use `--save-exact` — `6.0.0` is stable GA, so a floating range (`^6.0.0`, `6.x`) would resolve too, but an exact pin keeps every Purchasely package in lockstep.
 
 ```bash
 # Core SDK
-npm install react-native-purchasely@6.0.0-rc.3 --save-exact
+npm install react-native-purchasely@6.0.0 --save-exact
 
 # Google Play — required if targeting Google Play Store
-npm install @purchasely/react-native-purchasely-google@6.0.0-rc.3 --save-exact
+npm install @purchasely/react-native-purchasely-google@6.0.0 --save-exact
 
 # Video Player — optional, for video support in paywalls on Android
-npm install @purchasely/react-native-purchasely-android-player@6.0.0-rc.3 --save-exact
+npm install @purchasely/react-native-purchasely-android-player@6.0.0 --save-exact
 
 # Amazon Appstore — optional, Android alt store
-npm install @purchasely/react-native-purchasely-amazon@6.0.0-rc.3 --save-exact
+npm install @purchasely/react-native-purchasely-amazon@6.0.0 --save-exact
 
 # Huawei AppGallery — optional, Android alt store
-npm install @purchasely/react-native-purchasely-huawei@6.0.0-rc.3 --save-exact
+npm install @purchasely/react-native-purchasely-huawei@6.0.0 --save-exact
 ```
 
 **CRITICAL: All Purchasely packages must be at the exact same version, pinned exactly (never floating).** Check `package.json`:
@@ -43,20 +43,20 @@ npm install @purchasely/react-native-purchasely-huawei@6.0.0-rc.3 --save-exact
 ```json
 {
   "dependencies": {
-    "react-native-purchasely": "6.0.0-rc.3",
-    "@purchasely/react-native-purchasely-google": "6.0.0-rc.3",
-    "@purchasely/react-native-purchasely-android-player": "6.0.0-rc.3"
+    "react-native-purchasely": "6.0.0",
+    "@purchasely/react-native-purchasely-google": "6.0.0",
+    "@purchasely/react-native-purchasely-android-player": "6.0.0"
   }
 }
 ```
 
 > **Toolchain.** The v6 React Native SDK is built and tested against **React Native 0.86** and **Node 22** (`.nvmrc` → `v22`).
 
-> **Native dependency.** `react-native-purchasely 6.0.0-rc.3` pulls the **6.0.0-rc.3** native SDKs transitively — iOS `Purchasely 6.0.0-rc.3` (CocoaPods trunk) and Android `io.purchasely:core 6.0.0-rc.3` (Maven Central). Both are published, so the project builds from the public repositories. You do not bump the native pods/gradle dependencies yourself; the plugin's pinning is correct.
+> **Native dependency.** `react-native-purchasely 6.0.0` pulls the native SDKs transitively — iOS `Purchasely 6.0.0` (CocoaPods trunk) and Android `io.purchasely:core 6.0.1` (Maven Central). Both are published stable GA releases, so the project builds from the public repositories. You do not bump the native pods/gradle dependencies yourself; the plugin's pinning is correct.
 
 ### iOS Setup
 
-Minimum deployment target **iOS 13.4**. Install the pods:
+Minimum deployment target **iOS 15.1**. Install the pods:
 
 ```bash
 cd ios && pod install --repo-update
@@ -224,7 +224,7 @@ await request.display({
 |-------|------|-------------|
 | `presentation` | `PLYPresentation \| null` | The displayed presentation (or `null` if it never reached display) |
 | `purchaseResult` | `'purchased' \| 'restored' \| 'cancelled' \| null` | Purchase outcome |
-| `plan` | `PurchaselyPlan \| null` | The purchased plan (when `purchaseResult` is `'purchased'` / `'restored'`) |
+| `plan` | `PLYPlan \| null` | The purchased plan (when `purchaseResult` is `'purchased'` / `'restored'`) |
 | `closeReason` | `'button' \| 'backSystem' \| 'programmatic' \| null` | Why the screen closed (when no purchase) |
 | `error` | `{ message: string, code?, domain? } \| null` | Display error |
 
@@ -254,12 +254,9 @@ function InlinePaywallScreen() {
     <PLYPresentationView
       request={request}
       flex={1}
-      onPresentationClosed={(result) => {
-        // result: PLYPresentationViewResult = { result: ProductResult, plan: PurchaselyPlan | null }
-        if (
-          result.result === /* ProductResult */ 'purchased' ||
-          result.plan != null
-        ) {
+      onPresentationClosed={(outcome) => {
+        // outcome: PLYPresentationOutcome = { presentation, purchaseResult, plan, closeReason, error }
+        if (outcome.purchaseResult === 'purchased' || outcome.purchaseResult === 'restored') {
           // Handle purchase
         }
       }}
@@ -274,7 +271,9 @@ You can still use the simpler `placementId` form when you do not preload:
 <PLYPresentationView placementId="INLINE_PAYWALL" flex={1} onPresentationClosed={/* … */} />
 ```
 
-> **The embedded view does NOT emit the 5-field outcome.** `onPresentationClosed` receives a **`PLYPresentationViewResult`** — `{ result: ProductResult, plan: PurchaselyPlan | null }` — where `result` is the `ProductResult` ordinal enum (`PURCHASED` / `RESTORED` / `CANCELLED`) and `plan` is the purchased/restored plan (or `null` when the user just closed). Only the full-screen `request.display()` / `onDismissed` path returns the rich `PLYPresentationOutcome`. The `flex` prop defaults to `1`.
+> **The embedded view emits the same 5-field outcome as `display()`.** `onPresentationClosed` receives the same `PLYPresentationOutcome` — `{ presentation, purchaseResult, plan, closeReason, error }` — as `request.display()` / `request.onDismissed(...)`. The `flex` prop defaults to `1`.
+
+> **Unmounting a `<PLYPresentationView request={…}>` without dismissing it evicts the preloaded request natively** (iOS/Android parity) — remounting the same `request` then shows a blank view until you call `request.preload()` again. Re-preload before reusing a request in a new mount.
 
 ## Action Interceptor
 
@@ -376,7 +375,8 @@ import { PLYDataProcessingLegalBasis } from 'react-native-purchasely';
 // String attribute (with optional legal basis)
 Purchasely.setUserAttributeWithString('first_name', 'John', PLYDataProcessingLegalBasis.OPTIONAL);
 
-// Number attribute (setUserAttributeWithInt / setUserAttributeWithDouble are aliases)
+// Number attribute — setUserAttributeWithInt / setUserAttributeWithDouble are distinct
+// native overloads (not aliases); setUserAttributeWithNumber infers Int vs Double from the JS value
 Purchasely.setUserAttributeWithNumber('age', 30);
 
 // Boolean attribute
@@ -418,7 +418,7 @@ subscriptions.forEach((sub) => {
 const fresh = await Purchasely.userSubscriptions({ invalidateCache: true });
 ```
 
-> **`presentSubscriptions()` is REMOVED in v6 (BREAKING).** The native subscriptions screen was removed from the 6.0 SDKs on **both** platforms, so `Purchasely.presentSubscriptions()` has been **removed entirely** from the React Native API — it is not a no-op, the method no longer exists. There is no drop-in replacement: build your own subscriptions screen from `userSubscriptions()` / `userSubscriptionsHistory()`. `displaySubscriptionCancellationInstruction()` and the `clientPresentationDisplayed` / `clientPresentationClosed` methods are also gone.
+> **`presentSubscriptions()` is REMOVED in v6 (BREAKING).** The native subscriptions screen was removed from the 6.0 SDKs on **both** platforms, so `Purchasely.presentSubscriptions()` has been **removed entirely** from the React Native API — it is not a no-op, the method no longer exists. There is no drop-in replacement: build your own subscriptions screen from `userSubscriptions()` / `userSubscriptionsHistory()`. `displaySubscriptionCancellationInstruction()` is also gone. `clientPresentationDisplayed` / `clientPresentationClosed` are **kept** (BYOS) — pass the presentation you got from `preload()`.
 
 ## Pre-fetching Screens
 
@@ -548,7 +548,7 @@ try {
 ## Bridge & version alignment notes
 
 - The JS ↔ native bridge is still **NativeModules** (`Purchasely`) + event emitters. v6 changes the public JS surface, not the bridge transport.
-- **All Purchasely npm packages MUST be the exact same version** (`6.0.0-rc.3`). Mixing versions causes runtime crashes. Pin exactly — never floating (`^6.0.0`, `6.x`).
+- **All Purchasely npm packages MUST be the exact same version** (`6.0.0`). Mixing versions causes runtime crashes. Pin exactly — never floating (`^6.0.0`, `6.x`).
 - Run a fresh install after pinning: `rm -rf node_modules && npm install`, then `pod install --repo-update` (iOS) and `./gradlew --refresh-dependencies` (Android) as needed.
 - See [`../sdk-versions.md`](../sdk-versions.md) for the canonical version table and [`./migration-v6.md`](./migration-v6.md) for the full v5 → v6 old→new mapping.
 

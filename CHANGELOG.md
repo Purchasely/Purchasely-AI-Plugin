@@ -17,10 +17,13 @@ All notable changes to this project are documented here. The format is based on 
 
 ### Changed
 
-- **SDK pins updated to GA** across all skills and references: native iOS **6.0.0** (SPM install now primary), Android **6.0.1**, Flutter **6.0.0** (stable on pub.dev), React Native **6.0.0-rc.3**, Cordova **6.0.0-rc.3**.
+- **SDK pins updated to GA** across all skills and references: native iOS **6.0.0** (SPM install now primary), Android **6.0.1**, Flutter **6.0.0** (stable on pub.dev), React Native **6.0.0** (GA, npm `latest`), Cordova **6.0.0-rc.3** (still pre-release).
 - Android toolchain updated (Kotlin 2.3.x).
 - Action-interceptor guidance updated: returning success on purchase/restore in Observer mode auto-synchronizes — no manual `synchronize()` inside the interceptor.
 - Expanded `references/concepts/monthly-commitment.md` — added Google Play native installment subscriptions, cross-platform scope (SDK 6.0+ on iOS/Flutter/RN/Cordova) for the Apple advance-commitment fields, `INSTALLMENT_PAID` / `INSTALLMENT_REFUNDED` webhooks, `commitment_*` attributes.
+- React Native guidance realigned from `6.0.0-rc.3` to **6.0.0 GA**, pulling native iOS `6.0.0` / Android `6.0.1`; React Native's iOS deployment target raised to **15.1** (set by the `react-native-purchasely` podspec, aligned with RN 0.86 — was 13.4 during the pre-release).
+- React Native `PurchaselyPlan` type renamed to `PLYPlan`; `setUserAttributeWithInt`/`WithDouble` documented as distinct native overloads, not aliases of the `Number` variants.
+- React Native 6.0.0 GA new API surface documented: `PLYPlan` offer-phase fields (`hasOfferPrice`/`offerPrice`/`offerAmount`/`offerDuration`/`offerPeriod`/`basePlanId`), `PLYPromoOffer.publicId`, 8 new `PLYEventName` values, `userSubscriptionsHistory({ invalidateCache })`, `restoreAllProducts`/`silentRestoreAllProducts({ timeout })`, Android-only `automaticDeeplinkHandling(bool)`, and the embedded `PLYPresentationView` unmount-eviction behavior of a preloaded `request` prop.
 
 ### Fixed
 
@@ -32,6 +35,10 @@ All notable changes to this project are documented here. The format is based on 
 - Dead anchor in `debug-mode.md`.
 - Migrate-skill platform coverage now lists all 5 platforms in README, AGENTS.md, GEMINI.md, and the hooks intro.
 - `gemini-extension.json` version aligned with the other manifests.
+- React Native `clientPresentationDisplayed` / `clientPresentationClosed` corrected — they are **kept, unchanged** in v6 (docs previously listed them as removed with no replacement).
+- React Native embedded `PLYPresentationView.onPresentationClosed` corrected to emit the 5-field `PLYPresentationOutcome` (the 2-field `PLYPresentationViewResult` type was removed at GA).
+- React Native `getConstants()` corrected — not exposed on the public API surface.
+- Review-skill grep list corrected: `clientPresentation` is a kept/valid v6 API on all platforms and must not be flagged as removed or legacy; `showPresentation` remains genuinely removed.
 
 ## [2.0.0-rc.6] — 2026-07-07
 
