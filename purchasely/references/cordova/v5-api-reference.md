@@ -2,9 +2,9 @@
 
 > **Do not write new v5 code.** This is a compact snapshot of the legacy v5.x Cordova
 > tokens so the `purchasely-migrate` skill can **recognize** existing v5 code in a project
-> and map it forward. The Cordova JS surface stays **method-based** in v6, but three surfaces
-> changed in a breaking way (`start`, the action interceptor, the presentation display mode)
-> and several methods were renamed or removed. For the v6 surface, see
+> and map it forward. **The v6 Cordova JS surface is a builder API** (`Purchasely.builder`,
+> `Purchasely.presentation`, `Purchasely.interceptAction`) — the flat methods below were
+> **removed**, not kept method-based. For the v6 surface, see
 > [`integration.md`](integration.md); for the step-by-step migration, see
 > [`migration-v6.md`](migration-v6.md).
 

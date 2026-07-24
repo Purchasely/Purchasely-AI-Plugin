@@ -26,7 +26,8 @@ For workflow tasks, use the dedicated skills instead:
 
 ### SDK generation rules
 
-- **Native iOS, native Android, Flutter, React Native, and Cordova use SDK v6** (native iOS is stable GA at `6.0.0`; native Android is stable GA at `6.0.1` — Android never had a `6.0.0` tag, the release line went rc.1 → rc.2 → rc.3 → `6.0.1`; Flutter pins `6.0.0`, pulling native iOS `6.0.0` + Android core `6.0.1`; React Native pins `6.0.0` (stable GA, npm `latest` tag), pulling native iOS `6.0.0` + Android `6.0.1`; Cordova pins `6.0.0-rc.3` (npm dist-tag `next` — `latest` is still `5.7.3`, install the version explicitly) and pulls native iOS/Android `6.0.0-rc.3`).
+- **Native iOS, native Android, Flutter, React Native, and Cordova use SDK v6** (native iOS is stable GA at `6.0.0`; native Android is stable GA at `6.0.1` — Android never had a `6.0.0` tag, the release line went rc.1 → rc.2 → rc.3 → `6.0.1`; Flutter pins `6.0.0`, pulling native iOS `6.0.0` + Android core `6.0.1`; React Native pins `6.0.0` (stable GA, npm `latest` tag), pulling native iOS `6.0.0` + Android `6.0.1`; Cordova pins `6.0.0` (stable GA, npm `latest` tag — not `@next`) and pulls native iOS `6.0.0` / Android `6.0.1`).
+- **Cordova is on the v6 builder API** — `Purchasely.builder(apiKey)…start()` / `Purchasely.start({...}, ok, err)`, `Purchasely.presentation` builder/request, per-action `Purchasely.interceptAction(kind, handler)`.
 - Always answer iOS / Android / Flutter / React Native / Cordova with v6 APIs.
 - Never invent signatures. If exact syntax matters, load the matching reference file before answering.
 
@@ -40,7 +41,7 @@ On native iOS, native Android, Flutter, React Native, and Cordova v6, the defaul
 - React Native: `.runningMode('full')` (string)
 - Cordova: `runningMode: Purchasely.RunningMode.full` in the `start` options object
 
-Observer mode means the app owns billing. Returning `SUCCESS` from the purchase/restore interceptor already triggers Purchasely's synchronization automatically — do **not** call `Purchasely.synchronize()` manually inside the interceptor. Manual `synchronize()` is only needed for purchases made **outside** the interceptor (a custom sell screen, BYOS). Native iOS/Android Observer presentations do not auto-close after purchase/restore; dismiss explicitly with `closeAllScreens()`. Flutter v6 dismisses via `presentation.close()`. React Native v6 dismisses via `request.close()`. Cordova v6 dismisses via `closePresentation()`.
+Observer mode means the app owns billing. Returning `SUCCESS` from the purchase/restore interceptor already triggers Purchasely's synchronization automatically — do **not** call `Purchasely.synchronize()` manually inside the interceptor. Manual `synchronize()` is only needed for purchases made **outside** the interceptor (a custom sell screen, BYOS). Native iOS/Android Observer presentations do not auto-close after purchase/restore; dismiss explicitly with `closeAllScreens()`. Flutter v6 dismisses via `presentation.close()`. React Native v6 dismisses via `request.close()`. Cordova v6 dismisses via `request.close()` (`closeAllScreens()` under the hood).
 
 ## Answering workflow
 
@@ -110,7 +111,7 @@ Load the matching platform before giving exact setup or API signatures:
 - Android v6: `PLYPresentation { placementId("id") }.preload()` then `loaded.display(context)`.
 - Flutter v6: `PresentationBuilder.placement("id").build()` → `PresentationRequest`, then `request.preload()` and/or `request.display([Transition])`.
 - React Native v6: `Purchasely.presentation.placement("id").build()` → `PLYPresentationRequest`, then `request.preload()` (resolves a `PLYLoadedPresentation`) and/or `request.display(transition?)`.
-- Cordova v6: `fetchPresentationForPlacement(...)` then `presentPresentation(..., displayMode, ...)`.
+- Cordova v6: `Purchasely.presentation.placement(id).build()` → a request, then `.preload()` and/or `.display(transition?)` (resolves at dismiss with a 5-field outcome: `presentation`, `purchaseResult`, `plan`, `closeReason`, `error`).
 - For Flows, prefer build/fetch → type guard → display. Avoid placement shorthand when Flow behavior matters.
 - For embedded / nested rendering, only use container APIs when the user explicitly wants to own the container.
 - Android: `Purchasely.setDefaultPresentationDismissHandler(handler)` is, and always was, the correct Android name — `setDefaultPresentationResultHandler` never existed there (only iOS renamed *from* that name in v6). Since `6.0.1` the `handler` parameter is nullable — pass `null` to unregister it.
@@ -136,7 +137,7 @@ Do not generate these for v6 native, Flutter, React Native, or Cordova:
 - native Android: `Purchasely.subscriptionsFragment()`, `PLYSubscriptionsFragment`, the `ply/subscriptions` and `ply/cancellation_survey` deeplinks
 - Flutter `Purchasely.start(...)`, `fetchPresentation`, `presentPresentation*`, `setPaywallActionInterceptorCallback`, `onProcessAction`, `closePresentation()`, `closeAllScreens()`, `presentSubscriptions()`
 - React Native `Purchasely.start({...})`, `fetchPresentation`, `presentPresentation*`, `setPaywallActionInterceptor`, `onProcessAction`, `closePresentation()`, `closeAllScreens()`, `presentSubscriptions()`, `readyToOpenDeeplink`, `isDeeplinkHandled`, `setDefaultPresentationResultCallback`/`Handler`. ⚠️ **`isDeeplinkHandled(uri)` was renamed to `Purchasely.handleDeeplink(uri)` on React Native** (removed with no alias, matching native iOS/Android and Flutter) — generate `handleDeeplink`, never `isDeeplinkHandled`.
-- Cordova positional `Purchasely.start('API_KEY', ...)`, `setPaywallActionInterceptor`, `onProcessAction`, `PaywallAction`, `readyToOpenDeeplink`, `isDeeplinkHandled`, `presentSubscriptions()`, `presentProductWithIdentifier()`, `presentPlanWithIdentifier()`, `showPresentation()`, `hidePresentation()`
+- Cordova `Purchasely.start(apiKey, stores, storeKit1, userId, logLevel, runningMode, ok, err)` (positional), `fetchPresentation*`, `presentPresentation*`, `presentProductWithIdentifier`, `presentPlanWithIdentifier`, `setPaywallActionInterceptor` + `onProcessAction`, `PaywallAction`, `readyToOpenDeeplink`, `isDeeplinkHandled`, `setDefaultPresentationResultHandler`, `presentSubscriptions()`, `showPresentation()`, `hidePresentation()` — all removed in Cordova 6.0.0 in favour of `Purchasely.builder(...)`/options-object `start`, `Purchasely.presentation`, `Purchasely.interceptAction`, `.allowDeeplink(true)`, `Purchasely.handleDeeplink(uri)`, and `setDefaultPresentationDismissHandler`.
 - Do not generate `purchase(planId:)`, `Purchasely.purchase({ planId })`, or generic `Purchasely.purchase(...)`
 - `PLYAttribute.oneSignalPlayerId` — removed with no alias; use `.oneSignalExternalId` / `.oneSignalUserId`. The backend audience key also changed (`onesignal_player_id` → `onesignal_external_id`) — any audience rule still keyed on the old value stops receiving data silently.
 

@@ -2,7 +2,7 @@
 
 Applies to: **iOS, Android, React Native, Flutter, Cordova**.
 
-Every fetched/preloaded presentation carries a `type` field telling you what the dashboard returned. **You must check the type before displaying** — calling `display(...)` on a `DEACTIVATED` presentation is undefined behaviour and a `CLIENT` presentation isn't a real paywall at all. Native iOS/Android, React Native and Flutter v6 obtain the presentation with `PLYPresentationBuilder` / the `PLYPresentation { }` DSL / `Purchasely.presentation....build()` / `PLYPresentationBuilder` + `preload`; the method-based Cordova v6 bridge still calls `Purchasely.fetchPresentationForPlacement(...)`.
+Every fetched/preloaded presentation carries a `type` field telling you what the dashboard returned. **You must check the type before displaying** — calling `display(...)` on a `DEACTIVATED` presentation is undefined behaviour and a `CLIENT` presentation isn't a real paywall at all. Native iOS/Android, React Native, Flutter and Cordova v6 all obtain the presentation with `PLYPresentationBuilder` / the `PLYPresentation { }` DSL / `Purchasely.presentation....build()` + `preload`; the v5 `fetchPresentation` / `fetchPresentationForPlacement` methods are removed in v6.
 
 ## The four types
 
@@ -127,30 +127,23 @@ switch (presentation.type) {
 ### Cordova (JavaScript)
 
 ```js
-Purchasely.fetchPresentationForPlacement(
-  'PREMIUM_PAYWALL',
-  null,
-  presentation => {
-    switch (presentation.type) {
-      case 'NORMAL':
-      case 'FALLBACK':
-        Purchasely.presentPresentation(
-          presentation,
-          Purchasely.TransitionType.fullScreen,
-          null,
-          result => handleResult(result),
-          err => console.error(err),
-        );
-        break;
-      case 'DEACTIVATED':
-        return; // skip silently
-      case 'CLIENT':
-        showCustomPaywall(presentation.plans);
-        break;
-    }
-  },
-  err => console.error(err),
-);
+const request = Purchasely.presentation.placement('PREMIUM_PAYWALL').build();
+
+request.preload().then(presentation => {
+  switch (presentation.type) {
+    case Purchasely.PresentationType.normal:
+    case Purchasely.PresentationType.fallback:
+      // request.display() shows the preloaded screen and resolves at dismiss
+      // with a 5-field outcome (required for Flows).
+      request.display().then(outcome => handleResult(outcome));
+      break;
+    case Purchasely.PresentationType.deactivated:
+      return; // skip silently
+    case Purchasely.PresentationType.client:
+      showCustomPaywall(presentation.plans);
+      break;
+  }
+}).catch(err => console.error(err));
 ```
 
 ## Why this matters
@@ -163,7 +156,7 @@ The dashboard can disable a placement for an audience without redeploying the ap
 
 ## Display vs embedded container
 
-Use `display()` / bridge `presentPresentation(...)` by default. Switch to container APIs only when the app explicitly needs to embed or control the Purchasely UI:
+Use `display()` (or the Cordova request's `.display(...)`) by default. Switch to container APIs only when the app explicitly needs to embed or control the Purchasely UI:
 
 | Platform | Default display | Embedded / nested API |
 |----------|-----------------|-----------------------|
@@ -171,7 +164,7 @@ Use `display()` / bridge `presentPresentation(...)` by default. Switch to contai
 | Android | `loaded.display(activity)` | `loaded.buildView(context) { outcome -> }` or `loaded.getFragment { outcome -> }` |
 | React Native | `request.display()` (on the built `PLYPresentationRequest`) | `<PLYPresentationView placementId=… />` component |
 | Flutter | `request.display(const PLYTransition.fullScreen())` | `PLYPresentationView(request: ...)` widget |
-| Cordova | `Purchasely.presentPresentation(presentation, displayMode, backgroundColor, success, error)` | no general-purpose inline bridge in the public JS API |
+| Cordova | `request.display(transition?)` (on the built presentation request) | no general-purpose inline bridge in the public JS API |
 
 ## See also
 

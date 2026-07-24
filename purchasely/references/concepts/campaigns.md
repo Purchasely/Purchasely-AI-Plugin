@@ -117,7 +117,7 @@ await PurchaselyBuilder.apiKey('<YOUR_API_KEY>')
 
 ## Placement-based campaigns — no extra SDK code
 
-You already fetch the placement (native iOS/Android v6: `PLYPresentationBuilder.forPlacementId("PLACEMENT_ID")` / `PLYPresentation { placementId("PLACEMENT_ID") }`; React Native v6: `Purchasely.presentation.placement("PLACEMENT_ID").build()`; Flutter v6: `PLYPresentationBuilder.placement("PLACEMENT_ID").build()`; Cordova v6: `fetchPresentationForPlacement("PLACEMENT_ID")`). When a campaign targets that placement and the user matches the audience, the SDK substitutes the campaign's Screen for the Placement's default rules. Same presentation-type handling, same display path. Nothing to change in your code.
+You already fetch the placement (native iOS/Android v6: `PLYPresentationBuilder.forPlacementId("PLACEMENT_ID")` / `PLYPresentation { placementId("PLACEMENT_ID") }`; React Native v6: `Purchasely.presentation.placement("PLACEMENT_ID").build()`; Flutter v6: `PLYPresentationBuilder.placement("PLACEMENT_ID").build()`; Cordova v6: `Purchasely.presentation.placement("PLACEMENT_ID").build()`). When a campaign targets that placement and the user matches the audience, the SDK substitutes the campaign's Screen for the Placement's default rules. Same presentation-type handling, same display path. Nothing to change in your code.
 
 ## Typical use cases
 

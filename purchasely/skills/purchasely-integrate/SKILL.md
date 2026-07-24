@@ -56,7 +56,7 @@ Before writing integration code, run a Purchasely expert checkpoint. If the harn
 
 If that subagent is not available, do the checkpoint inline using the `purchasely-sdk-expert` guidance when available, or this fallback checklist:
 
-- Confirm the SDK generation: native iOS uses v6 (`6.0.0`, stable GA); native Android uses v6 (`6.0.1`, stable GA — Android never had a `6.0.0` tag); Flutter uses v6 (`6.0.0`, pulling native iOS `6.0.0` + Android core `6.0.1`); React Native uses v6 (`6.0.0`, stable GA, npm `latest`); Cordova uses v6 (`6.0.0-rc.3`, npm dist-tag `next`).
+- Confirm the SDK generation: native iOS uses v6 (`6.0.0`, stable GA); native Android uses v6 (`6.0.1`, stable GA — Android never had a `6.0.0` tag); Flutter uses v6 (`6.0.0`, pulling native iOS `6.0.0` + Android core `6.0.1`); React Native uses v6 (`6.0.0`, stable GA, npm `latest`); Cordova uses v6 (`6.0.0`, stable GA, npm `latest`).
 - Confirm versions are pinned from `../../references/sdk-versions.md` and no floating ranges are introduced.
 - Confirm Full mode is explicit when Purchasely must process and validate purchases.
 - Confirm the presentation path matches the platform generation and handles `DEACTIVATED` / `FALLBACK` where relevant.
@@ -103,9 +103,9 @@ Run the appropriate installation commands and modify project files as needed.
 | Android (native) | **6.0.1** (stable GA — Android never had a `6.0.0` tag; the line went rc.1 → rc.2 → rc.3 → `6.0.1`) |
 | Flutter | **6.0.0** (stable, pulls native iOS `6.0.0` + Android core `6.0.1`) |
 | React Native | **6.0.0** (stable GA, npm `latest` tag) |
-| Cordova | **6.0.0-rc.3** (npm dist-tag `next` — `latest` is still `5.7.3`; install the version explicitly) |
+| Cordova | **6.0.0** (stable GA, npm `latest` tag) |
 
-**Pin exactly on Android, Flutter, React Native, and Cordova** — never floating (`5.+`, `6.+`, `^5.0.0`, `^6.0.0-rc.3`). Floating versions break reproducibility and silently pull regressions; **Cordova** is the only platform still pinned to a pre-release (`6.0.0-rc.3`), and a caret/range won't resolve a pre-release at all. **iOS is the exception**: it's stable GA, so a minor-range pin is the recommended form — SPM `from: "6.0.0"` (primary) or CocoaPods `pod 'Purchasely', '~> 6.0'` — see the iOS install section below. React Native is also stable GA now, but keep the exact pin across all five `react-native-purchasely*` packages for cross-package alignment.
+**Pin exactly on Android, Flutter, React Native, and Cordova** — never floating (`5.+`, `6.+`, `^5.0.0`, `^6.0.0`). Floating versions break reproducibility and silently pull regressions. **iOS is the exception**: it's stable GA, so a minor-range pin is the recommended form — SPM `from: "6.0.0"` (primary) or CocoaPods `pod 'Purchasely', '~> 6.0'` — see the iOS install section below. React Native and Cordova are also stable GA now, but keep the exact pin across all packages for cross-package alignment.
 
 **Before installing, ask the user these questions (adapt per platform):**
 
@@ -316,19 +316,17 @@ dependencies:
 
 Requirements: iOS 13.4+, Android minSdk 23, compileSdk 36, targetSdk 35
 
-> **Cordova is on the v6 API too** (same generation as native iOS / Android / Flutter / React Native). Unlike the builder-based v6 plugins, the **Cordova JavaScript surface stays method-based**: the native bridges were rewired to the 6.0 native SDKs behind the same `cordova.exec` actions. Most methods keep their v5 names and signatures (`fetchPresentation` / `presentPresentation[ForPlacement]`, `closePresentation()`, `userLogin` / `userLogout`, every `setUserAttributeWith*`), but there are **three breaking surfaces**: `Purchasely.start(options, success, error)` now takes a **single options object** (the v5 positional list is gone); the action interceptor is **per-action** `interceptAction(kind, handler)` returning a `Purchasely.InterceptResult` (`setPaywallActionInterceptor` + `onProcessAction` were removed; `PaywallAction` renamed `PresentationAction`); and the `isFullscreen` boolean became a **display mode** (`TransitionType`). Other v6 changes: default running mode is now **Observer** (set `runningMode: Purchasely.RunningMode.full` for purchase handling), deeplinks renamed `allowDeeplink` / `handleDeeplink` (+ new `allowCampaigns`), dismiss handler renamed `setDefaultPresentationDismissHandler`, `synchronize(success, error)` now reports completion, and `presentSubscriptions()` / `presentProductWithIdentifier()` / `presentPlanWithIdentifier()` / `showPresentation()` / `hidePresentation()` were **removed**. `../../references/cordova/integration.md` and `../../references/cordova/migration-v6.md` document the v6 API.
->
-> **Version note.** Cordova's v6 plugin is pinned to `6.0.0-rc.3`, pulling native iOS/Android `6.0.0-rc.3` — still a pre-release. The npm `latest` dist-tag still points to `5.7.3`; the v6 pre-release is published under the `next` dist-tag, so it must be installed with an **explicit version**, not `@latest` or `@next` (which can move).
+> **Cordova is on the v6 builder API** (same generation as native iOS / Android / Flutter / React Native), and unlike them it ships as a **stable** release (npm `latest`, not `@next`). `@purchasely/cordova-plugin-purchasely 6.0.0` pulls the native iOS `Purchasely 6.0.0` / Android `io.purchasely:core 6.0.1` SDKs and exposes the v6 JS surface: `Purchasely.builder(apiKey)…start()` (the v5-shaped `Purchasely.start({...}, ok, err)` options object is also still accepted, now as a single object instead of positional args), `Purchasely.presentation` builder/request (`preload()` / `display()`), and per-action `Purchasely.interceptAction(kind, handler)`. `../../references/cordova/integration.md` and `../../references/cordova/migration-v6.md` document the v6 API.
 
 **1. Install the core plugin:**
 ```bash
-cordova plugin add @purchasely/cordova-plugin-purchasely@6.0.0-rc.3
+cordova plugin add @purchasely/cordova-plugin-purchasely@6.0.0
 ```
 
 **2. Install the store dependency (required for Android):**
 ```bash
 # Google Play — required if targeting Google Play Store
-cordova plugin add @purchasely/cordova-plugin-purchasely-google@6.0.0-rc.3
+cordova plugin add @purchasely/cordova-plugin-purchasely-google@6.0.0
 ```
 
 **3. Android setup** — edit `android/build.gradle`:
@@ -347,11 +345,11 @@ allprojects {
 }
 ```
 
-**CRITICAL: All Purchasely packages must be at the exact same version.** Pin to `6.0.0-rc.3` (see `../../references/sdk-versions.md`):
+**CRITICAL: All Purchasely packages must be at the exact same version.** Pin to `6.0.0` (see `../../references/sdk-versions.md`):
 ```json
 "dependencies": {
-  "@purchasely/cordova-plugin-purchasely": "6.0.0-rc.3",
-  "@purchasely/cordova-plugin-purchasely-google": "6.0.0-rc.3"
+  "@purchasely/cordova-plugin-purchasely": "6.0.0",
+  "@purchasely/cordova-plugin-purchasely-google": "6.0.0"
 }
 ```
 
@@ -473,26 +471,23 @@ print('Purchasely started: $started');
 
 `PurchaselyBuilder...start()` returns a `Future<bool>`; check it before using the SDK. ⚠️ The `runningMode` now defaults to `RunningMode.observer` in v6 (was Full) — you MUST pass `.runningMode(RunningMode.full)` for Purchasely to process and validate purchases. Enums: `RunningMode{observer, full}`, `LogLevel{debug, info, warn, error}`, `StorekitVersion{storeKit1, storeKit2}`.
 
-### Cordova (JavaScript)
+### Cordova (JavaScript, SDK v6)
 
-`Purchasely.start(...)` takes a **single options object** in v6 (the v5 positional argument list was removed), followed by `success` / `error` callbacks. Only `apiKey` is required. The v6 default running mode is now **Observer** — set `runningMode: Purchasely.RunningMode.full` for Purchasely to process and validate purchases.
+v6 replaces the v5 positional `Purchasely.start(apiKey, stores, storeKit1, userId, logLevel, runningMode, ok, err)` with either an options object or a fluent builder (recommended, parity with RN/Flutter):
 
 ```javascript
-Purchasely.start(
-  {
-    apiKey: 'YOUR_API_KEY',
-    stores: [Purchasely.Store.google],        // Store.google | Store.huawei | Store.amazon
-    storeKit1: false,                         // iOS only: false = StoreKit 2
-    appUserId: null,                          // null for anonymous
-    logLevel: Purchasely.LogLevel.DEBUG,
-    runningMode: Purchasely.RunningMode.full, // v6 default is observer
-    allowDeeplink: true,                      // optional
-    allowCampaigns: true,                     // optional
-  },
-  (isConfigured) => console.log('Purchasely started', isConfigured),
-  (error) => console.error('Purchasely start error:', error)
-);
+Purchasely.builder('YOUR_API_KEY')
+  .runningMode(Purchasely.RunningMode.full)   // ⚠️ REQUIRED for purchase handling — default is 'observer' in v6
+  .logLevel(Purchasely.LogLevel.DEBUG)
+  .stores([Purchasely.Store.google])          // Android: google | huawei | amazon
+  .allowDeeplink(true)
+  .start(
+    (success) => console.log('Purchasely started'),
+    (error) => console.error('Purchasely start error:', error)
+  );
 ```
+
+`Purchasely.RunningMode` now defaults to `observer` in v6 (was implicitly Full) — you MUST pass `.runningMode(Purchasely.RunningMode.full)` for Purchasely to process and validate purchases.
 
 **Action:** Find the app's entry point file and write the initialization code into it. Add the necessary import statements at the top of the file.
 
@@ -502,9 +497,7 @@ Purchasely.start(
 
 Purchasely uses a **placement-based** approach. Placements are configured in the Purchasely Console and identified by a `placementId` (e.g., `"onboarding"`, `"settings"`, `"home_banner"`). Each placement can be associated with different Screens, audiences, and A/B tests — all managed remotely.
 
-Native iOS, Android, Flutter and React Native are on the v6 builder API. iOS uses `PLYPresentationBuilder` (`.forPlacementId(_)` / `.forScreenId(_)`) → `.build().preload()`. Android uses the `PLYPresentation { ... }.preload()` builder. Flutter uses `PresentationBuilder` (`.placement(id)` / `.screen(id)` / `.defaultSource()`) → `.build()` to get a `PresentationRequest`, then `preload()` / `display([Transition])`. React Native uses `Purchasely.presentation.placement(id)` / `.screen(id)` / `.defaultSource()` (alias `.default()`) → `.build()` to get a `PLYPresentationRequest`, then `preload()` / `display(transition?)`. The legacy `fetchPresentation(...)` / `presentationView(...)` / VC-returning methods are removed in v6 native, Flutter v6 and React Native v6 — do **NOT** use them on these platforms.
-
-> 💡 **Cordova v6 keeps a method-based presentation API:** use `fetchPresentation()` / `fetchPresentationForPlacement()` to inspect the returned `type`, then `presentPresentation(presentation, displayMode, ...)` (or `presentPresentationForPlacement`) with an explicit display mode. The v5 `isFullscreen` boolean argument became a display mode: `Purchasely.TransitionType.fullScreen`, `.modal`, `.drawer`, `.popin`, or a transition object. Keep the pre-fetch path for production so the app can skip `DEACTIVATED` / handle `CLIENT` before display.
+Native iOS, Android, Flutter, React Native and Cordova are all on the v6 builder API. iOS uses `PLYPresentationBuilder` (`.forPlacementId(_)` / `.forScreenId(_)`) → `.build().preload()`. Android uses the `PLYPresentation { ... }.preload()` builder. Flutter uses `PresentationBuilder` (`.placement(id)` / `.screen(id)` / `.defaultSource()`) → `.build()` to get a `PresentationRequest`, then `preload()` / `display([Transition])`. React Native uses `Purchasely.presentation.placement(id)` / `.screen(id)` / `.defaultSource()` (alias `.default()`) → `.build()` to get a `PLYPresentationRequest`, then `preload()` / `display(transition?)`. Cordova uses `Purchasely.presentation.placement(id)` / `.screen(id)` / `.defaultSource()` → `.build()` to get a request, then `preload()` / `display(transition?)`. The legacy `fetchPresentation(...)` / `presentPresentation*(...)` / `presentationView(...)` / VC-returning methods are removed in v6 native, Flutter v6, React Native v6, and Cordova v6 — do **NOT** use them on these platforms.
 
 The fetch returns a presentation with a `type` property. Handle each type:
 - **NORMAL**: Display the paywall to the user
@@ -628,34 +621,31 @@ switch (presentation.type) {
 
 `purchaseResult` is the `PurchaseResult` enum (`purchased` / `restored` / `cancelled`). If you don't need to inspect the type first, you can build and display in one chain: `await PresentationBuilder.placement('PLACEMENT_ID').build().display(const Transition.fullScreen())`. To dismiss programmatically later, hold the loaded `Presentation` and call `presentation.close()` (also `.display()` / `.back()`).
 
-### Cordova (JavaScript)
+### Cordova (JavaScript, SDK v6)
+
+Build a request with `Purchasely.presentation`, `preload()` it to inspect the `type`, then `display()` — which resolves at **dismiss** with a 5-field outcome (`presentation`, `purchaseResult`, `plan`, `closeReason`, `error`). The legacy `fetchPresentation` / `presentPresentation[ForPlacement]` methods are removed in Cordova v6:
 
 ```javascript
-Purchasely.fetchPresentationForPlacement(
-  'PLACEMENT_ID',
-  null, // contentId (optional)
-  (presentation) => {
-    switch (presentation.type) {
-      case 'NORMAL':
-      case 'FALLBACK':
-        Purchasely.presentPresentation(
-          presentation,
-          Purchasely.TransitionType.fullScreen,
-          null, // backgroundColor
-          (result) => console.log('Presentation dismissed', result),
-          (error) => console.error(error)
-        );
-        break;
-      case 'DEACTIVATED':
-        // Do nothing
-        break;
-      case 'CLIENT':
-        // Show your own custom paywall
-        break;
-    }
-  },
-  (error) => console.error(error)
-);
+const request = Purchasely.presentation.placement('PLACEMENT_ID').build();
+
+request.preload().then((loaded) => {
+  switch (loaded.type) {
+    case Purchasely.PresentationType.normal:
+    case Purchasely.PresentationType.fallback:
+      request.display().then((outcome) => {
+        if (outcome.purchaseResult === 'purchased' || outcome.purchaseResult === 'restored') {
+          console.log('Purchased', outcome.plan && outcome.plan.name);
+        }
+      });
+      break;
+    case Purchasely.PresentationType.deactivated:
+      // Do nothing
+      break;
+    case Purchasely.PresentationType.client:
+      // Show your own custom paywall
+      break;
+  }
+}).catch((error) => console.error(error));
 ```
 
 **Action:** Find the appropriate screen/view/component where the Presentation should be displayed (e.g., a premium button, settings screen, or onboarding flow) and add the display code. Ask the user which placement ID to use, or use `"onboarding"` as a sensible default.
@@ -917,7 +907,7 @@ Purchasely.interceptAction(Purchasely.PresentationAction.purchase, function(info
 });
 ```
 
-Action kinds (`Purchasely.PresentationAction`): `close`, `close_all`, `login`, `navigate`, `purchase`, `restore`, `open_presentation`, `open_placement`, `promo_code`, `web_checkout`.
+Action kinds (`Purchasely.PresentationAction`, camelCase keys — wire values stay `snake_case`, always compare against the constant): `close`, `closeAll`, `login`, `navigate`, `purchase`, `restore`, `openPresentation`, `openPlacement`, `promoCode`, `webCheckout`.
 
 **Action:** Register action interceptors right after SDK initialization. At minimum, handle the `login` action if the paywall can request authentication; register a handler only for the kinds you need. Handlers may return a `Promise` for async work.
 
@@ -1053,7 +1043,7 @@ When the interceptor receives a `PURCHASE` action in Observer mode, you run the 
 - **Native iOS/Android (v6):** intercept the `.purchase` action, run your billing flow, then **return `PLYInterceptResult.SUCCESS`** (`.success` on iOS) from the interceptor. (There is no `proceed`/`processAction` callback in the v6 native interceptor; returning `.success` is the v6 equivalent of the old `processAction(false)`.) Because Observer mode does not auto-close, **dismiss the paywall yourself with `Purchasely.closeAllScreens()` after the interceptor has resolved** (from your billing-result handler) — unless you wire a `close` / `close_all` action on the button in the Console. Do **not** call `closeAllScreens()` inside the interceptor closure before returning the result — that races the SDK.
 - **Flutter (v6):** intercept the `.purchase` action with `Purchasely.interceptAction(PresentationActionKind.purchase, ...)`, run your billing flow, then **return `InterceptResult.success`** from the handler. There is no `onProcessAction`; returning `.success` is the v6 equivalent of `processAction(false)`. Observer mode does not auto-close, so dismiss the paywall yourself with `presentation.close()` on the loaded `Presentation` **after** the handler resolves.
 - **React Native (v6):** intercept the `'purchase'` action with `Purchasely.interceptAction('purchase', ...)`, run your billing flow, then **return `'success'`** from the handler. There is no `onProcessAction`; returning `'success'` is the v6 equivalent of `processAction(false)`. Observer mode does not auto-close, so dismiss the paywall yourself with `request.close()` on the held `PresentationRequest` **after** the handler resolves.
-- **Cordova (v6):** intercept the `purchase` action with `Purchasely.interceptAction(Purchasely.PresentationAction.purchase, handler)`, run your billing flow, then **return (or resolve to) `Purchasely.InterceptResult.success`** from the handler. There is no `onProcessAction`; returning `.success` tells the SDK you handled the action. Observer mode does not auto-close, so dismiss with `Purchasely.closePresentation()` after the handler resolves.
+- **Cordova (v6):** intercept the `purchase` action with `Purchasely.interceptAction(Purchasely.PresentationAction.purchase, handler)`, run your billing flow, then **return (or resolve to) `Purchasely.InterceptResult.success`** from the handler. There is no `onProcessAction`; returning `.success` tells the SDK you handled the action. Observer mode does not auto-close, so dismiss with `request.close()` on the held presentation request after the handler resolves (`closePresentation()` is kept as a deprecated alias).
 
 **The order matters:** the SDK must learn the action was handled BEFORE the paywall tears down; reversing it leaves the paywall in an inconsistent state. On native v6, return the result first, then dismiss with `closeAllScreens()` from your billing-result handler — don't call it inside the interceptor closure.
 
@@ -1065,11 +1055,11 @@ When the interceptor receives a `PURCHASE` action in Observer mode, you run the 
 | Android (native) | **6.0.1** — return `PLYInterceptResult.SUCCESS`, then call `Purchasely.closeAllScreens()` after the interceptor resolves (Observer mode does not auto-close; or wire a Console `close` action). No threading constraint. |
 | Flutter | **6.0.0** — return `InterceptResult.success`, then dismiss with `presentation.close()` on the loaded `Presentation` after the handler resolves (Observer mode does not auto-close; or wire a Console `close` action). There is no `closePresentation()` in Flutter v6. |
 | React Native | **6.0.0** — return `'success'`, then dismiss with `request.close()` on the held `PresentationRequest` after the handler resolves (Observer mode does not auto-close; or wire a Console `close` action). There is no `closePresentation()` / `closeAllScreens()` in React Native v6. |
-| Cordova | **6.0.0-rc.3** — return `Purchasely.InterceptResult.success`, then dismiss with `Purchasely.closePresentation()` in the public JS bridge after the handler resolves (method-based; no `closeAllScreens()` on the JS side). |
+| Cordova | **6.0.0** — resolve the handler with `Purchasely.InterceptResult.success`, then call `request.close()` on the held presentation request after the handler resolves (Observer mode does not auto-close; or wire a Console `close` action). `request.close()` dismisses every displayed Purchasely screen (`closeAllScreens()` under the hood); the legacy `closePresentation()` is kept as a deprecated alias. |
 
 Full version list: `../../references/sdk-versions.md`.
 
-> On native iOS/Android in Observer mode, dismiss the presentation yourself with `closeAllScreens()` (not `closeDisplayedPresentation()`) after resolving the interceptor — the SDK only auto-appends `close_all` in Full mode. `closeAllScreens()` correctly tears down Flow paywalls with multiple steps. On Flutter v6, dismiss with `presentation.close()` on the loaded `Presentation` after the handler resolves. On React Native v6, dismiss with `request.close()` on the held `PresentationRequest` after the handler resolves (there is no `closePresentation()` / `closeAllScreens()` in React Native v6). On Cordova v6, use the public bridge `closePresentation()` after resolving the handler.
+> On native iOS/Android in Observer mode, dismiss the presentation yourself with `closeAllScreens()` (not `closeDisplayedPresentation()`) after resolving the interceptor — the SDK only auto-appends `close_all` in Full mode. `closeAllScreens()` correctly tears down Flow paywalls with multiple steps. On Flutter v6, dismiss with `presentation.close()` on the loaded `Presentation` after the handler resolves. On React Native v6, dismiss with `request.close()` on the held `PresentationRequest` after the handler resolves (there is no `closePresentation()` / `closeAllScreens()` in React Native v6). On Cordova v6, dismiss with `request.close()` on the held presentation request after the handler resolves (`closePresentation()` is kept as a deprecated alias).
 
 ### iOS Observer-mode post-purchase (v6)
 
@@ -1162,7 +1152,7 @@ Purchasely.interceptAction(Purchasely.PresentationAction.purchase, function(info
 });
 
 function onPurchaseSuccess() {
-  Purchasely.closePresentation(); // after the interceptor resolved
+  Purchasely.closeAllScreens(); // after the interceptor resolved (closePresentation() is a deprecated alias)
 }
 ```
 
@@ -1238,8 +1228,8 @@ Pick the ones the user's roadmap actually needs — don't push all six on day on
 Add app-side log markers around the key Purchasely decision points — they make every future bug 10× faster to diagnose. The SDK already emits `[Purchasely]` lines; add an app-side prefix (e.g. `[YourApp]`) at:
 
 - After `synchronize()` completes (success or failure)
-- Before each platform dismiss call (`closeAllScreens()` on native iOS/Android v6, `presentation.close()` on Flutter v6, `request.close()` on React Native v6, `closePresentation()` on Cordova v6)
-- When a presentation finishes loading (native + Flutter + React Native v6: in the builder `onPresented` / `onLoaded` / `.preload()` result — placement, type, error; Cordova v6: in the `fetchPresentation` completion)
+- Before each platform dismiss call (`closeAllScreens()` on native iOS/Android v6, `presentation.close()` on Flutter v6, `request.close()` on React Native v6 and Cordova v6)
+- When a presentation finishes loading (native + Flutter + React Native + Cordova v6: in the builder `onPresented` / `onLoaded` / `.preload()` result — placement, type, error)
 - When chaining a follow-up placement (and what it resolves to)
 
 Mirror the SDK's analytics events via `PLYEventDelegate` (iOS) / `EventListener` (Android) with the full property bag — that way, a single `grep -E "\[Purchasely\]|\[YourApp\]"` over the failing run reveals exactly what the SDK did and why. See `../../references/troubleshooting/common-issues.md` §0 for the full event taxonomy and annotated traces.

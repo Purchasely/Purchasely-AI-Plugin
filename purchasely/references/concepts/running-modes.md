@@ -139,7 +139,7 @@ Purchasely.start(
 );
 ```
 
-> **Cross-platform note.** React Native, Flutter, and Cordova are on the v6 API (default Observer), in the same v6 group as native iOS & Android. React Native uses the builder (`Purchasely.builder('key')....start()`) and string running modes (`'full'` / `'observer'`); Flutter uses `PurchaselyBuilder.apiKey(...)....start()` and the `PLYRunningMode` enum; Cordova keeps method-based `start(...)` but now takes a single options object with `Purchasely.RunningMode.full` / `.observer`. Always confirm the exact plugin signature in that platform's integration reference and in [`sdk-versions.md`](../sdk-versions.md).
+> **Cross-platform note.** React Native, Flutter, and Cordova are on the v6 API (default Observer), in the same v6 group as native iOS & Android. React Native uses the builder (`Purchasely.builder('key')....start()`) and string running modes (`'full'` / `'observer'`); Flutter uses `PurchaselyBuilder.apiKey(...)....start()` and the `PLYRunningMode` enum; Cordova uses the fluent builder (`Purchasely.builder('key')....start()`) or the v5-shaped options object (`Purchasely.start({...}, ok, err)`, now a single object instead of positional args) with `Purchasely.RunningMode.full` / `.observer`. Always confirm the exact plugin signature in that platform's integration reference and in [`sdk-versions.md`](../sdk-versions.md).
 
 ## Log Levels
 

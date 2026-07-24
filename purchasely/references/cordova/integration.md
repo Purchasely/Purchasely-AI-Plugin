@@ -1,36 +1,34 @@
 # Cordova Integration
 
-> **Cross-platform reference.** This file covers Cordova-specific syntax for the **v6** SDK (`6.0.0-rc.3`). Many concepts (Observer-mode post-purchase flow, presentation type guard, presentation cache, programmatic purchases, audience-targeting attributes, GDPR consent, subscription checks) are **universal across iOS / Android / RN / Flutter / Cordova** and live in `../concepts/`. Load:
+> **Cross-platform reference.** This file covers Cordova-specific syntax. Many concepts (Observer-mode post-purchase flow, presentation type guard, presentation cache, programmatic purchases, audience-targeting attributes, GDPR consent, subscription checks) are **universal across iOS / Android / RN / Flutter / Cordova** and live in `../concepts/`. Load:
 >
 > - [`../concepts/running-modes.md`](../concepts/running-modes.md) — Full vs Observer + log levels
-> - [`../concepts/paywall-actions.md`](../concepts/paywall-actions.md) — per-action `interceptAction` + `InterceptResult` rules
+> - [`../concepts/paywall-actions.md`](../concepts/paywall-actions.md) — `PLYPresentationAction` enum + interceptor rules
 > - [`../concepts/presentation-types.md`](../concepts/presentation-types.md) — `NORMAL` / `FALLBACK` / `DEACTIVATED` / `CLIENT` guard
 > - [`../concepts/presentation-cache.md`](../concepts/presentation-cache.md) — app-side cache (recommended)
-> - [`../concepts/observer-mode-post-purchase.md`](../concepts/observer-mode-post-purchase.md) — resolve the interceptor → `closePresentation` ordering, chaining follow-up placements
+> - [`../concepts/observer-mode-post-purchase.md`](../concepts/observer-mode-post-purchase.md) — `synchronize → dismiss` ordering, chaining follow-up placements
 > - [`../concepts/programmatic-purchases.md`](../concepts/programmatic-purchases.md) — exact `purchaseWithPlanVendorId` syntax
 > - [`../concepts/user-attributes-targeting.md`](../concepts/user-attributes-targeting.md) — audience targeting + GDPR consent
 > - [`../concepts/privacy-settings.md`](../concepts/privacy-settings.md) — `revokeDataProcessingConsent` and privacy purposes
 > - [`../concepts/subscription-checks.md`](../concepts/subscription-checks.md) — gating premium content, restore purchases
-> - [`../sdk-versions.md`](../sdk-versions.md) — latest stable versions (pin to **6.0.0-rc.3** for Cordova)
-> - [`migration-v6.md`](migration-v6.md) — v5 → v6 migration mapping for Cordova
+> - [`../sdk-versions.md`](../sdk-versions.md) — latest stable versions (pin to **6.0.0** for Cordova)
+> - [`./migration-v6.md`](./migration-v6.md) — full v5 → v6 API mapping if migrating an existing integration
 
-> **v6 keeps a method-based JS API — but the surface changed.** Unlike native iOS/Android and the React Native / Flutter SDKs, the Cordova plugin does **not** introduce a builder API — the native bridges were rewired to the v6 SDKs behind `cordova.exec` actions. Most methods keep their name and signature, but there are **three breaking surfaces**: `start()` now takes a **single options object** (was positional); the action interceptor is now **per-action** (`interceptAction(kind, handler)` returning an `InterceptResult` — `setPaywallActionInterceptor` + `onProcessAction` were **removed**); and the presentation `isFullscreen` boolean became a **display mode**. Smaller changes: default running mode is now **Observer**, deeplinks use `allowDeeplink` / `handleDeeplink` (+ new `allowCampaigns`), the default dismiss handler is `setDefaultPresentationDismissHandler`, `synchronize` reports completion, and `presentSubscriptions` / `presentProductWithIdentifier` / `presentPlanWithIdentifier` / `showPresentation` / `hidePresentation` were **removed**.
+**Cordova is on the v6 builder API** (`Purchasely.builder`, `Purchasely.presentation`, `Purchasely.interceptAction`) as a **stable** release (npm `latest`, not `@next`) — pulling native iOS `Purchasely 6.0.0` / Android `io.purchasely:core 6.0.1`.
 
 ## Installation
 
-Requirements: iOS 13.4+, Android minSdk 23, compileSdk 36. Pin all packages to **6.0.0-rc.3** (see [`../sdk-versions.md`](../sdk-versions.md)). The `6.0.0-rc.3` plugin pulls the **6.0.0-rc.3 native SDKs** (iOS `Purchasely`, Android `io.purchasely:core` — both confirmed pinned in `plugin.xml` at the published tag).
-
-> **npm's `latest` dist-tag still points to `5.7.3`.** `6.0.0-rc.3` is published under the `next` dist-tag, so `cordova plugin add @purchasely/cordova-plugin-purchasely` with no version pulls the old v5 plugin. Always install an explicit version (or `--tag next`).
+Requirements: iOS 11.0+, Android minSdk 23, compileSdk 36, targetSdk 35. Pin all packages to **6.0.0** (see [`../sdk-versions.md`](../sdk-versions.md)).
 
 ```bash
 # Core plugin
-cordova plugin add @purchasely/cordova-plugin-purchasely@6.0.0-rc.3
+cordova plugin add @purchasely/cordova-plugin-purchasely@6.0.0
 
 # Google Play — required if targeting Google Play Store
-cordova plugin add @purchasely/cordova-plugin-purchasely-google@6.0.0-rc.3
+cordova plugin add @purchasely/cordova-plugin-purchasely-google@6.0.0
 ```
 
-**CRITICAL: All Purchasely packages must be at the exact same version.** A stray `6.0.0` (release) outranks `6.0.0-rc.3` in Gradle and silently upgrades `io.purchasely:core`, causing a runtime `NoSuchMethodError`. There is **no video player plugin on Cordova**.
+**CRITICAL: All Purchasely packages must be at the exact same version.**
 
 ### Android Setup
 
@@ -45,7 +43,6 @@ buildscript {
 }
 allprojects {
     repositories {
-        google()
         mavenCentral()
     }
 }
@@ -53,133 +50,97 @@ allprojects {
 
 ## Initialization
 
-In v6, `Purchasely.start(...)` takes a **single options object** followed by `success` / `error` callbacks (the v5 positional argument list is gone). Only `apiKey` is required. **The v6 default running mode is `Observer`** — pass `runningMode: Purchasely.RunningMode.full` if Purchasely must own the purchase flow and validate receipts:
+Cordova v6 supports **two** ways to start the SDK. The fluent builder is recommended (parity with RN/Flutter); the options-object form is also accepted.
+
+**Fluent builder (recommended):**
 
 ```javascript
 document.addEventListener('deviceready', function() {
-  Purchasely.start(
-    {
-      apiKey: 'YOUR_API_KEY',
-      stores: [Purchasely.Store.google],   // Store.google | Store.huawei | Store.amazon
-      storeKit1: false,                     // iOS only: false = StoreKit 2 (recommended)
-      appUserId: null,                      // optional
-      logLevel: Purchasely.LogLevel.DEBUG,
-      runningMode: Purchasely.RunningMode.full, // ⚠️ v6 default is Observer — set .full to handle purchases
-      allowDeeplink: true,                  // optional
-      allowCampaigns: true,                 // optional
-    },
-    function(isConfigured) {
-      console.log('Purchasely started:', isConfigured);
-    },
-    function(error) {
-      console.error('Purchasely init failed:', error);
-    }
-  );
+  Purchasely.builder('YOUR_API_KEY')
+    .runningMode(Purchasely.RunningMode.full)                 // ⚠️ default is 'observer' in v6 — set 'full' explicitly if Purchasely should own the purchase flow
+    .logLevel(Purchasely.LogLevel.DEBUG)
+    .stores([Purchasely.Store.google])                        // Android: google | huawei | amazon
+    .storekitVersion(Purchasely.StorekitVersion.storeKit2)     // iOS only
+    .allowDeeplink(true)
+    .allowCampaigns(true)
+    .start(
+      function(success) { console.log('Purchasely started:', success); },
+      function(error) { console.error('Purchasely init failed:', error); }
+    );
 }, false);
 ```
 
-Recognised options: `apiKey` (required), `appUserId`, `logLevel`, `runningMode`, `stores`, `storeKit1` / `storekitVersion` (iOS), `allowDeeplink`, `allowCampaigns`, `deeplink` (cold-start URL).
+**Options object (also supported):**
 
-> `Purchasely.RunningMode` values are now **name strings** (`'observer'` / `'full'`), not integers — the native iOS and Android enums use different raw values, so the bridge maps by name. `Purchasely.RunningMode.paywallObserver` and `transactionOnly` were **removed** — use `Purchasely.RunningMode.observer`.
+```javascript
+Purchasely.start(
+  {
+    apiKey: 'YOUR_API_KEY',
+    stores: [Purchasely.Store.google],
+    storeKit1: false,                       // iOS only
+    appUserId: null,
+    logLevel: Purchasely.LogLevel.DEBUG,
+    runningMode: Purchasely.RunningMode.full, // ⚠️ default is 'observer' in v6
+    allowDeeplink: true,
+  },
+  function(success) { console.log('Purchasely started:', success); },
+  function(error) { console.error('Purchasely init failed:', error); }
+);
+```
+
+> **⚠️ Breaking change vs v5.** The default `runningMode` is now `Purchasely.RunningMode.observer` (v5 effectively defaulted to Full). If the app expects Purchasely to process and validate purchases, set `.runningMode(Purchasely.RunningMode.full)` explicitly.
 
 ## Display a Paywall
 
-### Placement shortcut for simple non-Flow paywalls
-
-`presentPresentationForPlacement(...)` is still available for simple placements guaranteed to host only a non-Flow paywall. For Flow-compatible display, use the fetch + type guard path below.
-
-The `isFullscreen` boolean was replaced by a **display mode**: pass a `Purchasely.TransitionType` string, a legacy boolean (`true` → `fullScreen`, `false` → `modal`, still accepted), or a full transition object for drawer/popin sizing.
+Build a request with `Purchasely.presentation`, then `.preload()` it to inspect the `type` and/or `.display()` it. The v5 `fetchPresentation*` / `presentPresentation*` / `presentPresentationForPlacement` methods are **removed**.
 
 ```javascript
-Purchasely.presentPresentationForPlacement(
-  'ONBOARDING',  // placementVendorId
-  null,           // contentId (optional)
-  Purchasely.TransitionType.fullScreen,  // display mode (string | boolean | transition object)
-  function(result) {
-    switch (result.result) {
-      case Purchasely.PurchaseResult.PURCHASED:
-        console.log('Purchased plan:', result.plan);
-        break;
-      case Purchasely.PurchaseResult.RESTORED:
-        console.log('Restored purchases');
-        break;
-      case Purchasely.PurchaseResult.CANCELLED:
-        console.log('User cancelled');
-        break;
-    }
-  },
-  function(error) {
-    console.error('Presentation error:', error);
+var request = Purchasely.presentation
+  .placement('PREMIUM')  // or .screen('SCREEN_ID') / .defaultSource()
+  .build();
+
+request.preload().then(function(loaded) {
+  switch (loaded.type) {
+    case Purchasely.PresentationType.normal:
+    case Purchasely.PresentationType.fallback:
+      request.display().then(handlePurchaseResult).catch(function(error) {
+        console.error('Presentation error:', error);
+      });
+      break;
+    case Purchasely.PresentationType.deactivated:
+      // Do NOT display
+      break;
+    case Purchasely.PresentationType.client:
+      // Use your own UI with Purchasely plan data
+      showCustomPaywall(loaded.plans);
+      break;
   }
-);
+}).catch(function(error) {
+  console.error('Fetch error:', error);
+});
 ```
 
-The result object also carries the richer v6 fields `purchaseResult` (string), `closeReason`, and `presentation` alongside the legacy `result` (code) and `plan`.
-
-An optional final `callbacks` object observes the presentation lifecycle: `{ onPresented(presentation, error), onCloseRequested() }`. `success` still receives the final dismiss outcome.
-
-**Rich transitions** (drawer / popin sizing) pass a transition object instead of a string:
+If you don't need to inspect the type first, build and display in one chain:
 
 ```javascript
-Purchasely.presentPresentationForPlacement('ONBOARDING', null, {
-  type: Purchasely.TransitionType.drawer,
-  dismissible: true,
-  height: { type: Purchasely.DimensionType.percentage, value: 0.8 }, // 0.0–1.0
-  backgroundColor: '#000000'
-}, onResult, onError);
+Purchasely.presentation.placement('ONBOARDING').build().display()
+  .then(handlePurchaseResult)
+  .catch(function(error) { console.error('Presentation error:', error); });
 ```
 
-`TransitionType`: `fullScreen`, `modal`, `drawer`, `popin`, `push`, `inlinePaywall`. `DimensionType`: `pixel`, `percentage` (`width` is popin-only; `height` drives drawer + popin). On **iOS** only a percentage `height` (plus `dismissible` / `backgroundColor`) is applied to drawer/popin; **Android** honors the full set.
-
-To present the default (audience-targeted) presentation with no placement or presentation id, use `presentPresentationForDefault(contentId, displayMode, success, error, callbacks)`.
-
-### Fetch Presentation (check type before displaying)
-
-```javascript
-Purchasely.fetchPresentationForPlacement(
-  'PREMIUM',  // placementId
-  null,       // contentId
-  function(presentation) {
-    switch (presentation.type) {
-      case 'NORMAL':
-      case 'FALLBACK':
-        Purchasely.presentPresentation(
-          presentation,
-          Purchasely.TransitionType.fullScreen,  // display mode
-          null,  // backgroundColor
-          handlePurchaseResult,
-          function(error) { console.error('Presentation error:', error); }
-        );
-        break;
-      case 'DEACTIVATED':
-        // Do NOT display
-        break;
-      case 'CLIENT':
-        // Use your own UI with Purchasely plan data
-        showCustomPaywall(presentation.plans);
-        break;
-    }
-  },
-  function(error) {
-    console.error('Fetch error:', error);
-  }
-);
-```
-
-`fetchPresentationForDefault(contentId, success, error)` fetches the default (audience-targeted) presentation.
+`display(transition?)` takes an optional `Purchasely.TransitionType` (`fullScreen`, `modal`, `drawer`, `popin`, `push`, `inlinePaywall`) or a full object for drawer/popin sizing. There is no per-request `close()` on Cordova — `request.close()` always dismisses every displayed Purchasely screen (`closeAllScreens()` under the hood); `request.back()` navigates back inside a multi-step (Flow) presentation.
 
 ## Action Interceptor
 
-Purchasely 6.0 intercepts actions **per kind**, matching the native SDK. `setPaywallActionInterceptor(callback)` + `onProcessAction(result)` were **removed**. Register a handler for each action you care about with `interceptAction(kind, handler)`. The handler receives `(info, parameters)` and returns — or resolves to — a `Purchasely.InterceptResult` (`success`, `failed`, `notHandled`). Action kinds are on `Purchasely.PresentationAction` (the v5 `PaywallAction` constant was renamed to `PresentationAction`).
+Register **one handler per action kind** with `Purchasely.interceptAction(kind, handler)`. The handler returns — or resolves to — a `Purchasely.InterceptResult` (`success` / `failed` / `notHandled`) instead of calling `onProcessAction`. The v5 `setPaywallActionInterceptor` + `onProcessAction` are **removed**.
 
 ```javascript
 Purchasely.interceptAction(Purchasely.PresentationAction.login, function(info, parameters) {
   return new Promise(function(resolve) {
-    // Present your login screen
     showLoginScreen(function(userId) {
       if (userId) {
-        Purchasely.userLogin(userId, function() {});
-        resolve(Purchasely.InterceptResult.success);   // the app fully handled login
+        Purchasely.userLogin(userId);
+        resolve(Purchasely.InterceptResult.success);
       } else {
         resolve(Purchasely.InterceptResult.failed);
       }
@@ -191,51 +152,23 @@ Purchasely.interceptAction(Purchasely.PresentationAction.navigate, function(info
   var url = parameters && parameters.url;
   if (url) {
     window.open(url, '_system');
-    return Purchasely.InterceptResult.success;     // the app handled navigation
   }
-  return Purchasely.InterceptResult.notHandled;    // let the SDK handle it
+  return Purchasely.InterceptResult.success;
 });
 
+// In Full mode, let Purchasely run the purchase itself:
 Purchasely.interceptAction(Purchasely.PresentationAction.purchase, function(info, parameters) {
-  // let the SDK run its own purchase flow
   return Purchasely.InterceptResult.notHandled;
 });
-
-// Stop intercepting one kind, or all of them:
-Purchasely.removeActionInterceptor(Purchasely.PresentationAction.purchase);
-Purchasely.removeAllActionInterceptors();
 ```
 
-- `InterceptResult`: `success` (you handled it), `failed` (you tried and failed), `notHandled` (let the SDK proceed).
-- Handlers may return a value **or a `Promise`** — async work (showing your own login screen) is supported; report the result once it resolves.
-- Each intercept resolves independently, so concurrent intercepts never clobber one another.
-- Registering the same kind again **replaces** its handler.
+`Purchasely.PresentationAction` (camelCase keys, `snake_case` wire values): `close`, `closeAll`, `login`, `navigate`, `purchase`, `restore`, `openPresentation`, `openPlacement`, `promoCode`, `webCheckout`. Handlers may return a value directly or a `Promise` resolving one — each intercepted call resolves independently.
 
-## Observer Mode — Processing Transactions Yourself
-
-In Observer mode (the v6 default), run your own billing, synchronize, then close the screen (Observer mode does not auto-close). Intercept the `purchase` action, do your work asynchronously, resolve the handler, then dismiss:
-
-```javascript
-Purchasely.interceptAction(Purchasely.PresentationAction.purchase, function(info, parameters) {
-  var storeProductId = parameters.plan.productId;
-
-  return MyPurchaseSystem.purchase(storeProductId).then(function(ok) {
-    // Resolving with `success` auto-synchronizes the receipt — do not call
-    // Purchasely.synchronize() here.
-    return ok ? Purchasely.InterceptResult.success : Purchasely.InterceptResult.failed;
-  });
-});
-
-function onPurchaseSuccess() {
-  Purchasely.closePresentation(); // after the interceptor promise resolved
-}
-```
-
-`Purchasely.synchronize(success, error)` now reports completion (the v5 fire-and-forget behavior is gone); calling `Purchasely.synchronize()` with no arguments still works. Reserve manual `synchronize()` calls for purchases processed **outside** the interceptor flow (a "Restore Purchases" button, a client-side/BYOS presentation) — resolving `.purchase` / `.restore` with `success` already synchronizes automatically.
+**Important:** Every registered handler must resolve to a `Purchasely.InterceptResult` on every code path (success, error, cancellation). A path that never resolves freezes the paywall.
 
 ## Programmatic Purchases
 
-For an app-side purchase button in Full mode, use the Cordova positional API:
+Unchanged from v5. For an app-side purchase button in Full mode:
 
 ```javascript
 Purchasely.purchaseWithPlanVendorId(
@@ -255,24 +188,31 @@ Do not use `Purchasely.purchase(...)` on Cordova; it is not exposed by the publi
 
 ## Purchase Result Handling
 
-The result callback receives an object with a `result` property:
+`display()` resolves at **dismiss** with a 5-field **outcome** — there is no legacy `result` field:
 
-| Result | Value | Description |
-|--------|-------|-------------|
-| `PURCHASED` | `Purchasely.PurchaseResult.PURCHASED` | User successfully purchased a plan |
-| `CANCELLED` | `Purchasely.PurchaseResult.CANCELLED` | User cancelled the purchase flow |
-| `RESTORED` | `Purchasely.PurchaseResult.RESTORED` | User restored previous purchases |
+| Field | Description |
+|-------|--------------|
+| `presentation` | The presentation that was displayed |
+| `purchaseResult` | `'purchased'` \| `'cancelled'` \| `'restored'` \| `null` (string, not the old int enum) |
+| `plan` | The purchased/restored plan, if any |
+| `closeReason` | `Purchasely.CloseReason.button` \| `.backSystem` \| `.programmatic` \| `null` (always compare against the constant) |
+| `error` | Populated on failure |
 
 ```javascript
-function handlePurchaseResult(result) {
-  switch (result.result) {
-    case Purchasely.PurchaseResult.PURCHASED:
-      unlockPremium(result.plan);
+function handlePurchaseResult(outcome) {
+  if (outcome.error) {
+    console.error(outcome.error.message);
+    return;
+  }
+  switch (outcome.purchaseResult) {
+    case 'purchased':
+      unlockPremium(outcome.plan);
       break;
-    case Purchasely.PurchaseResult.RESTORED:
+    case 'restored':
       restorePremium();
       break;
-    case Purchasely.PurchaseResult.CANCELLED:
+    default:
+      // Dismissed without purchase — check outcome.closeReason if needed
       break;
   }
 }
@@ -285,10 +225,8 @@ function handlePurchaseResult(result) {
 ```javascript
 Purchasely.userLogin(
   'user_123',
-  function(shouldRefresh) {
-    if (shouldRefresh) {
-      // Call your backend to refresh user entitlements
-    }
+  function(success) {
+    console.log('User logged in:', success);
   }
 );
 ```
@@ -296,87 +234,144 @@ Purchasely.userLogin(
 ### Logout
 
 ```javascript
-Purchasely.userLogout(); // clears the user id and custom attributes
+Purchasely.userLogout(); // optional bool: clearUserAttributes (default true)
+```
+
+## User Attributes
+
+```javascript
+// String attribute
+Purchasely.setUserAttributeWithString('first_name', 'John');
+
+// Numeric attributes
+Purchasely.setUserAttributeWithInt('age', 30, Purchasely.DataProcessingLegalBasis.optional);
+Purchasely.setUserAttributeWithDouble('score', 4.5, Purchasely.DataProcessingLegalBasis.optional);
+
+// Boolean attribute
+Purchasely.setUserAttributeWithBoolean('is_premium', true);
 ```
 
 ## Subscriptions
 
+Fetch the user's active subscriptions (now accepts an optional `invalidateCache` boolean to force a fresh fetch):
+
 ```javascript
-Purchasely.userSubscriptions(function(subscriptions) {
-  subscriptions.forEach(function(sub) {
-    console.log('Plan:', sub.plan.vendorId, 'Source:', sub.subscriptionSource);
-  });
-}, function(error) { console.error(error); });
+Purchasely.userSubscriptions(
+  function(subscriptions) {
+    subscriptions.forEach(function(sub) {
+      console.log('Plan:', sub.plan.vendorId);
+      console.log('Store:', sub.subscriptionSource);
+    });
+  },
+  function(error) {
+    console.error('Failed to fetch subscriptions:', error);
+  },
+  false // invalidateCache
+);
 ```
 
-> **`presentSubscriptions` was removed in v6.** The native subscriptions-list UI was removed from both SDKs, so there is no `Purchasely.presentSubscriptions()` on the JS surface anymore (calling it throws `TypeError: not a function`). Build your own management screen from `userSubscriptions()` / `userSubscriptionsHistory()`. `presentProductWithIdentifier()`, `presentPlanWithIdentifier()`, `showPresentation()` and `hidePresentation()` were removed too — use placement/screen-based presentation, and `closePresentation()` / `backPresentation()` to control the displayed presentation.
+`Purchasely.presentSubscriptions()` is **removed entirely** in v6 (not a no-op) — build your own subscriptions screen from `userSubscriptions()` / `userSubscriptionsHistory()`.
 
 ## Deeplinks
 
-```javascript
-// Pass an incoming deeplink to the SDK
-Purchasely.handleDeeplink('app_scheme://ply/presentations/', function(handled) {
-  console.log('Handled by Purchasely?', handled);
-});
+### Allow Deeplinks (replaces `readyToOpenDeeplink`)
 
-// Deeplinks display immediately by default. Defer them during a splash/onboarding:
-Purchasely.allowDeeplink(false);
-// ...later, when ready:
+```javascript
 Purchasely.allowDeeplink(true);
-
-// Independently allow/defer campaign deeplinks (new in v6):
-Purchasely.allowCampaigns(true);
+Purchasely.allowCampaigns(true); // gate automatic campaign display
 ```
 
-> v5's `readyToOpenDeeplink(bool)` and `isDeeplinkHandled(url, ...)` were **removed** (renamed, not aliased) — use `allowDeeplink(bool)` and `handleDeeplink(url, success, error)`. `allowCampaigns(bool)` is new.
-
-### Default presentation dismiss handler
-
-For presentations opened by the SDK itself (campaigns, deeplinks, promoted in-app purchases), register the default dismiss handler — `setDefaultPresentationDismissHandler` (renamed from v5's `setDefaultPresentationResultHandler`). Stop receiving them with `removeDefaultPresentationDismissHandler()`:
+### Handle Incoming Deeplink (replaces `isDeeplinkHandled` — renamed, no alias)
 
 ```javascript
-Purchasely.setDefaultPresentationDismissHandler(function(outcome) {
-  // `presentation` identifies which campaign/deeplink closed
-  console.log('Dismissed:', outcome.presentation && outcome.presentation.screenId);
-  console.log('Purchase:', outcome.purchaseResult, '/ close:', outcome.closeReason);
-  if (outcome.result === Purchasely.PurchaseResult.PURCHASED && outcome.plan) {
-    console.log('Purchased', outcome.plan.vendorId);
+Purchasely.handleDeeplink(
+  'purchasely://your-deeplink-url',
+  function(handled) {
+    if (handled) {
+      console.log('Deeplink handled by Purchasely');
+    }
+  },
+  function(error) {
+    console.error('Deeplink error:', error);
   }
-}, function(error) { console.error(error); });
+);
 ```
 
-## Custom User Attributes
+### Default Presentation Dismiss Handler
+
+For paywalls the SDK opens itself (campaigns, deeplinks, Promoted IAP) — your app never calls `display()` for these, so register the global handler instead:
 
 ```javascript
-Purchasely.setUserAttributeWithString('favorite_spirit', 'gin');
-Purchasely.setUserAttributeWithBoolean('newsletter', true);
-Purchasely.setUserAttributeWithInt('viewed_articles', 7);
-Purchasely.setUserAttributeWithDouble('avg_session', 4.5);
-
-Purchasely.userAttribute('favorite_spirit', function(value) {
-  console.log('favorite_spirit =', value);
-});
-
-Purchasely.clearUserAttribute('favorite_spirit');
-Purchasely.clearUserAttributes();
+Purchasely.setDefaultPresentationDismissHandler(
+  function(outcome) { console.log('SDK paywall dismissed:', outcome.purchaseResult, outcome.closeReason); },
+  function(error) { console.error(error); }
+);
 ```
 
-There is no native increment/decrement on Cordova — read then set with `setUserAttributeWithInt`.
+## Synchronize Purchases
 
-## New v6 constants
+`synchronize()` now reports completion (v5 was fire-and-forget):
 
-The plugin exports these v6 constants (in addition to `LogLevel`, `PurchaseResult`, `RunningMode`, `Attribute`, …):
-
-`PresentationAction` (action kinds for `interceptAction`), `InterceptResult` (`success` / `failed` / `notHandled`), `TransitionType`, `DimensionType`, `Store` (`google` / `huawei` / `amazon`), `StorekitVersion` (`storeKit1` / `storeKit2`), `CloseReason` (`button` / `back_system` / `programmatic`), `PresentationType`.
-
-## Completion Build Gate
-
-Before declaring a Cordova integration complete, build the example app for each target platform and resolve any failure:
-
-```bash
-cd purchasely/example
-./android.sh   # builds the Android app with the linked plugin
-./ios.sh       # builds the iOS app
+```javascript
+Purchasely.synchronize(
+  function(ok) { console.log('Synchronized', ok); },
+  function(error) { console.error('Synchronize failed', error); }
+);
 ```
 
-If the build fails, fix the integration and rerun the build until it passes before reporting success.
+Fire-and-forget calls (`Purchasely.synchronize()`, no args) still work.
+
+## Complete Integration Example
+
+```javascript
+var app = {
+  initialize: function() {
+    document.addEventListener('deviceready', this.onDeviceReady.bind(this), false);
+  },
+
+  onDeviceReady: function() {
+    Purchasely.builder('YOUR_API_KEY')
+      .runningMode(Purchasely.RunningMode.full)
+      .logLevel(Purchasely.LogLevel.DEBUG)
+      .stores([Purchasely.Store.google])
+      .allowDeeplink(true)
+      .start(function() {
+        console.log('Purchasely ready');
+
+        // Set up action interceptors (one per kind)
+        Purchasely.interceptAction(Purchasely.PresentationAction.login, function(info, parameters) {
+          return new Promise(function(resolve) {
+            app.showLogin(function(userId) {
+              if (userId) {
+                Purchasely.userLogin(userId);
+                resolve(Purchasely.InterceptResult.success);
+              } else {
+                resolve(Purchasely.InterceptResult.failed);
+              }
+            });
+          });
+        });
+      }, function(error) {
+        console.error('Purchasely failed:', error);
+      });
+  },
+
+  showPaywall: function() {
+    Purchasely.presentation.placement('ONBOARDING').build().display()
+      .then(function(outcome) {
+        console.log('Result:', outcome.purchaseResult);
+      })
+      .catch(function(error) {
+        console.error('Presentation error:', error);
+      });
+  },
+
+  showLogin: function(callback) {
+    // Your login logic here
+    var userId = prompt('Enter user ID:');
+    callback(userId);
+  }
+};
+
+app.initialize();
+```
