@@ -1,6 +1,6 @@
 {
   "name": "purchasely",
   "description": "Purchasely SDK integration assistant — guides implementation, reviews code, and debugs issues across iOS, Android, React Native, Flutter, and Cordova.",
-  "version": "2.0.0-rc.6",
+  "version": "2.0.0",
   "contextFileName": "GEMINI.md"
 }

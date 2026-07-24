@@ -2,7 +2,9 @@
 
 All notable changes to this project are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.0.0] — 2026-07-24
+
+First stable release of the v6-generation plugin. All five SDK platforms — native iOS, native Android, Flutter, React Native, and **Cordova** — are now on the SDK v6 line at GA, with aligned migration, integration, review, and debug guidance.
 
 ### Added
 
@@ -17,7 +19,8 @@ All notable changes to this project are documented here. The format is based on 
 
 ### Changed
 
-- **SDK pins updated to GA** across all skills and references: native iOS **6.0.0** (SPM install now primary), Android **6.0.1**, Flutter **6.0.0** (stable on pub.dev), React Native **6.0.0** (GA, npm `latest`), Cordova **6.0.0-rc.3** (still pre-release).
+- **SDK pins updated to GA** across all skills and references: native iOS **6.0.0** (SPM install now primary), Android **6.0.1**, Flutter **6.0.0** (stable on pub.dev), React Native **6.0.0** (GA, npm `latest`), Cordova **6.0.0** (GA, npm `latest`; pulls native iOS `6.0.0` / Android `6.0.1`).
+- **Cordova finalized to the v6 builder API (GA).** Corrected the earlier pre-release framing that described Cordova as staying method-based: the `@purchasely/cordova-plugin-purchasely` `6.0.0` plugin exposes the same builder surface as React Native / Flutter — `Purchasely.builder(apiKey)…start()` (the options-object `start(...)` is also accepted), the `Purchasely.presentation.placement/screen/defaultSource().build()` request builder with `preload()` / `display(transition)` / `close()` / `back()` and `onLoaded`/`onPresented`/`onCloseRequested`/`onDismissed` callbacks, per-kind `interceptAction` with camelCase `PresentationAction` kinds + `InterceptResult`, and the 5-field presentation outcome (`purchaseResult` as a string). The v5 flat methods (`fetchPresentation*`, `presentPresentation*`, `presentSubscriptions`, `setPaywallActionInterceptor` + `onProcessAction`, `readyToOpenDeeplink` / `isDeeplinkHandled`) are **removed**. `references/cordova/migration-v6.md` and `references/cordova/integration.md` rewritten onto the builder API; `sdk-versions.md`, the five skills, and the shared concept references realigned; Android host requirements bumped to minSdk 23 / compileSdk 36 / targetSdk 35.
 - Android toolchain updated (Kotlin 2.3.x).
 - Action-interceptor guidance updated: returning success on purchase/restore in Observer mode auto-synchronizes — no manual `synchronize()` inside the interceptor.
 - Expanded `references/concepts/monthly-commitment.md` — added Google Play native installment subscriptions, cross-platform scope (SDK 6.0+ on iOS/Flutter/RN/Cordova) for the Apple advance-commitment fields, `INSTALLMENT_PAID` / `INSTALLMENT_REFUNDED` webhooks, `commitment_*` attributes.
@@ -217,6 +220,7 @@ Initial release of the Purchasely AI Plugin for Claude Code, GitHub Copilot CLI,
 - Reference documentation for Purchasely SDK setup, paywall display, purchases, subscriptions, privacy/GDPR, promotional offers, campaigns, and troubleshooting across iOS, Android, React Native, Flutter, and Cordova.
 - Installation and marketplace metadata for supported agent environments.
 
+[2.0.0]: https://github.com/Purchasely/Purchasely-AI-Plugin/releases/tag/2.0.0
 [2.0.0-rc.6]: https://github.com/Purchasely/Purchasely-AI-Plugin/releases/tag/2.0.0-rc.6
 [2.0.0-rc.5]: https://github.com/Purchasely/Purchasely-AI-Plugin/releases/tag/2.0.0-rc.5
 [2.0.0-rc.4]: https://github.com/Purchasely/Purchasely-AI-Plugin/releases/tag/2.0.0-rc.4
