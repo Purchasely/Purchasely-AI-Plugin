@@ -13,6 +13,9 @@ When a topic also has a deeper platform-specific take (e.g. SwiftUI lifecycle, J
 | [running-modes.md](running-modes.md) | Full vs Observer modes, log levels |
 | [paywall-actions.md](paywall-actions.md) | `PLYPresentationAction` / `PresentationAction` + per-action `interceptAction` / `PLYInterceptResult` / `InterceptResult` / string result (native iOS/Android, React Native, Flutter v6, and Cordova v6) + chaining multiple actions on a single button (purchase + open_screen / open_placement / deeplink) |
 | [presentation-types.md](presentation-types.md) | `PLYPresentationType` enum (NORMAL / FALLBACK / DEACTIVATED / CLIENT) guard |
+| [flows.md](flows.md) | Multi-step Flows: `display()` ownership, Transitions (only override Open Screen / Open Placement / Deeplink / Web Page), Display Mode vs Transition Type, `PLYPresentationOutcome` + local vs global dismiss handler, freeze causes, Flow analytics fields, Quiz insights |
+| [screen-resolution.md](screen-resolution.md) | Which Screen a Placement serves (Audience priority → *Everyone else* → A/B override), Audience vs conditional visibility, custom fonts (PostScript name / native project), prices rendering as a dash, published change not visible |
+| [localization.md](localization.md) | Two localization layers: Screen content (Console) vs `ply_*` SDK system strings (app bundle), 17 SDK languages, `setLanguage` |
 | [byos.md](byos.md) | Bring Your Own Screen — embed native screens (login, custom forms, legacy paywall) inside a Flow; iOS + Android only, SDK ≥ 5.6.0 |
 | [lottie-animations.md](lottie-animations.md) | Lottie animations in Purchasely Screens — weak dependency bridge for iOS / Android native rendering |
 | [presentation-cache.md](presentation-cache.md) | App-side caching + preload pattern (avoid `FlowsManager.flowSteps` accumulation) |
@@ -49,6 +52,9 @@ When a topic also has a deeper platform-specific take (e.g. SwiftUI lifecycle, J
 | Improving paywall perceived performance | `presentation-cache.md` (preload pattern) |
 | Debugging stuck paywalls / blank presentations | `presentation-types.md`, `presentation-cache.md`, `paywall-actions.md` |
 | Debugging rendering issues (missing components, blank images, silent Lottie) | `rendering-engine.md` |
+| Building or debugging a multi-step Flow (transitions, outcome, freeze) | `flows.md`, `presentation-types.md` |
+| "Wrong Screen / no Screen / stale Screen / no price / wrong font" | `screen-resolution.md` |
+| Translating Screens or SDK alerts | `localization.md` |
 | Embedding a native login / custom form / legacy paywall inside a Flow | `byos.md` (iOS + Android, SDK ≥ 5.6.0) |
 | Adding or debugging Lottie animations in Purchasely Screens | `lottie-animations.md` (iOS / Android native bridge; cross-platform apps configure host projects) |
 | Configuring multi-step buttons (purchase + next step, purchase + placement) | `paywall-actions.md` § Chaining multiple actions |

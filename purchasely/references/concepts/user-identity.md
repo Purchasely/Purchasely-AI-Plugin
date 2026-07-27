@@ -4,6 +4,16 @@ Applies to: **iOS, Android, React Native, Flutter, Cordova**.
 
 Identity is the source of **most production "the user paid but lost their subscription"** tickets. Getting the call sequence right — and understanding what happens to anonymous → logged-in transitions — eliminates a whole category of bugs.
 
+## Pseudonymous by design
+
+Purchasely never asks for an email address or a phone number. The identifier passed to `userLogin` is an **opaque string of your choosing** — an internal UUID is enough, with **no loss of functionality**:
+
+- **Analytics** — every UI / SDK event and every Server Event carries that ID.
+- **A/B tests** — assignment is a hash of the identifier (bucket 0–99), deterministic whether the ID is pseudonymous or not.
+- **Audiences** — matched on the user attributes you push yourself; nothing forces identifying data into them.
+
+Two rules: **do not use an email address as the user ID** (it brings PII into the platform for no benefit), and **do not hash at the last moment app-side** — the ID must stay stable and identical to what your backend and webhook consumers use, otherwise the link between user and subscription is unrecoverable.
+
 ## The model
 
 Purchasely tracks two user concepts:
@@ -83,8 +93,9 @@ A user may renew, cancel, or be charged while the app is backgrounded. To keep c
 authService.signIn(email: email, password: password) { result in
     switch result {
     case .success(let user):
-        Purchasely.userLogin(with: user.id) { isNew in
-            // isNew == true the first time this userId is seen on this device
+        Purchasely.userLogin(with: user.id) { shouldRefreshCredentials in
+            // true when a subscription was transferred from the anonymous user
+            // → re-fetch the user's rights from your backend
         }
     case .failure: break
     }
@@ -107,7 +118,9 @@ Purchasely.synchronize(
 // In your sign-in flow
 authRepository.signIn(email, password)
     .onSuccess { user ->
-        Purchasely.userLogin(user.id) { isNew -> }
+        Purchasely.userLogin(user.id) { shouldRefresh ->
+            // true when a subscription was transferred → refresh rights from your backend
+        }
     }
 
 // In your sign-out flow
@@ -170,6 +183,42 @@ document.addEventListener('resume', () => {
 5. The anonymous ID is retired.
 
 > **Caveat.** If the user uninstalls before signing in, the anonymous ID is lost. There is no recovery path — Apple's `restoreAllProducts` will find the receipt again, but you can no longer attribute the original anonymous events.
+
+On the webhook side a transfer emits **`DEACTIVATE` on the anonymous ID** and **`ACTIVATE` on the connected one**.
+
+> **Only subscriptions transfer.** Consumables and non-consumables are **not** transferable from the anonymous user to the connected account.
+
+## Anonymous user lifecycle
+
+| Topic | Behavior |
+|-------|----------|
+| **Lifetime** | Tied to the installation. Stable while the app stays installed; uninstalling loses the ID with no recovery. |
+| **Multi-device** | No — the anonymous ID is per install. Cross-device continuity requires a stable app-level ID that you provide. |
+| **Entitlements** | Purchases attach to the `anonymous_user_id`; webhooks carry that field instead of `user_id`. |
+| **Logout** | `userLogout()` removes the app ID, the SDK falls back to the device's anonymous ID, and user attributes are purged (Android: `userLogout(clearUserAttributes = false)` keeps them). The subscription stays attached to the identifier that owned it — it is **not** returned to the anonymous user. |
+| **Reinstall, logged-in user** | Nothing to do — `userLogin` with the same ID restores entitlements from the backend. |
+| **Reinstall, anonymous user** | A new `anonymous_user_id` is generated. **Restore** recovers the entitlement from the store, but the previous anonymous history and its event attribution are gone. |
+
+> **Support tip.** Surface the `anonymous_user_id` somewhere in the app — a "My subscriptions" screen, or the footer of a contact email. It saves a lot of time when debugging a user-specific issue. Debug Mode also displays it.
+
+## Unknown users
+
+A purchase that reaches Purchasely **only through a store notification**, with no identifier attached. Causes:
+
+- the purchase was made on an app version that did not have the SDK yet,
+- the subscription came through **family sharing**,
+- an error interrupted the purchase (app killed, network loss),
+- **Observer mode** and the transaction completed outside the action interceptor without a `Purchasely.synchronize()` call.
+
+Consequences: they appear in the Console subscription and one-time purchase listings, but **no webhook is sent** and nothing is forwarded to integrations (can be enabled on request). S2S forwarding keeps working.
+
+Most resolve themselves: a family-shared subscription attaches automatically when the member opens the app, and an interrupted purchase is fixed by the user tapping **Restore**.
+
+## One subscription, two accounts
+
+Not by design: a subscription is attached to one identifier at a time, and a transfer **moves** it rather than duplicating it.
+
+Family sharing is the store-provided exception — the member gets access, every server event carries `is_family_shared: true`, and `FAMILY_SHARED_REVOKED` fires when the owner removes access. Purchasely receives **no data about the payer**; the stores do not transmit it.
 
 ## Anti-patterns
 

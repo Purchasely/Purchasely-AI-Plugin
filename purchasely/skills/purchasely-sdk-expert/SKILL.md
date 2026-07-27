@@ -76,6 +76,9 @@ Load as needed:
 - `../../references/concepts/promotional-offers.md` — Apple promos, Google offers, offer codes
 - `../../references/concepts/dynamic-offerings.md` — `setDynamicOffering` runtime plan/offer overrides (server-side at fetch); same-plan billing-type pitfall
 - `../../references/concepts/monthly-commitment.md` — Apple advance commitment (12-month billed monthly), `PLYBillingPlanType`, iOS 26.4+ eligibility (excl. US/SG), and Google Play native installment subscriptions
+- `../../references/concepts/flows.md` — Flows: `display()` ownership, Transitions, Display Mode vs Transition Type, `PLYPresentationOutcome`, Quiz insights
+- `../../references/concepts/screen-resolution.md` — Placement → Audience priority → A/B override, custom fonts, prices not resolving
+- `../../references/concepts/localization.md` — Screen content vs `ply_*` SDK system strings, `setLanguage`
 - `../../references/concepts/campaigns.md` — trigger / placement campaigns
 - `../../references/concepts/byos.md` — Bring Your Own Screen, iOS/Android only
 - `../../references/concepts/lottie-animations.md` — Lottie weak dependency bridge
@@ -83,6 +86,7 @@ Load as needed:
 - `../../references/concepts/rendering-engine.md` — UIKit / Android Views rendering engine and gotchas
 - `../../references/concepts/web-checkout.md` — Web Checkout action/flow
 - `../../references/architecture-patterns.md` — optional wrapper / gateway architecture
+- `../../references/console-and-data.md` — **non-SDK client questions**: environments and API keys, moving a Screen between apps, Plan deletion, roles, A/B test reading and constraints, dashboard vs own-query discrepancies, gross revenue vs store payout, webhooks / exports / Client API, subscriber base import
 
 ### Platform references
 

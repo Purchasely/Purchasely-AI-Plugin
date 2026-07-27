@@ -546,3 +546,27 @@ Purchasely.interceptAction<PLYPresentationAction.Close> { info, _ ->
 **Fix:** map a given plan to a **single** billing plan type per presentation. If you need both up-front and monthly-commitment variants on screen, back them with **two distinct plans/products**. Call `Purchasely.clearDynamicOfferings()` before re-registering so a leftover offering from a previous screen/session doesn't add a second mapping for the same plan. Register offerings **before** fetching/displaying the placement (they are applied server-side at fetch).
 
 See [dynamic-offerings.md](../concepts/dynamic-offerings.md) and [monthly-commitment.md](../concepts/monthly-commitment.md).
+
+## 13. Prices Render as a Dash or Empty
+
+**Symptoms:** the Screen renders but price placeholders (`{{PRICE}}`, `{{AMOUNT}}`, …) show a dash or nothing.
+
+**Check in order:** Plan not mapped to a store product for the platform under test → store product not purchasable yet (App Store "Ready to Submit" + price schedule + paid apps agreement; Google Play product **active** + app published on a track) → tester account not eligible / wrong storefront → **Android-only Google Play Billing dependency conflict** (prices fine on iOS but not Android; on SDK 5.x this is `billing` vs `billing-ktx`; on React Native / Flutter / Cordova the main package and the Google package must be on the **exact same version**) → `start()` failed.
+
+Full checklist: [screen-resolution.md](../concepts/screen-resolution.md#prices-render-as-a-dash-or-empty). Sandbox/TestFlight prices in USD are expected store behavior, not a bug — see [testing/README.md](../testing/README.md).
+
+## 14. A Published Console Change Is Not Visible in the App
+
+**Symptoms:** the Screen was edited and published in the Console, the device still shows the old one.
+
+**Check in order:** saved but **not published** (drafts require Debug Mode) → the SDK **cached** the Screen for the session (fully close and reopen the app, or dismiss and re-open the paywall so it re-fetches) → the Placement resolves to a **different Screen** than the default because an Audience or a running A/B test overrides it → an already-bucketed A/B test user keeps their variant by design.
+
+A screenshot taken without reopening the paywall may predate the change entirely. See [screen-resolution.md](../concepts/screen-resolution.md#a-published-change-is-not-visible-in-the-app).
+
+## 15. Custom Font Not Applied / Text Clipped on One Platform
+
+**Symptoms:** the Console font is ignored on device, or multiline text is clipped on iOS *or* Android only.
+
+**Cause:** Screens render with **native** components, so the font must exist in the **native project**. The file uploaded in the Console is used **only for the Composer preview** and is never shipped. The iOS field must match the font's **PostScript name** (not the filename); the Android field must match the resource name. A missing font is silently substituted by the OS, which changes line height and wrapping — hence clipping on one platform only.
+
+Full prerequisites: [screen-resolution.md](../concepts/screen-resolution.md#custom-fonts--the-font-must-exist-in-the-native-project).

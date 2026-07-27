@@ -2,6 +2,28 @@
 
 All notable changes to this project are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [2.0.1] — 2026-07-27
+
+Documentation FAQ (docs.purchasely.com Help Center) and the bundled references were cross-checked in both directions; this release imports the FAQ knowledge that had no reference coverage.
+
+### Added
+
+- `references/concepts/flows.md` — Flows: `display()` must own the presentation or navigation is lost, Transitions only override Open Screen / Open Placement / Deeplink / Web Page, Display Mode vs Transition Type (`Push` needs a nav bar, else Modal on iOS / Full screen on Android), `PLYPresentationOutcome` fields and local-vs-global dismiss handler, freeze/blank causes, Flow analytics fields, Quiz answers via the custom user attribute listener.
+- `references/concepts/screen-resolution.md` — Placement resolution order (Audience priority → *Everyone else* → A/B override), Audience vs conditional visibility, expired-subscription attribute caveat, no-Screen-at-all checklist, published-change-not-visible, custom fonts (native project + iOS PostScript name), prices rendering as a dash, expected cross-platform rendering differences.
+- `references/concepts/localization.md` — the two localization layers (Screen content in the Console vs `ply_*` system strings in the app bundle), 17 SDK languages with English fallback, no per-component fallback, store-formatted prices/durations, `setLanguage` per platform.
+- `references/console-and-data.md` — Console and data answers the SDK expert gets asked in the same thread: environments and per-app API keys, duplicating a Screen across apps, why a Plan cannot be deleted, roles and access, A/B test reading (26 variants, deterministic bucketing, weights, control-group structures, constraints, when to read), Server vs UI/SDK events, webhook/forwarding/Client API/CSV channels, dashboard-vs-own-query discrepancies, gross revenue vs store payout, subscriber base import.
+- `references/troubleshooting/common-issues.md` §13–15 — prices rendering as a dash, published Console change not visible, custom font not applied / text clipped on one platform.
+- `references/concepts/user-identity.md` — pseudonymous-by-design section (no PII required, never use an email as user ID), anonymous user lifecycle table (reinstall, logout, multi-device), unknown users (causes, no webhook by default, self-resolution), one-subscription-two-accounts and family sharing.
+- `references/concepts/privacy-settings.md` — GDPR roles and DPA, certifications and Trust Center, DPIA/TOMs on request, the four-entry processing register with legal basis and revocability, children-oriented app mode and its trade-off, `POST /user_deletion_requests` (HMAC signature, coverage, 50 req/10 min throttle).
+- `references/architecture-patterns.md` §6 — inline paywall rules: Cordova unsupported, preload required, height configured in the Composer and exposed as `PLYPresentation.height`, view removal on `onCloseRequested` is app-side, unbounded container caveat, Console preview is not a size reference.
+
+### Changed
+
+- `references/concepts/user-identity.md` — `userLogin` completion documented as `shouldRefreshCredentials` (a subscription was transferred → refresh rights from your backend) instead of an "is new user" flag; transfer emits `DEACTIVATE` on the anonymous ID and `ACTIVATE` on the connected one; only subscriptions transfer, not consumables/non-consumables.
+- `skills/purchasely-sdk-expert/SKILL.md` and `skills/purchasely-debug/SKILL.md` reference maps updated with the new files.
+
 ## [2.0.0] — 2026-07-24
 
 First stable release of the v6-generation plugin. All five SDK platforms — native iOS, native Android, Flutter, React Native, and **Cordova** — are now on the SDK v6 line at GA, with aligned migration, integration, review, and debug guidance.

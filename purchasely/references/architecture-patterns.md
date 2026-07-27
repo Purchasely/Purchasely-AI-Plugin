@@ -283,6 +283,15 @@ if (inlineResult is FetchResult.Success) {
 - `onResult` forwards purchase events to the ViewModel
 - If fetch failed, the banner is simply not shown
 
+### Rules that cover most inline issues
+
+- **Available on Swift, Kotlin (including Compose), Flutter and React Native. Cordova is not supported.**
+- **Pre-fetch first.** A nested view is built from a **preloaded** presentation, not from a placement ID (Android `buildView(context)` requires a loaded presentation).
+- **The height is configured in the Composer**, on the first item (the layout) of the Screen structure, and exposed as `PLYPresentation.height` on the preloaded presentation — size the container from it instead of hardcoding.
+- **The host view owns layout and removal.** UIKit: add the presentation's view as a subview and pin its four anchors. SwiftUI: `presentation.swiftUIView`. Android: add the built view to your container. On close the SDK calls `onCloseRequested` — **removing the view from your layout is your responsibility**, the SDK does not do it.
+- **An unbounded container is the usual cause of a blank or clipped inline paywall** — the host must give it a real height.
+- **The Console preview is not a size reference** for a nested paywall: it renders at full-screen proportions while the device renders at your container's size.
+
 ---
 
 ## 7. User Attributes

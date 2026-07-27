@@ -18,6 +18,9 @@ The bundled references are intentionally curated, not a full copy of the public 
 - `../../references/concepts/paywall-actions.md` — interceptor rules + returned/resolved result invariant (root cause of most "frozen UI" bugs)
 - `../../references/concepts/presentation-types.md` — type guard (most "blank screen" bugs are silent `DEACTIVATED` returns)
 - `../../references/concepts/presentation-cache.md` — stale presentations / stuck Flow paywalls + preload pattern
+- `../../references/concepts/flows.md` — Flow frozen/blank, transition ignored, `Push` without a nav bar, `PLYPresentationOutcome` never delivered
+- `../../references/concepts/screen-resolution.md` — wrong Screen served, no Screen at all, published change not visible, prices as a dash, custom font not applied
+- `../../references/concepts/localization.md` — untranslated string: Screen content tab vs `ply_*` system string
 - `../../references/concepts/observer-mode-post-purchase.md` — intercept-result → dismiss ordering issues
 - `../../references/concepts/running-modes.md` — Full vs Observer mode confusion
 - `../../references/concepts/programmatic-purchases.md` — wrong app-side purchase API names (`purchase(planId)`, `purchase({ planId })`, Cordova positional callbacks)
