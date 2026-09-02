@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Fixed
+
+- `purchasely/.claude-plugin/plugin.json`: removed the redundant `"hooks": "./hooks/hooks.json"` key. Claude Code loads `hooks/hooks.json` on its own, so the manifest entry made the plugin fail to load with `Hook load failed: Duplicate hooks file detected`. The skills, the agent and the commands loaded, the session-start hook did not. `2.0.0-rc.6` removed the same key from the root `.claude-plugin/plugin.json`, but the marketplace installs `./purchasely`, so the nested manifest is the one that reaches the harness.
+
 ## [2.1.0] — 2026-09-02
 
 The `purchasely-sdk-expert` skill now verifies and cites a source before it answers a behavior question, and it routes a topic to the right reference instead of guessing. A support investigation had spent a day reading SDK and backend source code to rediscover a documented product rule.
