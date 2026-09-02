@@ -4,7 +4,7 @@ This project is using the **Purchasely AI Plugin**. You have access to five auto
 
 ## Skills (auto-invoked when relevant)
 
-- **`purchasely-sdk-expert`**: how Purchasely works and behaves, product and Console behaviour (campaigns, campaign triggers and capping, audiences and targeting, placements and screen resolution, A/B tests, running modes, presentation cache, offer eligibility, localization) and SDK APIs (paywalls, purchases, subscriptions, identity, deeplinks, privacy).
+- **`purchasely-sdk-expert`**: how Purchasely works and behaves, product and Console behavior (campaigns, campaign triggers and capping, audiences and targeting, placements and screen resolution, A/B tests, running modes, presentation cache, offer eligibility, localization) and SDK APIs (paywalls, purchases, subscriptions, identity, deeplinks, privacy).
 - **`purchasely-integrate`** — step-by-step SDK integration: install, `Purchasely.start(...)`, paywall display, action interceptor, user login/logout, Restore, Manage Subscription, plus campaigns / promo offers / analytics.
 - **`purchasely-review`** — checklist review that audits an existing integration for missing interceptor completions, deprecated APIs, identity ordering, `PrivacyInfo.xcprivacy`, Google Play Billing v8, log-level gating, and more.
 - **`purchasely-debug`** — diagnostic flow for blank paywalls, frozen UI, purchase failures, and deeplinks. Includes SDK debug logging, `PLYError` decoding, and the screen-issue-report escalation template.
