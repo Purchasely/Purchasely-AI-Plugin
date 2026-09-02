@@ -1,6 +1,6 @@
 ---
 name: purchasely-sdk-expert
-description: "Use when the user asks a free-form question about Purchasely SDK APIs, paywalls, placements, purchases, subscriptions, campaigns, user identity, deeplinks, privacy, or SDK behavior across iOS, Android, React Native, Flutter, and Cordova."
+description: "Use when a question is about how Purchasely works or behaves, whether it comes from a user or from another agent that investigates a report. Covers product and Console behavior (campaigns, campaign triggers and capping, audiences and targeting, placements and screen resolution, A/B tests, running modes, presentation cache, offer eligibility, localization) and SDK APIs (paywalls, purchases, subscriptions, user identity, deeplinks, privacy) on iOS, Android, React Native, Flutter, and Cordova. Also use for 'how does X work', 'why does X happen' and 'X does not work' reports: the cause is often a documented product rule, so check this skill before reading any SDK, backend or Console source code."
 ---
 
 # Purchasely SDK Expert
@@ -11,8 +11,59 @@ For workflow tasks, use the dedicated skills instead:
 
 - New integration or step-by-step implementation → `purchasely-integrate`
 - Existing integration audit → `purchasely-review`
-- Runtime issue / broken behavior → `purchasely-debug`
+- Runtime issue where the observed behavior diverges from the documented one → `purchasely-debug`
 - v5 → v6 upgrade → `purchasely-migrate`
+
+> **A symptom report is not automatically debug work.** "X does not work" is very often a documented product rule, not a defect. Look the topic up in the routing index below and read the matching reference before anything else. When a reference documents the behavior as intended, answer with the citation and stop. Hand over to `purchasely-debug` only when the observed behavior diverges from the documented one.
+
+## Source of truth (apply before answering)
+
+Never answer a question about product or SDK behavior from memory. Every statement about expected behavior carries its source.
+
+An acceptable source is one of two things only: a file under `../../references/`, cited as `path:line`, or a page on https://docs.purchasely.com/. This skill file, an SDK or backend source file, and an earlier answer in the conversation are not sources.
+
+1. **Search `../../references/` first.** Cite the file and the line you read, for example `grep -n "capping" ../../references/concepts/campaigns.md`. Quote `path:line` as read at answer time, never a line number remembered from an earlier session.
+2. **Read https://docs.purchasely.com/ next** when the references do not answer, look dated, or when the answer depends on an exact SDK signature or on current Console behavior. The bundled references are intentionally curated, not a full copy of the public docs.
+3. **Say that you do not know** when neither source answers. Name the reference file or the documentation page to check next. Do not produce a plausible answer without a source.
+4. **Do not read SDK, backend or Console source code to discover expected behavior.** Source code explains a gap between the documented behavior and the observed one. It never defines the documented behavior.
+5. **Qualify before you accuse.** Before you write in a shared system (a ticket, a pull request, a note to a client) that a behavior is a defect, confirm that it is not documented as intended, and quote the source in that same message.
+
+## Routing index (topic to reference file)
+
+Read the matching file before you answer. Paths are relative to this skill (`../../references/`).
+
+| The question is about | Read first |
+|---|---|
+| Campaign, capping, frequency cap, impression cap, exposure window, `APP_STARTED` trigger, campaign not displayed | `concepts/campaigns.md` |
+| Full vs Observer, who owns the purchase flow | `concepts/running-modes.md` |
+| `userLogin` / `userLogout`, anonymous id, unknown user, identity transfer | `concepts/user-identity.md` |
+| Audience, targeting, user attribute, segment | `concepts/user-attributes-targeting.md` |
+| Preload, stale or missing paywall content, cache invalidation | `concepts/presentation-cache.md` |
+| Which Screen a Placement serves, audience priority, A/B override, no Screen at all | `concepts/screen-resolution.md` |
+| `NORMAL` / `FALLBACK` / `DEACTIVATED` / `CLIENT`, blank paywall | `concepts/presentation-types.md` |
+| Button action, interceptor, frozen paywall | `concepts/paywall-actions.md` |
+| Flow, Transition, Quiz, `PLYPresentationOutcome` | `concepts/flows.md` |
+| Promotional offer, offer code, developer determined offer, offer eligibility | `concepts/promotional-offers.md` |
+| `setDynamicOffering`, runtime plan or offer override | `concepts/dynamic-offerings.md` |
+| 12-month commitment billed monthly, Google Play installments | `concepts/monthly-commitment.md` |
+| Premium gating, entitlement check, restore | `concepts/subscription-checks.md` |
+| Native subscription management page, cancellation | `concepts/subscription-management.md` |
+| Observer-mode post-purchase ordering and dismissal | `concepts/observer-mode-post-purchase.md` |
+| Consent, GDPR, privacy purposes, user deletion request | `concepts/privacy-settings.md` |
+| Programmatic purchase from app code | `concepts/programmatic-purchases.md` |
+| Language, translation, `ply_*` system strings, `setLanguage` | `concepts/localization.md` |
+| Lottie animation | `concepts/lottie-animations.md` |
+| Bring Your Own Screen, custom native screen in a Flow | `concepts/byos.md` |
+| Web Checkout action or flow | `concepts/web-checkout.md` |
+| Rendering engine gotchas, layout differences | `concepts/rendering-engine.md` |
+| Forwarding SDK events to a third-party tool | `concepts/analytics-integration.md` |
+| One user with subscriptions on several stores, coexistence, double billing | `cross-platform-subscriptions.md` |
+| Current SDK versions, minimum OS and API levels | `sdk-versions.md` |
+| Console and data questions: environments, API keys, roles, reading an A/B test, dashboard vs own query, revenue, webhooks, exports | `console-and-data.md` |
+| Purchasely platform architecture: SDK, Purchasely Server, stores, client backend, third-party tools | `purchasely-architecture.md` |
+| Optional wrapper or gateway architecture, inline paywall rules | `architecture-patterns.md` |
+
+Platform files (exact setup and signatures) and troubleshooting files are listed in the **Reference map** below.
 
 ## Core context
 
@@ -45,7 +96,7 @@ Observer mode means the app owns billing. Returning `SUCCESS` from the purchase/
 
 ## Answering workflow
 
-1. **Classify the question.** If it is actually integration, review, debug, or migration work, switch to the matching dedicated skill.
+1. **Look up the documented behavior, then classify.** A report that something does not work is not automatically debug work: find the topic in the routing index above and read the reference first. Answer with the citation when the behavior is documented as intended. Switch to `purchasely-integrate`, `purchasely-review`, `purchasely-debug` or `purchasely-migrate` for genuine workflow tasks, or when the observed behavior diverges from the documented one.
 2. **Detect platform and SDK generation.** Use project files or the user's wording. If ambiguous and exact code depends on it, ask one concise clarifying question.
 3. **Load references before exact-code answers.** Use the reference map below. Local references are the fast path; if a detail is missing or potentially stale, verify against official Purchasely docs when web access is available.
 4. **Answer with current API only.** If the user's snippet uses old API names, point out the replacement.
@@ -153,6 +204,7 @@ For any campaign / trigger / `APP_STARTED` / launch display question, load `../.
 
 - Trigger-based campaigns are SDK-managed. The app does not manually build or fetch the campaign paywall.
 - Placement-based campaigns override the placement when the app displays that placement.
+- **Capping (impression cap, frequency, exposure window) applies to trigger-based delivery only.** A campaign served through a Placement is never capped: the SDK evaluates it every time the app displays that placement. "The capping does not work" on a placement-served campaign is documented behavior, not a defect. Source: `../../references/concepts/campaigns.md` (the `> Important` callout under "The four campaign dimensions", and the capping bullet under "Anti-patterns").
 - Mention deeplink display readiness: v6 native / Flutter / React Native / Cordova all use `allowDeeplink`, and it defaults to **true** everywhere. On React Native the builder simply **omits** the key when `.allowDeeplink(...)` isn't called, and the native default (`true`) applies — there is no RN-specific exception. Cordova v6 also exposes `allowCampaigns` separately from `allowDeeplink`.
 - **`allowCampaigns` default flip (v6):** defaults to **true** on iOS/Android/Flutter (v5 default was `false`). If a client migrating to v6 suddenly sees campaigns firing that never showed before, this default change is the cause, not a regression. Campaign deeplink opening is additionally conditioned on the SDK being config-ready.
 
@@ -203,3 +255,4 @@ Use this checklist when another Purchasely workflow asks for expert validation a
 - Keep explanations concise.
 - Include version/platform caveats when behavior differs.
 - If you cannot verify a current Console behavior or exact signature, say what you checked and what remains uncertain.
+- Cite the source of every statement about expected behavior: a reference `path:line`, or a https://docs.purchasely.com/ page.

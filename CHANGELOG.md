@@ -4,6 +4,19 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Added
+
+- `skills/purchasely-sdk-expert/SKILL.md` and `agents/purchasely-sdk-expert.md`: a **Source of truth** rule. Search the bundled `references/` first and cite `path:line`, then check https://docs.purchasely.com/ when a detail is missing, dated, or depends on an exact signature or on current Console behaviour, and say "I do not know" plus where to look rather than answer a product behaviour rule from memory. Source code never defines expected behaviour.
+- `skills/purchasely-sdk-expert/SKILL.md`: a **Routing index** table at the top of the file (topic to reference file) covering every file in `references/concepts/` plus the cross-store, versions, Console and architecture references.
+- `skills/purchasely-sdk-expert/SKILL.md`: the campaign capping rule in the Campaigns section, with its source. Capping applies to trigger-based delivery only, never to a campaign served through a Placement.
+
+### Changed
+
+- `skills/purchasely-sdk-expert/SKILL.md` and `agents/purchasely-sdk-expert.md`: the `description:` now covers product and Console behaviour questions (campaign triggers and capping, audiences, placements and screen resolution, A/B tests, running modes, cache, offer eligibility, localization), questions asked by another agent, and "how does X work" / "why does X happen" / "X does not work" reports. The previous wording only described SDK questions, so a product behaviour question did not reliably invoke the skill.
+- `hooks/intro.md`: the session-start routing sentence lists the same concept keywords, and states that a report of something not working goes to the skill and to `references/concepts/` before any source code.
+- `skills/purchasely-sdk-expert/SKILL.md`: the answering workflow now looks up the documented behaviour before it classifies the question. A report that something does not work is no longer routed straight to `purchasely-debug`; it goes there only when the observed behaviour diverges from the documented one.
+- `references/concepts/campaigns.md`: the trigger-only capping rule is now also stated in the opening summary, so it is visible without reading the whole file.
+
 ## [2.0.1] — 2026-07-27
 
 Documentation FAQ (docs.purchasely.com Help Center) and the bundled references were cross-checked in both directions; this release imports the FAQ knowledge that had no reference coverage.

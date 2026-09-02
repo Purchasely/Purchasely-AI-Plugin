@@ -10,7 +10,7 @@ A Placement resolves in a strict order, and the **first match wins**:
 
 1. The SDK walks the Audiences attached to the Placement **from the highest priority down** (top of the list = highest).
 2. The first Audience the user belongs to determines the Screen.
-3. If no Audience matches, the Screen attached to **_Everyone else_** is served.
+3. If no Audience matches, the Screen attached to ***Everyone else*** is served.
 4. A running **A/B test overrides** that result with one of its variants.
 
 So a user can belong to several Audiences and still see only one Screen — the highest-priority one. If the wrong Screen appears, **reorder the Audiences on the Placement** (`⋮` → *Prioritize audiences*) rather than editing the Audiences themselves.
