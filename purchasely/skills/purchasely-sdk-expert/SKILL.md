@@ -11,7 +11,7 @@ For workflow tasks, use the dedicated skills instead:
 
 - New integration or step-by-step implementation → `purchasely-integrate`
 - Existing integration audit → `purchasely-review`
-- Runtime issue / broken behavior → `purchasely-debug`
+- Runtime issue where the observed behaviour diverges from the documented one → `purchasely-debug`
 - v5 → v6 upgrade → `purchasely-migrate`
 
 > **A symptom report is not automatically debug work.** "X does not work" is very often a documented product rule, not a defect. Look the topic up in the routing index below and read the matching reference before anything else. When a reference documents the behaviour as intended, answer with the citation and stop. Hand over to `purchasely-debug` only when the observed behaviour diverges from the documented one.
