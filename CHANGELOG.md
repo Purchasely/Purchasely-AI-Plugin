@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+## [2.1.1] — 2026-09-02
+
+A marketplace install of the Claude Code plugin reported `failed to load` since `2.0.0`. The plugin's own manifest declared a hooks file that Claude Code already loads by convention, so the `SessionStart` hook never reached the session.
+
 ### Fixed
 
 - `purchasely/.claude-plugin/plugin.json`: removed the redundant `"hooks": "./hooks/hooks.json"` key. Claude Code loads `hooks/hooks.json` on its own, so the manifest entry made the plugin fail to load with `Hook load failed: Duplicate hooks file detected`. The skills, the agent and the commands loaded, the session-start hook did not. `2.0.0-rc.6` removed the same key from the root `.claude-plugin/plugin.json`, but the marketplace installs `./purchasely`, so the nested manifest is the one that reaches the harness.

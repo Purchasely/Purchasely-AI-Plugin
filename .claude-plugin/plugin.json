@@ -1,7 +1,7 @@
 {
   "name": "purchasely",
   "description": "Purchasely SDK integration assistant — guides implementation, reviews code, and debugs issues across iOS, Android, React Native, Flutter, and Cordova.",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "author": {
     "name": "Purchasely",
     "email": "support@purchasely.com"
