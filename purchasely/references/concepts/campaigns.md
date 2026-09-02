@@ -9,6 +9,8 @@ Applies to: **iOS, Android, React Native, Flutter, Cordova**.
 - **on an event trigger** (e.g. `APP_STARTED`), or
 - **on a Placement** (instead of the Placement's default rules).
 
+> **Capping applies to trigger-based delivery only.** Impression cap, frequency and exposure window are evaluated on the trigger path (`APP_STARTED` and other event triggers). A campaign served through a Placement is never capped: the SDK evaluates it every time the app calls that placement. A report that "the campaign capping does not work" on a placement-served campaign is expected behaviour, not a defect. Detail under *The four campaign dimensions* and *Anti-patterns* below.
+
 Campaigns are the recommended way to schedule promos (Black Friday, anniversary offers), run retention flows, or centralise display rules — without shipping code.
 
 ## Why use them
