@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+## [2.1.0] — 2026-09-02
+
+The `purchasely-sdk-expert` skill now verifies and cites a source before it answers a behavior question, and it routes a topic to the right reference instead of guessing. A support investigation had spent a day reading SDK and backend source code to rediscover a documented product rule.
+
 ### Added
 
 - `skills/purchasely-sdk-expert/SKILL.md` and `agents/purchasely-sdk-expert.md`: a **Source of truth** rule. Search the bundled `references/` first and cite `path:line`, then check https://docs.purchasely.com/ when a detail is missing, dated, or depends on an exact signature or on current Console behaviour, and say "I do not know" plus where to look rather than answer a product behaviour rule from memory. Source code never defines expected behaviour.
