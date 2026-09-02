@@ -12,6 +12,8 @@ All notable changes to this project are documented here. The format is based on 
 
 ### Changed
 
+- `skills/purchasely-sdk-expert/SKILL.md` and `agents/purchasely-sdk-expert.md`: the `description:` now covers product and Console behaviour questions (campaign triggers and capping, audiences, placements and screen resolution, A/B tests, running modes, cache, offer eligibility, localization), questions asked by another agent, and "how does X work" / "why does X happen" / "X does not work" reports. The previous wording only described SDK questions, so a product behaviour question did not reliably invoke the skill.
+- `hooks/intro.md`: the session-start routing sentence lists the same concept keywords, and states that a report of something not working goes to the skill and to `references/concepts/` before any source code.
 - `skills/purchasely-sdk-expert/SKILL.md`: the answering workflow now looks up the documented behaviour before it classifies the question. A report that something does not work is no longer routed straight to `purchasely-debug`; it goes there only when the observed behaviour diverges from the documented one.
 - `references/concepts/campaigns.md`: the trigger-only capping rule is now also stated in the opening summary, so it is visible without reading the whole file.
 

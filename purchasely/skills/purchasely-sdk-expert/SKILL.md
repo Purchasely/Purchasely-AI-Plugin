@@ -1,6 +1,6 @@
 ---
 name: purchasely-sdk-expert
-description: "Use when the user asks a free-form question about Purchasely SDK APIs, paywalls, placements, purchases, subscriptions, campaigns, user identity, deeplinks, privacy, or SDK behavior across iOS, Android, React Native, Flutter, and Cordova."
+description: "Use when a question is about how Purchasely works or behaves, whether it comes from a user or from another agent that investigates a report. Covers product and Console behaviour (campaigns, campaign triggers and capping, audiences and targeting, placements and screen resolution, A/B tests, running modes, presentation cache, offer eligibility, localization) and SDK APIs (paywalls, purchases, subscriptions, user identity, deeplinks, privacy) on iOS, Android, React Native, Flutter, and Cordova. Also use for 'how does X work', 'why does X happen' and 'X does not work' reports: the cause is often a documented product rule, so check this skill before reading any SDK, backend or Console source code."
 ---
 
 # Purchasely SDK Expert
