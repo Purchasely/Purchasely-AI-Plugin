@@ -375,6 +375,55 @@ Purchasely.removeAllActionInterceptors();
 
 > `OpenPresentation.presentationId` is the **target presentation** the action wants to open (`PLYPresentationAction.OpenPresentation(presentationId = …)` in source) — it is a parameter on the action, not a renamed field. It is distinct from `PLYPresentation.screenId` (the loaded presentation's own id, renamed from `id` in v6). The "don't use `presentationId`" guidance above applies to the loaded `PLYPresentation`, not to this action parameter.
 
+## UI Handler — Alerts
+
+In Full mode the SDK displays its own `AlertDialog` at the end of a paywall action (purchase success, purchase error, restore result, plan change). `PLYUIHandler.onAlert` lets the app display its own dialog instead.
+
+```kotlin
+Purchasely.uiHandler = object : PLYUIHandler {
+    override fun onAlert(
+        alert: PLYAlertMessage,
+        purchaselyView: View,
+        activity: Activity?,
+        proceed: () -> Unit
+    ) { … }
+}
+// Java: Purchasely.setUIHandler(new CustomUIHandler());
+```
+
+**Every branch of `onAlert` must end with exactly one of `proceed()` or `alert.onDismiss()`.**
+
+| Call | Effect |
+|------|--------|
+| `proceed()` | The SDK displays its own dialog and dismisses the alert when the user taps its button. |
+| `alert.onDismiss()` | Dismisses the alert with no SDK dialog. Use it when you display your own. |
+
+The alert is the last step of the paywall action that produced it, and the SDK keeps that action open until the alert is dismissed — only then does it resume the Screen (closing it after a successful purchase, accepting taps again after an error). A branch that calls neither leaves the action pending: **the Screen stays displayed and stops reacting to taps, close button included**, and later actions are never processed. Early v5 releases did not wait for the dismissal, so a missing call went unnoticed.
+
+`onDismiss()` is declared on the `PLYAlertMessage` base class, so it is available on every alert type without a `when` branch. The base class also exposes the strings the SDK would have displayed — `getTitleContent()`, `getContentMessage()`, `getButtonContent()` — so a custom dialog can reuse them.
+
+```kotlin
+Purchasely.uiHandler = object : PLYUIHandler {
+    override fun onAlert(alert: PLYAlertMessage, purchaselyView: View, activity: Activity?, proceed: () -> Unit) {
+        val context = activity ?: return proceed() // no activity: let the SDK display the alert
+        when (alert) {
+            is PLYAlertMessage.InAppSuccess,
+            is PLYAlertMessage.InAppSuccessUnauthentified ->
+                // dismiss once your dialog is closed, so the SDK resumes the Screen
+                showMyDialog(context, alert.getTitleContent(), alert.getContentMessage()) { alert.onDismiss() }
+            else -> proceed()
+        }
+    }
+}
+```
+
+Two rules:
+
+- Call `alert.onDismiss()` **after** your dialog is dismissed, not before — on a success alert the SDK resumes the flow and closes the Screen.
+- Never call both `proceed()` and `alert.onDismiss()` for the same alert, or the SDK dialog is displayed on top of yours.
+
+`PLYAlertMessage` is a sealed class; the error is carried by the types that have one (`PLYAlertMessage.InAppError`, `PLYAlertMessage.InAppRestorationError`, …). Inside a `when` branch read it with `alert.error`; its localized message is also what `alert.getContentMessage()` returns.
+
 ## Deeplinks and Campaigns
 
 The SDK **auto-intercepts** its own deeplinks (zero code): it reads the foreground activity's intent on create and resume. Manual calls still work and are deduped.

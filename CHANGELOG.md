@@ -4,6 +4,18 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Added
+
+- `references/android/api-reference.md`: a **UI Handler — Alerts** section. An `onAlert` implementation that displays its own dialogs must end every branch with `proceed()` or `alert.onDismiss()`; the paywall action that raised the alert stays open until then, so a branch calling neither leaves the Screen displayed and unresponsive, close button included. Covers the `PLYAlertMessage` base-class helpers (`onDismiss()`, `getTitleContent()`, `getContentMessage()`, `getButtonContent()`) and the order/exclusivity rules.
+- `references/android/migration-v6.md`: a `PLYUIHandler` section and a verification-checklist item — the signature is unchanged, but early v5 releases did not wait for the alert dismissal, so a missing call is a latent v5 bug the migration surfaces.
+- `references/android/common-patterns.md`: a **Custom alert dialogs (`PLYUIHandler`)** pattern dismissing from `setOnDismissListener`.
+- `references/troubleshooting/common-issues.md`: §2 "UI Frozen / Paywall Stuck" now lists the custom `PLYUIHandler` as Cause A alongside the unresolved interceptor (Cause B), plus a row in the symptom → likely cause table.
+- `references/concepts/paywall-actions.md`: an Android anti-pattern for an `onAlert` that dismisses neither way.
+- `skills/purchasely-review/SKILL.md`: check 3.3 flags an `onAlert` branch that can skip both calls, both calls made for the same alert, and `onDismiss()` called before the custom dialog closes. Skipped on iOS and the cross-platform bridges — the contract is Android-specific.
+- `skills/purchasely-debug/SKILL.md`: "UI Frozen After Paywall Action" names the UI handler as the second Android cause and adds a step to audit it, plus a symptom-table row.
+- `skills/purchasely-migrate/SKILL.md`: a **UI handler alerts** step in the Android workflow.
+- `skills/purchasely-sdk-expert/SKILL.md`: a routing-index row for `PLYUIHandler` / custom alert dialog questions.
+
 ## [2.1.1] — 2026-09-02
 
 A marketplace install of the Claude Code plugin reported `failed to load` since `2.0.0`. The plugin's own manifest declared a hooks file that Claude Code already loads by convention, so the `SessionStart` hook never reached the session.
