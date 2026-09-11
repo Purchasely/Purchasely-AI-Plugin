@@ -78,6 +78,7 @@ If any of those three is missing, you have a defined symptom — see the table b
 | No `RECEIPT_VALIDATED` event | Receipt failed server-side validation | Check `[Purchasely] Receipt status: …` — `failed` / `error` → check StoreKit config, sandbox account, server clock |
 | `IN_APP_PURCHASED` but no `IN_APP_RENEWED` | Receipt validated but no active subscription state | Dashboard → Subscribers → look up the transaction; check store product config |
 | `PRESENTATION_CLOSED` never fires after a successful purchase | Dismiss API not called, or called before the action was acknowledged | Verify the order: the action MUST be acknowledged before dismissal. Native iOS/Android use `closeAllScreens()`; Flutter v6 uses `presentation.close()`; React Native v6 and Cordova v6 use `request.close()` |
+| Android: Screen stays displayed and ignores every tap after a purchase / restore / error dialog | A custom `PLYUIHandler.onAlert` displayed its own dialog without calling `proceed()` or `alert.onDismiss()`, so the paywall action never completed | See §2, Cause A. Check every branch of `onAlert`, including the early returns |
 | `pendingSuccessfulPurchase=false` after a real purchase | The flag was never set (transaction handler didn't run, or wrong mode) | Check interceptor `.purchase` case took the Observer branch |
 | Follow-up `fetchPresentation` returns `type=deactivated` or `error=…` | The chained placement is missing / typo / deactivated on the dashboard | Dashboard → Placements → check the exact vendor ID. Common gotcha: typo in the placement_id string |
 | Follow-up placement returns a presentation, but renders "the previous paywall again" | The Flow hosting the original placement chains a post-purchase step that points to the wrong paywall | The event's `flow_id` and `displayed_presentation` reveal the chained step. Dashboard → Flows → inspect `<flow_id>` post-purchase branches |
@@ -215,7 +216,22 @@ Purchasely.apiKey("KEY").storekitSettings(.storeKit2).start { error in
 
 **Symptoms:** Paywall buttons stop responding, spinner never dismisses, app appears frozen.
 
-**Cause:** the action was not acknowledged in all code paths of the interceptor — a returned `PLYInterceptResult` (`success` / `failed` / `notHandled`) on native iOS/Android v6 and Flutter v6, a returned `'success' / 'failed' / 'notHandled'` string on React Native v6, or a returned/resolved `Purchasely.InterceptResult` on Cordova v6.
+**Cause A (Android, custom `PLYUIHandler`):** an `onAlert` branch displayed the app's own dialog and called neither `proceed()` nor `alert.onDismiss()`. The alert is the last step of the paywall action that raised it (purchase, restore, plan change); the SDK keeps that action open until the alert is dismissed, so the Screen stays displayed and stops reacting to taps, close button included. Early v5 releases did not wait for the dismissal, so apps that migrate to v6 with an existing handler surface this for the first time.
+
+**Solution:** end every `onAlert` branch with exactly one of `proceed()` (SDK displays its dialog and dismisses the alert) or `alert.onDismiss()` (dismiss with no SDK dialog), the latter from the dismiss callback of your own dialog — after it closes, never before.
+
+```kotlin
+Purchasely.uiHandler = object : PLYUIHandler {
+    override fun onAlert(alert: PLYAlertMessage, purchaselyView: View, activity: Activity?, proceed: () -> Unit) {
+        val context = activity ?: return proceed() // no activity: let the SDK display the alert
+        showMyDialog(context, alert.getTitleContent(), alert.getContentMessage()) { alert.onDismiss() }
+    }
+}
+```
+
+`onDismiss()` is on the `PLYAlertMessage` base class, so it covers every alert type without a `when` branch. Never call both `proceed()` and `onDismiss()` for the same alert — the SDK dialog would appear on top of yours.
+
+**Cause B (all platforms):** the action was not acknowledged in all code paths of the interceptor — a returned `PLYInterceptResult` (`success` / `failed` / `notHandled`) on native iOS/Android v6 and Flutter v6, a returned `'success' / 'failed' / 'notHandled'` string on React Native v6, or a returned/resolved `Purchasely.InterceptResult` on Cordova v6.
 
 **Solution:** Ensure every branch resolves exactly once. Native iOS/Android v6, Flutter v6, React Native v6, and Cordova v6 all return or resolve a result.
 
