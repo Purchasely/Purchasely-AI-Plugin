@@ -243,6 +243,29 @@ presentation.display(activity) { outcome ->
 }
 ```
 
+## Custom alert dialogs (`PLYUIHandler`)
+
+Every branch must end with `proceed()` or `alert.onDismiss()` — the paywall action that raised the alert stays open until one of them is called.
+
+```kotlin
+Purchasely.uiHandler = object : PLYUIHandler {
+    override fun onAlert(alert: PLYAlertMessage, purchaselyView: View, activity: Activity?, proceed: () -> Unit) {
+        val context = activity ?: return proceed() // no activity: let the SDK display the alert
+        when (alert) {
+            is PLYAlertMessage.InAppSuccess,
+            is PLYAlertMessage.InAppSuccessUnauthentified ->
+                MaterialAlertDialogBuilder(context)
+                    .setTitle(alert.getTitleContent())
+                    .setMessage(alert.getContentMessage())
+                    .setPositiveButton(alert.getButtonContent()) { d, _ -> d.dismiss() }
+                    .setOnDismissListener { alert.onDismiss() } // after the dialog closes
+                    .show()
+            else -> proceed() // SDK dialog, dismissal handled for you
+        }
+    }
+}
+```
+
 ## Cleanup on restart
 
 ```kotlin

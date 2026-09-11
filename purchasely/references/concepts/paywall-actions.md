@@ -212,6 +212,7 @@ Key points:
 - ❌ Resolving twice (e.g. once in the happy path, once in `finally`).
 - ❌ Doing heavy synchronous work in the interceptor — the paywall is waiting on you.
 - ❌ Trying to "stay on the paywall after purchase" by holding the interceptor open or skipping the result — instead, configure the button with no second action (Observer mode) or add an explicit `open_screen` / `open_placement` step.
+- ❌ **Android only** — displaying a custom dialog from `PLYUIHandler.onAlert` without calling `proceed()` or `alert.onDismiss()`. The alert is the last step of the action that raised it, so the action stays open and the Screen freezes exactly as it does for an unresolved interceptor. See [../android/api-reference.md](../android/api-reference.md) § UI Handler — Alerts.
 
 ## See also
 

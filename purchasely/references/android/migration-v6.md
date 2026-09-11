@@ -329,6 +329,25 @@ Purchasely.removeActionInterceptor(PLYPresentationAction.Purchase.class); // Jav
 Purchasely.removeAllActionInterceptors();
 ```
 
+## `PLYUIHandler` — custom alert dialogs must dismiss the alert
+
+The signature of `PLYUIHandler.onAlert` is unchanged, but the contract is now enforced: an implementation that displays its own dialogs must end **every** branch with `proceed()` (the SDK displays its dialog and dismisses the alert) or `alert.onDismiss()` (the alert is dismissed with no SDK dialog).
+
+In v6 every paywall action goes through a single queue, and the action that raised the alert — a purchase, a restore, a plan change — stays open until the alert is dismissed. A branch that calls neither leaves it pending: the Screen remains displayed and stops reacting to taps, close button included. Early v5 releases did not wait for that dismissal, so the missing call went unnoticed.
+
+```kotlin
+Purchasely.uiHandler = object : PLYUIHandler {
+    override fun onAlert(alert: PLYAlertMessage, purchaselyView: View, activity: Activity?, proceed: () -> Unit) {
+        val context = activity ?: return proceed() // no activity: let the SDK display the alert
+        showMyDialog(context, alert.getTitleContent(), alert.getContentMessage()) {
+            alert.onDismiss() // dismisses the alert once your dialog is closed, no SDK dialog
+        }
+    }
+}
+```
+
+`onDismiss()` is declared on the `PLYAlertMessage` base class, so it covers every alert type without a `when` branch. Call it **after** your dialog is closed, not before: on a success alert the SDK resumes the flow and closes the Screen. Never call both `proceed()` and `onDismiss()` for the same alert. See [api-reference.md](api-reference.md) § UI Handler — Alerts.
+
 ## Observer-mode bridge: callback -> suspend
 
 ```kotlin
@@ -468,6 +487,7 @@ Mechanical, in order:
 8. **Deeplinks**: redundant `handleDeeplink(intent.data)` removed (auto-intercepted) unless on `singleTask`/`singleTop` without `setIntent(intent)`.
 9. **Offers**: `intro*` / `INTRO_*` / `TRIAL_*` -> `offer*` / `OFFER_*`.
 10. **Removed UI**: `subscriptionsFragment()`, `purchaseHistory()`, `isPastSubscriber()` replaced.
+11. **UI handler**: if `PLYUIHandler.onAlert` displays custom dialogs, every branch ends with `proceed()` or `alert.onDismiss()` — otherwise the Screen stays displayed and unresponsive.
 
 Build and test:
 
