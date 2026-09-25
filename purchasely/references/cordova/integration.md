@@ -128,7 +128,7 @@ Purchasely.presentation.placement('ONBOARDING').build().display()
   .catch(function(error) { console.error('Presentation error:', error); });
 ```
 
-`display(transition?)` takes an optional `Purchasely.TransitionType` (`fullScreen`, `modal`, `drawer`, `popin`, `push`, `inlinePaywall`) or a full object for drawer/popin sizing. There is no per-request `close()` on Cordova — `request.close()` always dismisses every displayed Purchasely screen (`closeAllScreens()` under the hood); `request.back()` navigates back inside a multi-step (Flow) presentation.
+`display(transition?)` takes an optional `Purchasely.TransitionType` (`fullScreen`, `modal`, `drawer`, `popin`, `push`, `inlinePaywall`) or a full object for drawer/popin sizing. There is no per-request `close()` on Cordova — `request.close()` always dismisses every displayed Purchasely screen (the native bridge’s `closeAllScreens()` action under the hood); `request.back()` navigates back inside a multi-step (Flow) presentation.
 
 ## Action Interceptor
 

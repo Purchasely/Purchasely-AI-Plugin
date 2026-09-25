@@ -363,15 +363,14 @@ const outcome = await loaded.display(); // same as request.display()
 const request = Purchasely.presentation.placement('ONBOARDING').build();
 
 request.display();  // show
-request.close();    // closeAllScreens() under the hood — closes every displayed screen
+request.close();    // delegates to the native `closeAllScreens()` action — closes every displayed screen
 request.back();      // navigate back inside a multi-step (Flow) presentation
 ```
 
 There is no per-request `close()` on Cordova (unlike iOS's request-scoped
 close on React Native) — `request.close()` always dismisses every displayed
-Purchasely screen, matching `Purchasely.closeAllScreens()`.
-`Purchasely.closePresentation()` is kept as a **deprecated alias** of
-`closeAllScreens()`.
+Purchasely screen, matching the native-backed JavaScript `Purchasely.closeAllScreens()` API.
+The deprecated top-level JavaScript method `Purchasely.closePresentation()` is an alias for `Purchasely.closeAllScreens()`. It is separate from the presentation request's `request.close()` method, though both ultimately invoke the same native `closeAllScreens` action.
 
 ---
 
@@ -571,7 +570,7 @@ subscriptions without a commitment:
 
 ## Other v6 changes
 
-- `Purchasely.closeAllScreens()` is the canonical name; `closePresentation()`
+- The native-backed JavaScript method `Purchasely.closeAllScreens()` is canonical; `closePresentation()`
   is kept as a **deprecated alias**.
 - `Purchasely.addEventListener` / `removeEventListener` are canonical;
   `addEventsListener` / `removeEventsListener` are kept as **deprecated
