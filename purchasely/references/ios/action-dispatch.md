@@ -10,7 +10,7 @@ The renderer documentation's explicit example is narrower: a label can have a co
 
 ## How to investigate a reported tap
 
-1. Use the action inventory to inspect the tapped component and each action-bearing ancestor. Read each component's full action object; visual nesting alone does not identify which configured actions can recognize the tap.
+1. Call `get_screen` for the served screen and inspect `screen.action_inventory.actions`. Each entry includes `component_id`, the complete `action` object, and (when available) a `parent_chain`; `component_type` and `label` may also be present. Check the `hierarchy_available` and `truncated` fields before relying on that inventory. If the inventory is absent or incomplete, inspect `screen.content.components` only when that raw map is actually present, and use each component's `values.action`; establish ancestry only from explicit parent fields or child-ID references. Oversized responses can replace the raw component map with an omission marker, and an inventory can itself be truncated. In either case, do not claim a complete action picture; request an untruncated configuration or reproduction evidence from the client/Console when available. Read each component's full action object; visual nesting alone does not identify which configured actions can recognize the tap.
 2. Confirm the public screen ID served by the app's relevant placement and compare it with the screen ID edited or retested. A change to a test copy does not establish that the runtime screen changed.
 3. Reproduce on the affected app and SDK build. Report what fired without claiming a deterministic order unless the reproduction establishes it.
 

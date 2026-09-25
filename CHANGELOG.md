@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Added
+
+- `purchasely/references/ios/action-dispatch.md`: documented the evidenced iOS gesture behavior for component and ancestor actions, with a concrete `get_screen` action-inventory lookup path and explicit limits on inferred dispatch order.
+
 ## [2.1.1] — 2026-09-02
 
 A marketplace install of the Claude Code plugin reported `failed to load` since `2.0.0`. The plugin's own manifest declared a hooks file that Claude Code already loads by convention, so the `SessionStart` hook never reached the session.

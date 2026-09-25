@@ -370,7 +370,7 @@ request.back();      // navigate back inside a multi-step (Flow) presentation
 There is no per-request `close()` on Cordova (unlike iOS's request-scoped
 close on React Native) — `request.close()` always dismisses every displayed
 Purchasely screen, matching the native-backed JavaScript `Purchasely.closeAllScreens()` API.
-The native bridge action `closeAllScreens()` is also exposed as the deprecated `closePresentation()` alias.
+The deprecated top-level JavaScript method `Purchasely.closePresentation()` is an alias for `Purchasely.closeAllScreens()`. It is separate from the presentation request's `request.close()` method, though both ultimately invoke the same native `closeAllScreens` action.
 
 ---
 
