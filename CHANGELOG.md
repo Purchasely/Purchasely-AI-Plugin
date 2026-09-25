@@ -7,6 +7,9 @@ All notable changes to this project are documented here. The format is based on 
 ### Added
 
 - `purchasely/references/ios/action-dispatch.md`: documented the evidenced iOS gesture behavior for component and ancestor actions, with a concrete `get_screen` action-inventory lookup path and explicit limits on inferred dispatch order.
+
+### Changed
+
 - Clarified Cordova dismissal semantics across the migration/integration guides, post-purchase reference, and debug/integrate skills: `request.close()` and `Purchasely.closeAllScreens()` both dismiss all displayed screens, while `closePresentation()` is a deprecated alias.
 
 ## [2.1.1] — 2026-09-02
