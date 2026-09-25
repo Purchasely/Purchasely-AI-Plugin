@@ -4,6 +4,8 @@ Applies to: **iOS, Android, React Native, Flutter, Cordova**.
 
 The **action interceptor** is a callback the SDK invokes when the user interacts with a paywall (taps Buy, Login, Restore, Close, etc.). It is the single most error-prone part of any Purchasely integration.
 
+For the iOS UIKit renderer's gesture-recognition behavior, including the documented label-highlight case where two actions can fire from one touch, see [iOS action dispatch](../ios/action-dispatch.md). That case does not specify ordering for nested parent/child component actions.
+
 ## The golden rule
 
 **Every code path through the interceptor MUST resolve exactly once** — return a `PLYInterceptResult` (native iOS/Android v6, Flutter v6), a string result (React Native v6), or `Purchasely.InterceptResult` (Cordova v6).
