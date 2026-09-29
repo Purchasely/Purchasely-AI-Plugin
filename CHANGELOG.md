@@ -10,6 +10,7 @@ All notable changes to this project are documented here. The format is based on 
 
 ### Changed
 
+- `purchasely/agents/purchasely-sdk-expert.md`: the Claude Code agent now sets `effort: medium`. The `sonnet` alias resolves to Sonnet 5.5, whose default effort is `high`; `medium` is sufficient for a question answered from the references, and the answer comes faster and costs less.
 - Clarified Cordova dismissal semantics across the migration/integration guides, post-purchase reference, and debug/integrate skills: `request.close()` and `Purchasely.closeAllScreens()` both dismiss all displayed screens, while `closePresentation()` is a deprecated alias.
 
 ## [2.1.1] — 2026-09-02
