@@ -4,12 +4,12 @@
 
 ## Current supported versions
 
-_Last updated: 2026-07-23._
+_Last updated: 2026-10-08._
 
 | Platform | Latest version | Notes |
 |----------|----------------|-------|
-| **iOS** (native) | **6.0.0** | Stable GA (tagged 2026-07-20). Fluent init builder, per-action `interceptAction` + `PLYInterceptResult`, `PLYPresentationBuilder`, `swiftUIView`, `closeAllScreens()`, `PLYPresentationOutcome` (with `closeReason`). **Default running mode is `.observer`** — set `.runningMode(.full)` for purchase handling. Install via SPM (primary — `from: "6.0.0"`) or CocoaPods (`~> 6.0`); the SDK's dev repo is now SPM-only, so CocoaPods/binary distribution is published from the separate `Purchasely/Purchasely-iOS` repo. Deployment target **13.4+** — inherited from the 5.x SDK, not a v6 change. |
-| **Android** (native) | **6.0.1** | Stable GA (tagged 2026-07-20 — no `6.0.0` tag was ever cut; chronology is `rc.1` → `rc.2` → `rc.3` → `6.0.1`). Presentation builder API, `screenId`, typed action interceptors, `PLYPresentationOutcome`. **Default running mode is `Observer`** — set `PLYRunningMode.Full` for purchase handling. No `presentation-compose` artifact (use `AndroidView { buildView }` for Compose); `google-play` / `huawei-services` / `amazon` / `player` artifacts stay in lockstep at `6.0.1`. |
+| **iOS** (native) | **6.2.0** | Stable (2026-10-08). 6.2.0 adds custom events (`Purchasely.emit(name:properties:)`, see [concepts/custom-events.md](concepts/custom-events.md)), a `signPromotionalOffer` variant that returns a purchase context token, and `PLYDataProcessingPurpose.refundHandling`. **Behavior change:** `appAccountToken` / `applicationUsername` now carry a random purchase context token, no longer the anonymous user id. 6.1.x adds the web redemption result (`webRedemptionDelegate(_:appHandlesRedemptionAlert:)`), `appAnonymousUserId(_:)` and `proxy()` on the builder. From 6.0.0: fluent init builder, per-action `interceptAction` + `PLYInterceptResult`, `PLYPresentationBuilder`, `swiftUIView`, `closeAllScreens()`, `PLYPresentationOutcome` (with `closeReason`). **Default running mode is `.observer`** — set `.runningMode(.full)` for purchase handling. Install via SPM (primary — `from: "6.2.0"`) or CocoaPods (`~> 6.2`); the SDK's dev repo is now SPM-only, so CocoaPods/binary distribution is published from the separate `Purchasely/Purchasely-iOS` repo. Deployment target **13.4+** — inherited from the 5.x SDK, not a v6 change. |
+| **Android** (native) | **6.2.0** | Stable (2026-10-08; no `6.0.0` tag was ever cut, the stable line starts at `6.0.1`). 6.2.0 adds custom events (`Purchasely.emit(name, properties)`, see [concepts/custom-events.md](concepts/custom-events.md)), `PLYPlan.dump()` and the `ply_active_subscriptions` / `ply_expired_subscriptions` built-in attributes. **Source-compat changes in 6.2.0:** new `PLYEvent` subclass (add an `else` to a `when (event)`), `StoreType.WEB_CHECKOUT_STRIPE` renamed `StoreType.STRIPE`, `PLYPurchaseResponse.expiredSubscriptions` is nullable. 6.1.x adds the web redemption result (`webRedemptionListener`), `anonymousUserId(id, override)` and `proxy(api)` on the builder. From 6.0.x: presentation builder API, `screenId`, typed action interceptors, `PLYPresentationOutcome`. **Default running mode is `Observer`** — set `PLYRunningMode.Full` for purchase handling. No `presentation-compose` artifact (use `AndroidView { buildView }` for Compose); `google-play` / `huawei-services` / `amazon` / `player` artifacts stay in lockstep at `6.2.0`. |
 | **Flutter** | **6.0.0** | Stable (published to pub.dev 2026-07-21). `purchasely_flutter`, `purchasely_google`, `purchasely_android_player` all `6.0.0`; embeds native iOS **6.0.0** + Android **`io.purchasely:core 6.0.1`**. Requires **Dart ≥ 3.0.0**. v6 builder API: `PurchaselyBuilder` fluent init, `PresentationBuilder` / `PresentationRequest`, per-action `interceptAction` + `InterceptResult`, `PresentationOutcome` (with `closeReason`). **Default running mode is `RunningMode.observer`** — set `.runningMode(RunningMode.full)` for purchase handling. All three `purchasely_*` packages MUST be the same version. |
 | **React Native** | **6.0.0** | Stable GA (npm `latest` tag). v6 builder API: `Purchasely.builder` fluent init (string options), `Purchasely.presentation` (`PLYPresentationBuilder`) / `PLYPresentationRequest`, per-action `interceptAction` returning `'success' \| 'failed' \| 'notHandled'`, `PLYPresentationOutcome` (with `closeReason` = `button`/`backSystem`/`programmatic`). `isDeeplinkHandled` is **removed** — use `handleDeeplink(uri)`. `presentSubscriptions()` is **removed**. Pulls the **native iOS 6.0.0 / Android 6.0.1 SDKs** (confirmed pinned at the published tags). Requires **`minSdk 23`** and iOS deployment target **15.1** (aligned with RN 0.86). **Default running mode is now `'observer'`** — set `.runningMode('full')` for purchase handling. All five `react-native-purchasely*` packages MUST be the same version, pinned exactly. |
 | **Cordova** | **6.0.0** | **Stable GA** (npm `latest` tag, not `@next`). v6 builder API: `Purchasely.builder(apiKey)` fluent init (also keeps the v5-shaped `Purchasely.start({...}, ok, err)` options object, now a single object instead of positional args), `Purchasely.presentation` builder / request lifecycle (`preload()`/`display()`/`close()`/`back()`), per-action `interceptAction(kind, handler)` returning `'success' \| 'failed' \| 'notHandled'`, 5-field outcome (`presentation`, `purchaseResult` string, `plan`, `closeReason`, `error`). The v5 flat paywall API (`fetchPresentation*`, `presentPresentation*`, `setPaywallActionInterceptor` + `onProcessAction`) is **removed**. `isDeeplinkHandled` is **removed** — use `handleDeeplink(uri)`. `presentSubscriptions()` is **removed**. Pulls native iOS `Purchasely 6.0.0` / Android `io.purchasely:core 6.0.1`. All `@purchasely/cordova-plugin-*` packages MUST be the same version, pinned exactly. |
@@ -18,17 +18,17 @@ _Last updated: 2026-07-23._
 
 ### iOS — Swift Package Manager (primary)
 
-In Xcode → File → Add Packages → enter `https://github.com/Purchasely/Purchasely-iOS` and select **Up to Next Major Version**, `from: "6.0.0"`:
+In Xcode → File → Add Packages → enter `https://github.com/Purchasely/Purchasely-iOS` and select **Up to Next Major Version**, `from: "6.2.0"`:
 
 ```swift
-.package(url: "https://github.com/Purchasely/Purchasely-iOS", from: "6.0.0")
+.package(url: "https://github.com/Purchasely/Purchasely-iOS", from: "6.2.0")
 ```
 
 ### iOS — CocoaPods
 
 ```ruby
 # Podfile
-pod 'Purchasely', '~> 6.0'
+pod 'Purchasely', '~> 6.2'
 ```
 
 CocoaPods and binary distribution are published from the `Purchasely/Purchasely-iOS` repo (the SDK's own dev repo went SPM-only).
@@ -37,7 +37,7 @@ CocoaPods and binary distribution are published from the `Purchasely/Purchasely-
 
 ```
 # Cartfile
-binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json" ~> 6.0
+binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json" ~> 6.2
 ```
 
 Then run `carthage update`.
@@ -47,20 +47,20 @@ Then run `carthage update`.
 ```kotlin
 // app/build.gradle.kts
 dependencies {
-    implementation("io.purchasely:core:6.0.1")
-    implementation("io.purchasely:google-play:6.0.1")          // if Google Play
-    implementation("io.purchasely:player:6.0.1")               // optional video support
+    implementation("io.purchasely:core:6.2.0")
+    implementation("io.purchasely:google-play:6.2.0")          // if Google Play
+    implementation("io.purchasely:player:6.2.0")               // optional video support
     // alt stores
-    implementation("io.purchasely:huawei-services:6.0.1")      // Huawei AppGallery
-    implementation("io.purchasely:amazon:6.0.1")               // Amazon Appstore
+    implementation("io.purchasely:huawei-services:6.2.0")      // Huawei AppGallery
+    implementation("io.purchasely:amazon:6.2.0")               // Amazon Appstore
 }
 ```
 
 ### Android — Gradle (Groovy)
 
 ```groovy
-implementation "io.purchasely:core:6.0.1"
-implementation "io.purchasely:google-play:6.0.1"
+implementation "io.purchasely:core:6.2.0"
+implementation "io.purchasely:google-play:6.2.0"
 ```
 
 ### React Native — package.json
@@ -120,6 +120,8 @@ When you install a cross-platform plugin, it internally pulls a specific native 
 | `purchasely_flutter 6.0.0` | iOS SDK 6.0.0 | Android SDK 6.0.1 |
 | `@purchasely/cordova-plugin-purchasely 6.0.0` | iOS SDK 6.0.0 | Android SDK 6.0.1 |
 
+The bridges still embed native 6.0.x. Features marked "native iOS / Android SDK 6.2.0" (custom events, web redemption result, `proxy`) are not exposed by the bridges yet. Do not promise them on Flutter, React Native or Cordova.
+
 This means a cross-platform plugin gets its pinned native SDKs transitively (React Native → iOS `6.0.0` / Android `6.0.1`, Flutter → iOS `6.0.0` / Android `6.0.1`, Cordova → iOS `6.0.0` / Android `6.0.1`). You do not need to bump the native pods/gradle dependencies yourself; the plugin's pinning is correct.
 
 > If a user is on a Cordova plugin version older than `6.0.0`, the v5 flat paywall API (`fetchPresentation*`, `presentPresentation*`, `setPaywallActionInterceptor` + `onProcessAction`) is what's bridged, not the v6 builder. Upgrade the plugin first, then verify the public bridge method name in that platform's integration reference.
@@ -133,17 +135,17 @@ This means a cross-platform plugin gets its pinned native SDKs transitively (Rea
 ## Universal rules
 
 1. **All plugin packages on the same version.** Mixing `react-native-purchasely 6.0.0` with `@purchasely/react-native-purchasely-google 5.7.3`, or `@purchasely/cordova-plugin-purchasely 6.0.0` with `@purchasely/cordova-plugin-purchasely-google 5.7.3`, causes runtime crashes.
-2. **Use exact versions, not floating ranges, until you've verified compatibility.** iOS native `6.0.0`, Android native `6.0.1`, Flutter `6.0.0`, React Native `6.0.0`, and Cordova `6.0.0` are all **stable GA** and can safely use a semver-compatible range (`~> 6.0`, `from: "6.0.0"`, `^6.0.0`) so patch fixes flow automatically; pin exactly instead if you prefer to control upgrades manually (recommended for React Native and Cordova, to keep every package in lockstep).
+2. **Use exact versions, not floating ranges, until you've verified compatibility.** iOS native `6.2.0`, Android native `6.2.0`, Flutter `6.0.0`, React Native `6.0.0`, and Cordova `6.0.0` are all **stable GA** and can safely use a semver-compatible range (`~> 6.2`, `from: "6.2.0"`, `^6.0.0`) so patch fixes flow automatically; pin exactly instead if you prefer to control upgrades manually (recommended for React Native and Cordova, to keep every package in lockstep).
 3. **iOS deployment target: 13.4+** for native, Flutter, and Cordova — this floor is inherited from the 5.x SDK, not a v6-specific change. Older targets break the Pod install. **React Native requires 15.1** (set by the `react-native-purchasely` podspec, aligned with RN 0.86) — higher than the universal floor.
-4. **Android toolchain (native 6.0.1, and the AGP/Kotlin floor for React Native v6 / Cordova v6 host apps):** Gradle **≥ 9.3** (the SDK's own dev wrapper runs 9.6.1), AGP **9.0.1**, **Kotlin 2.3.21** (fixes issues present in the 2.2.x line used by early v6 release candidates), JDK 17 to build, `minSdk 23`, `compileSdk 36`, `targetSdk 35`, Google Play Billing **8.3.0**.
+4. **Android toolchain (native 6.0.1 to 6.2.0, and the AGP/Kotlin floor for React Native v6 / Cordova v6 host apps):** Gradle **≥ 9.3** (the SDK's own dev wrapper runs 9.8.0 since 6.2.0), AGP **9.0.1**, **Kotlin 2.3.21** (fixes issues present in the 2.2.x line used by early v6 release candidates), JDK 17 to build, `minSdk 23`, `compileSdk 36`, `targetSdk 35`, Google Play Billing **8.3.0**.
 5. **Run a fresh install after pinning** — `pod install --repo-update` (iOS), `./gradlew --refresh-dependencies` (Android), `flutter clean && flutter pub get` (Flutter), `rm -rf node_modules && npm i` (RN / Cordova).
 
 ## When to upgrade
 
 Always recommend upgrading to the versions above when:
 
-- The native Android project pins a v6 release candidate (`rc.1` / `rc.2` / `rc.3`) — jump straight to the stable `6.0.1` (no `6.0.0` tag was ever cut for Android).
-- The native iOS project pins a pre-`6.0.0` release candidate — move to the stable `6.0.0` tag.
+- The native Android project pins a v6 release candidate (`rc.1` / `rc.2` / `rc.3`) — jump straight to the stable `6.2.0` (no `6.0.0` tag was ever cut for Android).
+- The native iOS project pins a pre-`6.0.0` release candidate — move to the stable `6.2.0` tag.
 - The project uses floating versions (`5.+`, `^5.0.0`) — pin to exact stable for reproducible builds.
 - The user is debugging issues that match a known fixed-in-5.7.x bug — see the platform changelog.
 

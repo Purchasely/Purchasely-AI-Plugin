@@ -1,11 +1,11 @@
 ---
 name: purchasely-migrate
-description: "Use when migrating an existing Purchasely SDK integration between major SDK versions. Supports native Android (Kotlin & Java), native iOS (Swift & Objective-C), Flutter, React Native, and Cordova v5.x to v6 — handles every v5→v6 breaking change so a project can be upgraded in a single prompt. Target pins: native iOS 6.0.0 (stable GA); native Android 6.0.1 (stable GA — Android never had a 6.0.0 tag); Flutter 6.0.0 (stable); React Native 6.0.0 (stable GA); Cordova 6.0.0 (stable GA)."
+description: "Use when migrating an existing Purchasely SDK integration between major SDK versions. Supports native Android (Kotlin & Java), native iOS (Swift & Objective-C), Flutter, React Native, and Cordova v5.x to v6 — handles every v5→v6 breaking change so a project can be upgraded in a single prompt. Target pins: native iOS 6.2.0 (latest stable); native Android 6.2.0 (latest stable — Android never had a 6.0.0 tag); Flutter 6.0.0 (stable); React Native 6.0.0 (stable GA); Cordova 6.0.0 (stable GA)."
 ---
 
 # Purchasely SDK Migration Guide
 
-You are migrating an existing Purchasely SDK integration. You must edit the user's project and verify each migration phase with the platform build/test commands. **Native Android (Kotlin & Java), native iOS (Swift & Objective-C), Flutter, React Native, and Cordova v5.x → v6 are supported** (native iOS pins `6.0.0`, stable GA; native Android pins `6.0.1`, stable GA — Android never had a `6.0.0` tag, the line went rc.1 → rc.2 → rc.3 → `6.0.1`; Flutter pins `6.0.0`, stable; React Native pins `6.0.0`, stable GA; Cordova pins `6.0.0`, stable GA).
+You are migrating an existing Purchasely SDK integration. You must edit the user's project and verify each migration phase with the platform build/test commands. **Native Android (Kotlin & Java), native iOS (Swift & Objective-C), Flutter, React Native, and Cordova v5.x → v6 are supported** (native iOS pins `6.2.0`, latest stable; native Android pins `6.2.0`, latest stable — Android never had a `6.0.0` tag, the line went rc.1 → rc.2 → rc.3 → `6.0.1`; Flutter pins `6.0.0`, stable; React Native pins `6.0.0`, stable GA; Cordova pins `6.0.0`, stable GA).
 
 The goal is a **one-prompt upgrade**: detect the platform and call-site language, rewrite every v5 API to its v6 form, and leave the project building with no v5-only symbols remaining.
 
@@ -39,8 +39,8 @@ Determine the project's intended mode before rewriting init: if the v5 code did 
 
 ## Reference files
 
-- `../../references/android/migration-v6.md` — authoritative Android v5.x → v6 migration checklist and API mapping (target `6.0.1`, stable GA).
-- `../../references/ios/migration-v6.md` — authoritative iOS v5.x → v6 migration checklist and API mapping (target `6.0.0`, stable GA).
+- `../../references/android/migration-v6.md` — authoritative Android v5.x → v6 migration checklist and API mapping (target `6.2.0`, latest stable).
+- `../../references/ios/migration-v6.md` — authoritative iOS v5.x → v6 migration checklist and API mapping (target `6.2.0`, latest stable).
 - `../../references/flutter/migration-v6.md` — authoritative Flutter v5.x → v6 migration checklist and API mapping (target `6.0.0`, stable).
 - `../../references/react-native/migration-v6.md` — authoritative React Native v5.x → v6 migration checklist and API mapping (target `6.0.0`, stable GA).
 - `../../references/cordova/migration-v6.md` — authoritative Cordova v5.x → v6 migration checklist and API mapping (target `6.0.0`, stable GA).
@@ -61,7 +61,7 @@ Before rewriting code, run a Purchasely expert checkpoint. If the harness expose
 
 If that subagent is not available, do the checkpoint inline using the `purchasely-sdk-expert` guidance when available, or this fallback checklist:
 
-- Confirm the migration is in scope: native iOS, native Android, Flutter, React Native, or Cordova v5.x → v6 (native iOS `6.0.0`, stable GA; native Android `6.0.1`, stable GA — Android never had a `6.0.0` tag; Flutter `6.0.0`, stable; React Native `6.0.0`, stable GA; Cordova `6.0.0`, stable GA).
+- Confirm the migration is in scope: native iOS, native Android, Flutter, React Native, or Cordova v5.x → v6 (native iOS `6.2.0`, latest stable; native Android `6.2.0`, latest stable — Android never had a `6.0.0` tag; Flutter `6.0.0`, stable; React Native `6.0.0`, stable GA; Cordova `6.0.0`, stable GA).
 - Confirm the current v5 running mode and whether v6 must set Full explicitly.
 - Confirm every package / pod / Gradle artifact is pinned exactly to the target version.
 - Confirm legacy presentation APIs are replaced by the v6 builder / preload / display path for the platform.
@@ -77,8 +77,8 @@ Incorporate corrections before editing files.
 `$ARGUMENTS` may contain:
 - `android` / `ios` / `flutter` / `react-native` / `cordova` — target platform. If omitted, detect it from the project files.
 - `from:5.x` / `from:5.7.4` — optional source version.
-- `to:6.0.1` — optional target version. Default per platform (native iOS `6.0.0`; native Android `6.0.1`; Flutter `6.0.0`; React Native `6.0.0`; Cordova `6.0.0`).
-- `mavenLocal` — Android only. Add `mavenLocal()` when the native SDK `6.0.1` artifact is only available locally.
+- `to:6.2.0` — optional target version. Default per platform (native iOS `6.2.0`; native Android `6.2.0`; Flutter `6.0.0`; React Native `6.0.0`; Cordova `6.0.0`).
+- `mavenLocal` — Android only. Add `mavenLocal()` when the native SDK `6.2.0` artifact is only available locally.
 
 ## Mandatory Workflow — Android (Kotlin & Java)
 
@@ -86,8 +86,8 @@ Incorporate corrections before editing files.
 2. Read `../../references/android/migration-v6.md`, and skim `../../references/android/v5-api-reference.md` so you recognize every legacy symbol.
 3. Find current Purchasely usages with ripgrep (these are the v5 symbols to replace): `Purchasely`, `PLYPresentation`, `PLYPresentationAction`, `setPaywallActionsInterceptor`, `processAction`, `fetchPresentation`, `presentationView`, `PLYPresentationProperties`, `PLYPresentationActionParameters`, `PLYPresentationInfo`, `PLYProductViewResult`, `readyToOpenDeeplink`, `isDeeplinkHandled`, `PaywallObserver`, `subscriptionsFragment`, `purchaseHistory`, `isPastSubscriber`, `hasIntroductoryPrice`, `INTRO_`, `TRIAL_`, `presentationId`.
 4. Update Gradle first:
-   - Pin Purchasely Android artifacts to `6.0.1` (`io.purchasely:core`, `io.purchasely:google-play`, optional `io.purchasely:player`) — Android never had a `6.0.0` tag; the release line went rc.1 → rc.2 → rc.3 → `6.0.1`. There is **no `presentation-compose` artifact** — do not add one.
-   - Bump Google Play Billing direct dependencies to `8.3.0` (Purchasely `google-play:6.0.1` resolves to PBL v8). If the app calls `queryProductDetailsAsync`, update the lambda to read `queryResult.productDetailsList`.
+   - Pin Purchasely Android artifacts to `6.2.0` (`io.purchasely:core`, `io.purchasely:google-play`, optional `io.purchasely:player`) — Android never had a `6.0.0` tag; the release line went rc.1 → rc.2 → rc.3 → `6.0.1` → `6.2.0`. There is **no `presentation-compose` artifact** — do not add one.
+   - Bump Google Play Billing direct dependencies to `8.3.0` (Purchasely `google-play:6.2.0` resolves to PBL v8). If the app calls `queryProductDetailsAsync`, update the lambda to read `queryResult.productDetailsList`.
    - Add `mavenLocal()` before `google()` / `mavenCentral()` only when requested or required to resolve local artifacts.
    - Move to the Gradle/AGP/Kotlin versions required by the SDK (Gradle 9.3.0+, AGP 9, Kotlin 2.3.x / K2, JDK 17 to build, `minSdk 23`, `compileSdk 36`). With AGP 9, remove `org.jetbrains.kotlin.android` (root `apply false`, every module `plugins { }` block, and the version catalog) — Kotlin support is built into AGP. Leaving it applied fails with `Cannot add extension with name 'kotlin', as there is an extension already registered with that name`. Also remove the `android { kotlinOptions { jvmTarget = "..." } }` block once `kotlin-android` is gone.
    - The reified `interceptAction<T> { … }` / `removeActionInterceptor<T>()` are `inline` functions targeting JVM 11 — compile Kotlin modules with `jvmTarget = 11`, or use the non-inline `Class`-based overload.
@@ -108,7 +108,7 @@ Incorporate corrections before editing files.
 1. Detect the iOS project: `*.xcodeproj` / `*.xcworkspace`, `project.yml` (XcodeGen), `Package.swift`, or a `Podfile`. Detect how Purchasely is integrated — **SPM** or **CocoaPods** — and the **call-site language** (Swift vs Objective-C), because both drive the rewrite.
 2. Read `../../references/ios/migration-v6.md`, and skim `../../references/ios/v5-api-reference.md` so you recognize every legacy symbol.
 3. Find current Purchasely usages with ripgrep: `start(withAPIKey`, `paywallObserver`, `readyToOpenDeeplink`, `isDeeplinkHandled`, `setPaywallActionsInterceptor`, `proceed(`, `fetchPresentation`, `presentationController`, `productController`, `planController`, `PresentationView`, `presentationView`, `productView`, `planView`, `ply/products`, `ply/plans`, `closeDisplayedPresentation`, `PLYProductViewControllerResult`, `PLYPresentationInfo`, `displayMode:`, `setDefaultPresentationResultHandler`, plus Objective-C call sites (`[Purchasely startWithAPIKey`, `PLYPresentation *`).
-4. Bump the dependency to `6.0.0` (stable GA) — SPM `from: "6.0.0"` (Up to Next Major, primary/preferred) or CocoaPods `pod 'Purchasely', '~> 6.0'` are the recommended forms now that the SDK is stable; Carthage `binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json" ~> 6.0` then `carthage update`. Resolve packages / `pod install` / `carthage update`, and clean the build folder.
+4. Bump the dependency to `6.2.0` (latest stable) — SPM `from: "6.2.0"` (Up to Next Major, primary/preferred) or CocoaPods `pod 'Purchasely', '~> 6.2'` are the recommended forms now that the SDK is stable; Carthage `binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json" ~> 6.2` then `carthage update`. Resolve packages / `pod install` / `carthage update`, and clean the build folder.
 5. Add `@preconcurrency import Purchasely` at SDK call sites compiled under Swift 6 strict concurrency, and relax test targets to `SWIFT_STRICT_CONCURRENCY = minimal`.
 6. Compile immediately. Treat compiler errors as the migration worklist; apply API migrations in small passes and recompile after each.
 7. **Rewrite initialization** from the removed `Purchasely.start(withAPIKey:…)` to the fluent chain `Purchasely.apiKey("…")…start()`. Prefer Swift async (`try await …start()`); use the completion form (`.start { error in }`, single `Error?`) when async is impractical or for Objective-C interop. **Objective-C:** `[[[[Purchasely apiKey:@"…"] appUserId:@"…"] runningMode:PLYRunningModeFull] startWithInitialized:^(NSError *e){}]`. **Set `.runningMode(.full)` explicitly when the app needs purchase handling/validation** (default is now `.observer`). Map `.paywallObserver` → `.observer`. Migrate the deprecated pre-`start` `set*` class funcs (`setEnvironment`, `setThemeMode`, …) to chain modifiers.
