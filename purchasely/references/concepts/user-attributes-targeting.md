@@ -122,6 +122,21 @@ If the app forwards a OneSignal player/subscription id to Purchasely for audienc
 | Remove | `Purchasely.clearUserAttribute(forKey:)` | `Purchasely.clearUserAttribute(key)` | `Purchasely.clearUserAttribute(key)` | `Purchasely.clearUserAttribute(key)` | `Purchasely.clearUserAttribute(key)` |
 | Remove all | `Purchasely.clearUserAttributes()` | `Purchasely.clearUserAttributes()` | `Purchasely.clearUserAttributes()` | `Purchasely.clearUserAttributes()` | `Purchasely.clearUserAttributes()` |
 
+## New built-in attributes (native 6.2.0)
+
+Built-in attributes are set by the SDK, not by your code. Use them in Console audiences.
+
+| Attribute | Shape | Platforms |
+|-----------|-------|-----------|
+| `ply_custom_events_tracked` | Map: event name to the number of custom events sent | native iOS + Android 6.2.0 |
+| `ply_custom_events_last_tracked` | Map: event name to the time of the last one | native iOS + Android 6.2.0 |
+| `ply_active_subscriptions` | List: one entry per active subscription | native iOS + Android 6.2.0 |
+| `ply_expired_subscriptions` | List: one entry per expired subscription (iOS: subject to data processing consent) | native iOS + Android 6.2.0 |
+
+- The two custom event counters count what the SDK sent, not what your code called. See [custom-events.md](custom-events.md).
+- Audiences now see the active and expired subscriptions of the user on every request, including subscriptions bought on the web (Stripe, web-to-app). Use them to target on the details of a subscription.
+- On iOS, `clearBuiltInAttributes()` also clears the cached subscriptions used for audience targeting.
+
 ## GDPR consent pattern
 
 Initialize the SDK **always** (paywall display and subscription operations require it). Set consent-related attributes only after the user grants consent, and call `revokeDataProcessingConsent(...)` for processing categories the user declines.

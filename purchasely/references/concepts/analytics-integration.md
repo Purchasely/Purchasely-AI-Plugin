@@ -47,6 +47,10 @@ API per platform:
 
 See [UI SDK Events](https://docs.purchasely.com/docs/ui-sdk-events) for the full event taxonomy and property bag fields.
 
+- **Custom events do not reach this hook.** An event your app sends with `Purchasely.emit` (native 6.2.0+) never arrives in `PLYEventDelegate` / the event listener. Forward it to your analytics SDK from your own code. See [custom-events.md](custom-events.md).
+- **New events in 6.1.0 (native iOS and Android):** `REDEMPTION_CONSUMED` and `REDEMPTION_FAILED` report a web-to-app redemption. A replayed redemption sends `REDEMPTION_CONSUMED` with a `replay` flag.
+- **Android 6.2.0:** `PLYEvent` has a new subclass for custom events. A `when (event)` on `PLYEvent` without an `else` branch no longer compiles. Add an `else` branch.
+
 ## Recommended architecture — an analytics wrapper
 
 > **Pattern, not requirement.** This is the same shape as the optional Purchasely SDK wrapper described in [architecture-patterns.md](../architecture-patterns.md): a single class that owns every call into your third-party analytics, mapped to your domain events. The Purchasely SDK works without this — the wrapper is for testability and to keep vendor-specific code in one place.

@@ -33,6 +33,7 @@ The bundled references are intentionally curated, not a full copy of the public 
 - `../../references/concepts/campaigns.md` — trigger-based campaigns silently don't fire (`allowDeeplink` / `allowCampaigns` on v6; `allowDeeplink` defaults `true` on **every** v6 platform including React Native — the builder just omits the key when unset; `allowCampaigns` defaults `true` in v6 on iOS/Android/Flutter, was `false` in v5; Android auto-intercepts)
 - `../../references/concepts/lottie-animations.md` — blank/static Lottie blocks, missing native bridge/dependency, oversized animation JSON
 - `../../references/concepts/analytics-integration.md` — events fire but don't reach Firebase/Amplitude/AppsFlyer (or duplicate)
+- `../../references/concepts/custom-events.md` — custom event not visible (name not declared, name mismatch, `analytics` consent refused, SDK < 6.2.0)
 - `../../references/architecture-patterns.md` — for projects using a wrapper class, diagnose wrapper-side issues (init order, decoupled Observer billing)
 - `../../references/sdk-versions.md` — minimum versions for APIs (e.g. `closeAllScreens()`, Campaigns ≥ 5.1.0, promo offers ≥ 4.0.0)
 
@@ -61,7 +62,7 @@ Before patching code or declaring a root cause, run a Purchasely expert checkpoi
 
 If that subagent is not available, do the checkpoint inline using the `purchasely-sdk-expert` guidance when available, or this fallback checklist:
 
-- Confirm the SDK generation: native iOS uses v6 (`6.0.0`, stable GA); native Android uses v6 (`6.0.1`, stable GA — Android never had a `6.0.0` tag, the line went rc.1 → rc.2 → rc.3 → `6.0.1`); Flutter uses v6 (`6.0.0`, pulling native iOS `6.0.0` + Android core `6.0.1`); React Native uses v6 (`6.0.0`, stable GA, npm `latest`, pulling native iOS `6.0.0` / Android `6.0.1`); Cordova uses v6 (`6.0.0`, stable GA, npm `latest`, pulling native iOS `6.0.0` / Android `6.0.1`).
+- Confirm the SDK generation: native iOS uses v6 (`6.2.0`, stable GA); native Android uses v6 (`6.2.0`, stable GA — Android never had a `6.0.0` tag); Flutter uses v6 (`6.0.0`, pulling native iOS `6.0.0` + Android core `6.0.1`); React Native uses v6 (`6.0.0`, stable GA, npm `latest`, pulling native iOS `6.0.0` / Android `6.0.1`); Cordova uses v6 (`6.0.0`, stable GA, npm `latest`, pulling native iOS `6.0.0` / Android `6.0.1`).
 - Confirm the suspected root cause matches the SDK logs, not just symptoms.
 - Confirm the fix uses current platform APIs and does not introduce removed v6 symbols or invented signatures.
 - Confirm running mode is explicit when Full purchase handling is expected.

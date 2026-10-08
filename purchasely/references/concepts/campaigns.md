@@ -117,6 +117,10 @@ await PurchaselyBuilder.apiKey('<YOUR_API_KEY>')
 > subscription.remove(); // or Purchasely.removeDefaultPresentationDismissHandler()
 > ```
 
+## Trigger a campaign from a custom event
+
+> **Native iOS / Android SDK 6.2.0+.** Link a campaign to one of your own custom events in the Console, then call `Purchasely.emit(...)`. The campaign follows the same rules as the `APP_STARTED` trigger: dates, capping, exposure window and the `campaigns` consent purpose. A custom event never opens the campaigns of a Purchasely event with the same name. Details: [custom-events.md](custom-events.md).
+
 ## Placement-based campaigns — no extra SDK code
 
 You already fetch the placement (native iOS/Android v6: `PLYPresentationBuilder.forPlacementId("PLACEMENT_ID")` / `PLYPresentation { placementId("PLACEMENT_ID") }`; React Native v6: `Purchasely.presentation.placement("PLACEMENT_ID").build()`; Flutter v6: `PLYPresentationBuilder.placement("PLACEMENT_ID").build()`; Cordova v6: `Purchasely.presentation.placement("PLACEMENT_ID").build()`). When a campaign targets that placement and the user matches the audience, the SDK substitutes the campaign's Screen for the Placement's default rules. Same presentation-type handling, same display path. Nothing to change in your code.

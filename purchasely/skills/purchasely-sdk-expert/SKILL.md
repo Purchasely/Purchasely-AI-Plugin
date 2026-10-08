@@ -59,6 +59,7 @@ Read the matching file before you answer. Paths are relative to this skill (`../
 | Web Checkout action or flow | `concepts/web-checkout.md` |
 | Rendering engine gotchas, layout differences | `concepts/rendering-engine.md` |
 | Forwarding SDK events to a third-party tool | `concepts/analytics-integration.md` |
+| Custom event, `Purchasely.emit`, `track_event` action, campaign triggered by an app event, `ply_custom_events_tracked` (native 6.2.0+) | `concepts/custom-events.md` |
 | One user with subscriptions on several stores, coexistence, double billing | `cross-platform-subscriptions.md` |
 | Current SDK versions, minimum OS and API levels | `sdk-versions.md` |
 | Console and data questions: environments, API keys, roles, reading an A/B test, dashboard vs own query, revenue, webhooks, exports | `console-and-data.md` |
@@ -79,7 +80,7 @@ Platform files (exact setup and signatures) and troubleshooting files are listed
 
 ### SDK generation rules
 
-- **Native iOS, native Android, Flutter, React Native, and Cordova use SDK v6** (native iOS is stable GA at `6.0.0`; native Android is stable GA at `6.0.1` — Android never had a `6.0.0` tag, the release line went rc.1 → rc.2 → rc.3 → `6.0.1`; Flutter pins `6.0.0`, pulling native iOS `6.0.0` + Android core `6.0.1`; React Native pins `6.0.0` (stable GA, npm `latest` tag), pulling native iOS `6.0.0` + Android `6.0.1`; Cordova pins `6.0.0` (stable GA, npm `latest` tag — not `@next`) and pulls native iOS `6.0.0` / Android `6.0.1`).
+- **Native iOS, native Android, Flutter, React Native, and Cordova use SDK v6** (native iOS is stable GA at `6.2.0`; native Android is stable GA at `6.2.0` — Android never had a `6.0.0` tag; Flutter pins `6.0.0`, pulling native iOS `6.0.0` + Android core `6.0.1`; React Native pins `6.0.0` (stable GA, npm `latest` tag), pulling native iOS `6.0.0` + Android `6.0.1`; Cordova pins `6.0.0` (stable GA, npm `latest` tag — not `@next`) and pulls native iOS `6.0.0` / Android `6.0.1`).
 - **Cordova is on the v6 builder API** — `Purchasely.builder(apiKey)…start()` / `Purchasely.start({...}, ok, err)`, `Purchasely.presentation` builder/request, per-action `Purchasely.interceptAction(kind, handler)`.
 - Always answer iOS / Android / Flutter / React Native / Cordova with v6 APIs.
 - Never invent signatures. If exact syntax matters, load the matching reference file before answering.
@@ -136,6 +137,7 @@ Load as needed:
 - `../../references/concepts/byos.md` — Bring Your Own Screen, iOS/Android only
 - `../../references/concepts/lottie-animations.md` — Lottie weak dependency bridge
 - `../../references/concepts/analytics-integration.md` — forwarding SDK events
+- `../../references/concepts/custom-events.md` — `Purchasely.emit` custom events, `track_event` action, custom-event campaign trigger (native 6.2.0+)
 - `../../references/concepts/rendering-engine.md` — UIKit / Android Views rendering engine and gotchas
 - `../../references/concepts/web-checkout.md` — Web Checkout action/flow
 - `../../references/architecture-patterns.md` — optional wrapper / gateway architecture
@@ -209,6 +211,14 @@ For any campaign / trigger / `APP_STARTED` / launch display question, load `../.
 - **Capping (impression cap, frequency, exposure window) applies to trigger-based delivery only.** A campaign served through a Placement is never capped: the SDK evaluates it every time the app displays that placement. "The capping does not work" on a placement-served campaign is documented behavior, not a defect. Source: `../../references/concepts/campaigns.md` (the `> Important` callout under "The four campaign dimensions", and the capping bullet under "Anti-patterns").
 - Mention deeplink display readiness: v6 native / Flutter / React Native / Cordova all use `allowDeeplink`, and it defaults to **true** everywhere. On React Native the builder simply **omits** the key when `.allowDeeplink(...)` isn't called, and the native default (`true`) applies — there is no RN-specific exception. Cordova v6 also exposes `allowCampaigns` separately from `allowDeeplink`.
 - **`allowCampaigns` default flip (v6):** defaults to **true** on iOS/Android/Flutter (v5 default was `false`). If a client migrating to v6 suddenly sees campaigns firing that never showed before, this default change is the cause, not a regression. Campaign deeplink opening is additionally conditioned on the SDK being config-ready.
+
+### Custom events
+
+For `Purchasely.emit` / custom event / `track_event` questions, load `../../references/concepts/custom-events.md` first.
+
+- Native iOS and Android SDK 6.2.0+ only. The React Native, Flutter and Cordova bridges do not expose it yet.
+- The event name must be declared in the Console and match exactly (case and spaces). An undeclared event is ignored.
+- Custom events never reach `PLYEventDelegate` / the event listener. A refused `analytics` purpose means no new custom events.
 
 ### BYOS
 
