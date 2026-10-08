@@ -79,7 +79,9 @@ Use this file when a user describes a symptom that matches a known support patte
 
 **Symptom:** a presentation is preloaded well ahead of display; when the user later triggers `display()`, none of the lifecycle callbacks (`onPresented`, `onDismissed`, etc.) ever fire — no error logged either.
 
-**Known fix:** the preloaded presentation was silently deallocated between preload and display when the app didn't keep a strong reference to it (or to the request that produced it) — nothing was logged to indicate this. Fixed in SDK **6.0.0-rc.2**. Regardless of the fix, keep a reference to the built request / loaded presentation — see [presentation-cache.md](../concepts/presentation-cache.md).
+**Known fix:** the preloaded presentation was silently deallocated between preload and display when the app didn't keep a strong reference to it (or to the request that produced it) — nothing was logged to indicate this. Fixed in SDK **6.0.0-rc.2**. **iOS, app presents `presentation.controller` itself:** `onDismissed` could be lost, or arrive as cancelled after a purchase. Fixed in native iOS **6.1.1**: it now fires with the real outcome on every close path (close button, purchase, restore, web checkout). The "keep the `PLYPresentation` in a property" workaround is only needed on iOS < 6.1.1. Upgrade to 6.1.1 or later.
+
+Regardless of the fix, keep a reference to the built request / loaded presentation — see [presentation-cache.md](../concepts/presentation-cache.md).
 
 ## Back button right-aligned / icon-text order reversed (fixed 6.0.0)
 

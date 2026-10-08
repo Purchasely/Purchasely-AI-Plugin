@@ -122,6 +122,8 @@ container.addView(view)
 
 ## Embed in Compose
 
+> `buildView` fixes in native Android: 6.1.0 (an inline view no longer restores another paywall's state after a configuration change) and 6.2.0 (no `Close` action sent when the host screen goes away; `PLYInterceptorInfo.presentation` is set for `Close`). Upgrade to 6.2.0 if an inline paywall misbehaves on rotation or closes unexpectedly.
+
 There is no `presentation-compose` artifact and no `PLYPresentationView` composable. `buildView(...)` returns an Android `View?` — wrap it in an `AndroidView`:
 
 ```kotlin
@@ -167,7 +169,7 @@ fun onBillingSuccess() {
     // Observer mode does not auto-close (the implicit close_all is Full-only). This handler
     // runs after the interceptor has resolved, so dismiss the paywall here — unless a
     // `close` / `close_all` action is configured on the button in the Console.
-    Purchasely.closeAllScreens()
+    Purchasely.closeAllScreens()   // Android < 6.2.0 did not close all stacked screens: upgrade
 }
 
 fun onBillingCancelled() {

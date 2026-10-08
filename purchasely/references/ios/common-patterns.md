@@ -19,7 +19,7 @@ final class PaywallLoader: ObservableObject {
     func load(placementId: String) {
         PLYPresentationBuilder
             .forPlacementId(placementId)
-            .onDismissed { outcome in
+            .onDismissed { outcome in   // iOS < 6.1.1: lost if you present presentation.controller yourself, upgrade
                 // user closed; outcome.purchaseResult / outcome.closeReason
             }
             .build()
