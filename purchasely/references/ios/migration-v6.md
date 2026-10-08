@@ -30,18 +30,18 @@ Version 6.0.0 (stable GA) introduces a fluent initialization builder, a granular
 
 ## Dependency
 
-Bump the Purchasely iOS package to `6.0.0` (stable GA).
+Bump the Purchasely iOS package to `6.2.0` (latest stable; no breaking API change between 6.0.0 and 6.2.0).
 
 **Swift Package Manager** (primary) — in `Package.swift` or the Xcode package list:
 
 ```swift
-.package(url: "https://github.com/Purchasely/Purchasely-iOS", from: "6.0.0")
+.package(url: "https://github.com/Purchasely/Purchasely-iOS", from: "6.2.0")
 ```
 
 **CocoaPods** — in the `Podfile`:
 
 ```ruby
-pod 'Purchasely', '~> 6.0'
+pod 'Purchasely', '~> 6.2'
 ```
 
 CocoaPods and binary distribution are published from the `Purchasely/Purchasely-iOS` repo; the SDK's own dev repo is SPM-only.
@@ -432,6 +432,10 @@ These v5 signatures are identical in v6 — leave them alone:
 - `Purchasely.synchronize(success:failure:)`.
 - `Purchasely.signPromotionalOffer(storeProductId:storeOfferId:success:failure:)`.
 - `Purchasely.revokeDataProcessingConsent(for:)`.
+
+## Upgrading from 6.0.x / 6.1.x to 6.2.0
+
+6.2.0 has no breaking API change. One behavior changes: before 6.2.0 the SDK put the anonymous user id in `appAccountToken` / `applicationUsername`. Since 6.2.0 it puts a new random UUID for each purchase (the purchase context token, used to attribute the purchase). A server that reads this field to identify the user must use its own user mapping or Purchasely webhooks instead.
 
 ## Migration checklist
 

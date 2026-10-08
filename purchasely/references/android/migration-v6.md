@@ -1,4 +1,4 @@
-# Android SDK v5.x -> v6.0.1 Migration
+# Android SDK v5.x -> v6 Migration
 
 This guide is Android-only. Do not apply it to iOS, React Native, Flutter, or Cordova until their v6 migrations are ready.
 
@@ -6,22 +6,22 @@ To recognize legacy v5 code in a project before rewriting it, see [v5-api-refere
 
 ## Build And Dependency Changes
 
-Pin every native Android Purchasely artifact to `6.0.1` (stable GA — chronology was `rc.1` → `rc.2` → `rc.3` → `6.0.1`; no `6.0.0` tag was ever cut):
+Pin every native Android Purchasely artifact to `6.2.0` (latest stable; the v6 chronology was `rc.1` → `rc.2` → `rc.3` → `6.0.1` → … → `6.2.0`; no `6.0.0` tag was ever cut):
 
 ```kotlin
-implementation("io.purchasely:core:6.0.1")
-implementation("io.purchasely:google-play:6.0.1")      // Google Play
-implementation("io.purchasely:player:6.0.1")           // optional video support
+implementation("io.purchasely:core:6.2.0")
+implementation("io.purchasely:google-play:6.2.0")      // Google Play
+implementation("io.purchasely:player:6.2.0")           // optional video support
 // alternative stores (only if used):
-implementation("io.purchasely:huawei-services:6.0.1")  // Huawei AppGallery
-implementation("io.purchasely:amazon:6.0.1")           // Amazon Appstore
+implementation("io.purchasely:huawei-services:6.2.0")  // Huawei AppGallery
+implementation("io.purchasely:amazon:6.2.0")           // Amazon Appstore
 ```
 
 `io.purchasely:core` is a **fat AAR** — internal modules (`:common`, `:network`, `:storage`, …) are fused into it, so there are no separate Maven coordinates to add for them and their `io.purchasely.*` FQNs are unaffected. There is **no** `presentation-compose` artifact and no Compose composable (a Compose renderer is in active development for a future release). For Compose embedding today, wrap the Android `View` from `buildView(...)` in an `AndroidView`.
 
 `io.purchasely:core` bundles a `lint.jar` (an internal `:core-lint` module) — it runs automatically for any consumer and flags missing `context()` / `apiKey()` in the DSL/Builder, and `runningMode(PLYRunningMode.Full)` configured without `stores(...)`.
 
-If `6.0.1` is only installed on the developer machine, add `mavenLocal()` in `dependencyResolutionManagement.repositories` before `google()` and `mavenCentral()`.
+If `6.2.0` is only installed on the developer machine, add `mavenLocal()` in `dependencyResolutionManagement.repositories` before `google()` and `mavenCentral()`.
 
 SDK v6 uses the modern Android toolchain: Gradle **≥ 9.3** (floor; the SDK's own dev wrapper runs 9.6.1), AGP **9.0.1**, Kotlin **2.3.21** (K2 compiler — fixes issues present in the 2.2.x line used by early v6 release candidates), JDK 17 to build, `minSdk 23`, `compileSdk 36`, `targetSdk 35`.
 
@@ -473,11 +473,20 @@ All `intro*` / `introductory*` methods and `INTRO_*` / `TRIAL_*` tags were remov
 | `localizedIntroductoryPrice()` | `localizedOfferPrice()` |
 | `PLYPlanTags.INTRO_PRICE` / `PLYPlanTags.TRIAL_PRICE` | `PLYPlanTags.OFFER_PRICE` |
 
+## Upgrading from 6.0.x / 6.1.x to 6.2.0
+
+6.2.0 has four source-compatibility changes. Binary behavior is otherwise additive.
+
+- `PLYEvent` has a new subclass. A `when (event)` on `PLYEvent` without an `else` branch no longer compiles: add an `else` branch.
+- `StoreType.WEB_CHECKOUT_STRIPE` is renamed `StoreType.STRIPE`.
+- `PLYPurchaseResponse.expiredSubscriptions` is now `List<PLYSubscription>?`. `null` means the answer says nothing about expired subscriptions.
+- A paywall fetch without an API key now fails with `PLYError.Configuration` (was `PLYError.Network`). The SDK sends no request.
+
 ## Verification Checklist
 
 Mechanical, in order:
 
-1. **Dependencies** pinned to `6.0.1`; no `presentation-compose` artifact; alt-store artifacts use `huawei-services` / `amazon`.
+1. **Dependencies** pinned to `6.2.0`; no `presentation-compose` artifact; alt-store artifacts use `huawei-services` / `amazon`.
 2. **Toolchain**: Gradle ≥ 9.3, AGP 9.0.1, Kotlin 2.3.21, JDK 17 to build, `minSdk 23`, `compileSdk 36`, `targetSdk 35`; `org.jetbrains.kotlin.android` plugin and `kotlinOptions {}` removed under AGP 9; Kotlin module on `jvmTarget = 11` (or interceptors use the `Class`-based overload).
 3. **Init**: `runningMode(PLYRunningMode.Full)` set if the app needs purchase validation / auto-close; `PaywallObserver` -> `Observer`; init callback is `start { error -> }`.
 4. **Imports** moved to `io.purchasely.ext.presentation.*`.

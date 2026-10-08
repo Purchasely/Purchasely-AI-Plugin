@@ -6,7 +6,7 @@
 
 ### Swift Package Manager (primary)
 
-Add the package URL in Xcode (File ▸ Add Packages ▸ enter the URL), selecting **Up to Next Major Version** `from: "6.0.0"`:
+Add the package URL in Xcode (File ▸ Add Packages ▸ enter the URL), selecting **Up to Next Major Version** `from: "6.2.0"`:
 
 ```
 https://github.com/Purchasely/Purchasely-iOS
@@ -16,7 +16,7 @@ Or add to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Purchasely/Purchasely-iOS", from: "6.0.0")
+    .package(url: "https://github.com/Purchasely/Purchasely-iOS", from: "6.2.0")
 ]
 ```
 
@@ -25,7 +25,7 @@ dependencies: [
 Add to your `Podfile`:
 
 ```ruby
-pod 'Purchasely', '~> 6.0'
+pod 'Purchasely', '~> 6.2'
 ```
 
 Then run:
@@ -41,7 +41,7 @@ CocoaPods and binary distribution are published from the `Purchasely/Purchasely-
 Add to your `Cartfile`:
 
 ```
-binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json" ~> 6.0
+binary "https://raw.githubusercontent.com/Purchasely/Purchasely-iOS/master/Purchasely.json" ~> 6.2
 ```
 
 Then run:
@@ -148,6 +148,9 @@ struct MyApp: App {
 | `allowDeeplink(_:)` | `true` | Deeplinks display immediately; pass `false` to defer until `Purchasely.allowDeeplink(true)` |
 | `allowCampaigns(_:)` | `true` ⚠️ | **Was `false` in v5.** Campaigns display immediately; pass `false` to defer until `Purchasely.allowCampaigns(true)`. Opening a queued campaign is additionally gated on the SDK's configuration being ready. |
 | `handleDeeplink(_:)` | unset | Pass a cold-start deeplink to display once the SDK has started |
+| `appAnonymousUserId(_:)` / `appAnonymousUserId(_:override:)` | unset | 6.1.0+. Takes a `UUID`. The SDK keeps an id already on the device unless `override: true`. See [`../concepts/user-identity.md`](../concepts/user-identity.md) |
+| `proxy()` / `proxy(api:)` | off | 6.1.0+. For a region where `api.purchasely.io` is unreachable. `proxy()` routes API traffic through `https://svc.purchasely.io`; `proxy(api: URL)` takes your own `https` URL; `proxy(api: nil)` turns it off. Only the API host moves: paywall and tracking hosts follow `environment(_:)` |
+| `webRedemptionDelegate(_:appHandlesRedemptionAlert:)` | unset | 6.1.0+. `PLYWebRedemptionDelegate` receives the Web-to-app redemption result. Weak reference. Objective-C must pass both arguments. See [`../concepts/web-checkout.md`](../concepts/web-checkout.md) |
 
 > 📘 The pre-`start` class funcs `setEnvironment(_:)`, `setShowPromotedInAppPurchasePaywall(_:)`, `setAppTechnology(_:)`, `setSdkBridgeVersion(_:)`, `setThemeMode(_:)` are **deprecated** (removal in v7). Use the chain modifiers above instead.
 

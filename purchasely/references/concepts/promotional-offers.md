@@ -91,6 +91,28 @@ Purchasely.plan(with: "your_plan_vendor_id") { plan in
 
 The SDK fetches the Apple signature transparently. No app-side cryptography is required.
 
+#### iOS 6.2.0+ — Observer mode with your own StoreKit purchase
+
+If **your app** makes the StoreKit purchase, sign the offer with the variant that returns a purchase context token. The SDK attributes the purchase to the paywall, placement, campaign and A/B test that started it.
+
+```swift
+Purchasely.signPromotionalOffer(
+    storeProductId: storeProductId,
+    storeOfferId: storeOfferId,
+    purchaseContextToken: nil,          // nil: the SDK makes a new token
+    success: { (signature: PLYOfferSignature, token: UUID) in
+        // StoreKit 2: Product.PurchaseOption.appAccountToken(token)
+        // StoreKit 1: payment.applicationUsername = token.uuidString.lowercased()
+    },
+    failure: { error in /* surface */ }
+)
+```
+
+- Apple compares the signature with the account field of the purchase. Put the token in that field and do not change it.
+- StoreKit 1 needs **lowercase**. With another case Apple rejects the offer.
+- `purchaseContextToken: nil` makes a new token. To sign again for the **same** purchase, for example after an error, pass the token you received before.
+- The older `signPromotionalOffer(storeProductId:storeOfferId:success:failure:)` signs for the anonymous user id and does not return a token. If you use it, do not put a token in the account field.
+
 #### Android (Kotlin) — offer token from the interceptor
 
 In v6 the offer parameters live on the `PLYPresentationAction.Purchase` sealed subclass; register a per-action interceptor and return a `PLYInterceptResult`:

@@ -44,6 +44,7 @@ Exposed in the SDK since **v5.4**, with the legal basis and revocability of each
 | `campaigns` | Automatically triggered Campaigns / in-app experiences. |
 | `thirdPartyIntegrations` | Forwarding subscription lifecycle events and subscription attributes to external integrations. |
 | `allNonEssentials` | Revokes analytics, identified analytics, personalization, campaigns, and third-party integrations in one call. |
+| `refundHandling` | Native iOS SDK 6.2.0+ only (`PLYDataProcessingPurpose.refundHandling`). Records that the user refused to share consumption data with Apple for refund requests. **Not** part of `allNonEssentials`. |
 
 Processing strictly required to operate subscriptions cannot be revoked through this API.
 
@@ -55,6 +56,14 @@ Processing strictly required to operate subscriptions cannot be revoked through 
 4. To reactivate all revokable processing, call the same API with an empty set/array.
 
 The SDK persists the choice until changed or until the app is reinstalled.
+
+> **Each call replaces the whole list.** `revokeDataProcessingConsent(for:)` stores the set you pass and discards the earlier one. To refuse `refundHandling` and `analytics`, pass both in one call: `Purchasely.revokeDataProcessingConsent(for: [.analytics, .refundHandling])`. `[.allNonEssentials]` does not cover `refundHandling`, so add it explicitly.
+
+Custom events (native SDK 6.2.0+, `Purchasely.emit`) respect the `analytics` purpose: when it is revoked, the SDK sends no new custom event.
+
+## iOS privacy manifest
+
+The Purchasely SDK ships its own `PrivacyInfo.xcprivacy`. Since native iOS SDK 6.1.0 it declares three more data types, for an optional SDK diagnostics report that is off by default and enabled by Purchasely per app: performance data, other diagnostic data and crash data. All three use the `AppFunctionality` purpose, are not linked to the user and are not used for tracking. If you copy the SDK manifest into your App Store privacy answers, update them.
 
 ## Code per platform
 

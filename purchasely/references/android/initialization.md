@@ -6,12 +6,12 @@ Native Android SDK v6 initializes with the Kotlin DSL (`Purchasely { … }`, rec
 
 ```kotlin
 dependencies {
-    implementation("io.purchasely:core:6.0.1")
-    implementation("io.purchasely:google-play:6.0.1")        // Google Play
-    implementation("io.purchasely:player:6.0.1")             // optional video support
+    implementation("io.purchasely:core:6.2.0")
+    implementation("io.purchasely:google-play:6.2.0")        // Google Play
+    implementation("io.purchasely:player:6.2.0")             // optional video support
     // alternative stores:
-    implementation("io.purchasely:huawei-services:6.0.1")    // Huawei AppGallery
-    implementation("io.purchasely:amazon:6.0.1")             // Amazon Appstore
+    implementation("io.purchasely:huawei-services:6.2.0")    // Huawei AppGallery
+    implementation("io.purchasely:amazon:6.2.0")             // Amazon Appstore
 }
 ```
 
@@ -99,6 +99,27 @@ Purchasely.Builder(applicationContext)
 ```
 
 The init callback is now `{ error -> }` (single nullable `PLYError`); the v5 `{ isConfigured, error -> }` two-argument form was removed. `themeMode(...)` is settable on **both** the DSL and the fluent Builder since `6.0.1`, matching the iOS `themeMode(_:)` chain modifier.
+
+## Optional settings added in 6.1.0
+
+Available on both the DSL and the fluent `Purchasely.Builder`. Native Android SDK 6.1.0+ (the dependency block above already uses 6.2.0).
+
+| Setting | Notes |
+|---------|-------|
+| `anonymousUserId(id, override = false)` | `id` is a `java.util.UUID`. The SDK keeps an anonymous id already on the device unless `override = true`. It stores an id you pass in uppercase and a generated id in lowercase: compare case-insensitively. See [`../concepts/user-identity.md`](../concepts/user-identity.md) |
+| `proxy(api)` | For a region where `api.purchasely.io` is unreachable. `api` is an `https` base URL, `https://svc.purchasely.io` or your own. Anything else is ignored with an error log. `proxy(api = null)` clears a proxy set by an earlier build. Only the API host moves: the paywall and tracking hosts stay on production |
+| `webRedemptionListener(appHandlesRedemptionAlert = false) { result -> }` | Receives the Web-to-app redemption result (`PLYWebRedemptionResult.Success` / `Failure`) on the main thread. The SDK holds the listener until `Purchasely.close()`: do not capture an `Activity`. See [`../concepts/web-checkout.md`](../concepts/web-checkout.md) |
+
+```kotlin
+Purchasely.Builder(applicationContext)
+    .apiKey("YOUR_API_KEY")
+    .stores(listOf(GoogleStore()))
+    .anonymousUserId(myInstallUuid)                       // optional
+    .proxy(api = "https://svc.purchasely.io")             // optional
+    .webRedemptionListener(appHandlesRedemptionAlert = false) { result -> /* ... */ }
+    .build()
+    .start()
+```
 
 ## `apiKey` validation
 

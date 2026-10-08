@@ -29,6 +29,64 @@ Web Checkout has its own dedicated SDK/UI events, separate from the regular purc
 | `WEB_CHECKOUT_ERROR` | The link fails to open or Stripe reports an error |
 | `WEB_CHECKOUT_TIMED_OUT` | The flow times out waiting for a result |
 
+## Web-to-app redemption result (6.1.0+)
+
+Native iOS / Android SDK 6.1.0+. A user buys on your website, taps the link in the confirmation email (`{scheme}://ply/redeem/{token}`) and lands in the app. The SDK tells your app when the redemption settles. The bridges do not expose this yet.
+
+Register the handler on the **builder only**. A redemption can settle during `start()`, so there is no runtime setter.
+
+```swift
+// iOS
+final class RedemptionHandler: PLYWebRedemptionDelegate {
+    func webRedemptionCompleted(result: PLYWebRedemptionResult) {
+        switch result.asResult() {
+        case .success(let context, let replay):
+            unlockContent(for: context?.subscription, replay: replay)
+        case .failure(let errorCode, let errorMessage):
+            showError(errorMessage)
+        }
+    }
+}
+
+Purchasely.apiKey("your-api-key")
+    .webRedemptionDelegate(handler, appHandlesRedemptionAlert: false)
+    .start()
+```
+
+```kotlin
+// Android
+Purchasely.Builder(applicationContext)
+    .apiKey("your-api-key")
+    .stores(listOf(GoogleStore()))
+    .webRedemptionListener(appHandlesRedemptionAlert = false) { result ->
+        when (result) {
+            is PLYWebRedemptionResult.Success -> unlockContent(result.context, result.replay)
+            is PLYWebRedemptionResult.Failure -> showError(result.errorMessage)
+        }
+    }
+    .build()
+    .start()
+```
+
+| Topic | Behavior |
+|-------|----------|
+| Result (iOS) | `PLYWebRedemptionResult`: `isSuccess`, `context?.subscription`, `replay`, `errorCode`, `errorMessage`. Swift can use `asResult()` for an exhaustive `switch`. |
+| Result (Android) | Sealed `PLYWebRedemptionResult`: `Success(context, replay)` and `Failure(errorCode, errorMessage)`. `context.subscription` can be `null`. |
+| Delivery | Main thread, exactly once per settled redemption, success or failure. |
+| `appHandlesRedemptionAlert = false` (default) | The SDK shows its own success or failure popin, then calls you when the user closes it. |
+| `appHandlesRedemptionAlert = true` | No popin. You are called as soon as the redemption settles and your app owns the post-redemption screen. |
+| `replay` | `true` when the user taps a link that was already redeemed. It is a success: unlock the content, but do not thank the user twice. |
+| `allowDeeplink` | A redemption deeplink ignores it. A user who taps the email link always gets the subscription. |
+| `errorMessage` | For an expired link it can contain a masked email (`j***@example.com`). Show it to the user. Do not send it to analytics. |
+| User attributes | A successful redemption can restore the built-in and custom attributes of the web purchase. The SDK applies them before the entitlement refresh. |
+| Lifetime | iOS keeps a **weak** reference to the delegate: keep a strong reference yourself. Android holds the listener until `Purchasely.close()`: do not capture an `Activity`. |
+
+The SDK also sends the `REDEMPTION_CONSUMED` and `REDEMPTION_FAILED` events. Add the two cases if your code switches over the event type.
+
+**Subscriptions outside the app catalog (6.2.0+).** A subscription whose plan is not in the app catalog, for example a web subscription, is returned by `userSubscriptions()` and in the redemption result. Its plan and product `vendorId` can be empty, so do not assume a non-empty value.
+
+Official doc: [Web-to-app funnels (redemption)](https://docs.purchasely.com/docs/web2app).
+
 ## Flutter bridge gotcha
 
 The iOS `webCheckout` interceptor payload changed format between SDK versions — the raw action-kind value moved from a **legacy `Int` raw value** to a **string**. The Flutter bridge tolerates both formats. If `webCheckout` interception appears to be a no-op on iOS after bumping the native SDK, check whether the Flutter bridge is still matching against the old integer format.

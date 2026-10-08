@@ -87,6 +87,9 @@ Purchasely.Builder(applicationContext)
 | `allowDeeplink(allowed)` | Enables deeplink-driven display. Default `true` in v6 (was `false`). |
 | `allowCampaigns(allowed)` | Enables or defers campaign display. Default `true`. |
 | `handleDeeplink(uri)` | Optional cold-start deeplink to route at initialization. |
+| `anonymousUserId(id, override = false)` | Since `6.1.0`. `id` is a `java.util.UUID?`. The SDK keeps an anonymous id already on the device unless `override = true`. |
+| `proxy(api = null)` | Since `6.1.0`. `api` is an `https` base URL (`https://svc.purchasely.io` or your own). `null` clears a proxy set by an earlier `build()`. |
+| `webRedemptionListener(appHandlesRedemptionAlert, listener)` | Since `6.1.0`. `PLYWebRedemptionListener.onRedemptionCompleted(result: PLYWebRedemptionResult)` (`Success` / `Failure`) runs on the main thread. `webRedemptionListener(listener)` is the shortcut with `appHandlesRedemptionAlert = false`. On the DSL the parameter order is the same. |
 | `onInitialized { error -> }` | Kotlin DSL initialization callback (single nullable `PLYError`). |
 | `start { error -> }` | Builder initialization callback (single nullable `PLYError`). |
 
@@ -524,6 +527,27 @@ Purchasely.synchronize(
     error -> { /* onError */ return Unit.INSTANCE; }
 );
 ```
+
+## Custom events — `Purchasely.emit`
+
+Since native Android SDK `6.2.0`. Sends a business event declared in the Console. The name must match the Console declaration exactly. Supported property types: `Int`, `Long`, `Float`, `Double`, `Boolean`, `String`, `Date` and a list of `String`. See [`../concepts/custom-events.md`](../concepts/custom-events.md).
+
+```kotlin
+Purchasely.emit(name = "recipe_viewed", properties = mapOf("recipe_id" to 42))
+```
+
+Signature: `fun emit(name: String, properties: Map<String, Any?> = emptyMap())` (`@JvmStatic`, `@JvmOverloads`).
+
+## Plan debug report — `PLYPlan.dump()`
+
+Since native Android SDK `6.2.0`. `plan.dump(): String` returns a multi-line report of the plan and of its Google Play product. Use it to debug a price, a period or an offer, and attach it to a support request.
+
+## Source-compatibility changes in `6.2.0`
+
+- `PLYEvent` has a new subclass: add an `else` branch to any `when (event)`.
+- `StoreType.WEB_CHECKOUT_STRIPE` is renamed `StoreType.STRIPE`.
+- `PLYPurchaseResponse.expiredSubscriptions` is now `List<PLYSubscription>?` (`null` = the answer says nothing about expired subscriptions).
+- A paywall fetch without an API key fails with `PLYError.Configuration` (was `PLYError.Network`).
 
 ## Plan offers — intro/trial helpers renamed
 

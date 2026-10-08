@@ -116,6 +116,7 @@ Do not substitute the regular purchase call for an offer-aware flow:
 
 - Full mode + Purchasely paywall: no custom purchase code; Purchasely handles the offer configured on the Screen.
 - iOS custom/Observer flow: use the promotional-offer APIs from [promotional-offers.md](promotional-offers.md).
+- iOS 6.2.0+ Observer flow with your own StoreKit purchase: prefer `signPromotionalOffer(storeProductId:storeOfferId:purchaseContextToken:success:failure:)` and pass the returned token in `appAccountToken` (StoreKit 2) or `applicationUsername` (StoreKit 1, `token.uuidString.lowercased()`). See [promotional-offers.md](promotional-offers.md).
 - Android custom/Observer flow: pass the Google `offerToken` to your billing layer.
 - React Native / Flutter / Cordova: use `signPromotionalOffer` for Apple signatures when your custom billing flow needs it.
 
