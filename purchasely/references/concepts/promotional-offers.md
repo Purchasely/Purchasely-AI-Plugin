@@ -111,7 +111,7 @@ Purchasely.signPromotionalOffer(
 - Apple compares the signature with the account field of the purchase. Put the token in that field and do not change it.
 - StoreKit 1 needs **lowercase**. With another case Apple rejects the offer.
 - `purchaseContextToken: nil` makes a new token. To sign again for the **same** purchase, for example after an error, pass the token you received before.
-- The older `signPromotionalOffer(storeProductId:storeOfferId:success:failure:)` signs for the anonymous user id and does not return a token. If you use it, do not put a token in the account field.
+- The older `signPromotionalOffer(storeProductId:storeOfferId:success:failure:)` and `signPromotionalOffer(plan:promoOffer:success:failure:)` are deprecated since SDK 6.2.0 in the official docs, but the 6.2.0 SDK does not mark it `@available(*, deprecated)`, so the compiler shows no warning. They still work. They sign for the anonymous user id and does not return a token. If you use it, do not put a token in the account field.
 
 #### Android (Kotlin) — offer token from the interceptor
 

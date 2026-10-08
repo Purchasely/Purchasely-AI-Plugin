@@ -34,7 +34,7 @@ Read the matching file before you answer. Paths are relative to this skill (`../
 
 | The question is about | Read first |
 |---|---|
-| Campaign, capping, frequency cap, impression cap, exposure window, `APP_STARTED` trigger, campaign not displayed | `concepts/campaigns.md` |
+| Campaign, capping, frequency cap, impression cap, exposure window, `APP_STARTED` trigger, custom event trigger, property filter, campaign not displayed | `concepts/campaigns.md` |
 | Full vs Observer, who owns the purchase flow | `concepts/running-modes.md` |
 | `userLogin` / `userLogout`, anonymous id, unknown user, identity transfer | `concepts/user-identity.md` |
 | Audience, targeting, user attribute, segment | `concepts/user-attributes-targeting.md` |

@@ -563,7 +563,7 @@ Purchasely.signPromotionalOffer(storeProductId: productId,
 }, failure: { error in })
 ```
 
-The other `signPromotionalOffer` overloads sign for the anonymous user id and use no token.
+The other `signPromotionalOffer` overloads (`storeProductId:storeOfferId:success:failure:` and `plan:promoOffer:success:failure:`) sign for the anonymous user id and use no token. They are deprecated since SDK 6.2.0 in the official docs, but the 6.2.0 SDK does not mark it `@available(*, deprecated)`, so the compiler shows no warning. They still work.
 
 ## Consent — `PLYDataProcessingPurpose.refundHandling`
 

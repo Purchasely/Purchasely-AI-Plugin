@@ -37,7 +37,7 @@ The result semantics are:
 | `navigate` | User tapped a custom navigation link | Handle the link (push a screen, open a URL), then `.success`. |
 | `open_presentation` | User tapped a link to another presentation | Either let the SDK handle (`.notHandled`) or build it yourself and `.success`. |
 | `promo_code` | User tapped Promo Code (iOS shows native sheet) | `.notHandled`. |
-| `track_event` | The screen sends one of your custom events (native iOS/Android 6.2.0+) | **Not interceptable**: the interceptor never sees it. It carries the screen context (presentation, placement, audience, A/B test and variant, campaign, flow and step), and never blocks the neighbor actions: a button that tracks then purchases still closes after the purchase. See [custom-events.md](custom-events.md). |
+| `track_event` | The screen sends one of your custom events (native iOS/Android 6.2.0+); optional second action; an older SDK ignores it | **Not interceptable**: the interceptor never sees it. It carries the screen context (presentation, placement, audience, A/B test and variant, campaign, flow and step), and never blocks the neighbor actions: a button that tracks then purchases still closes after the purchase. See [custom-events.md](custom-events.md). |
 
 Casing / type reference per platform:
 

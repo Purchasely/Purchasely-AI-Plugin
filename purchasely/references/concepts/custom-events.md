@@ -44,6 +44,11 @@ Signatures (source of truth): iOS `emit(name: String, properties: [String: Any] 
 
 ## Declare the event in the Console
 
+Open **Targeting > Events** in the Console.
+
+1. **Properties tab.** Declare each property once for the app: a name and a type (`string`, `int`, `float`, `bool`, `date` or `array of strings`). You then link it to each event that sends it, and two events can share one property. Rename, retype or delete of a property applies to every event that uses it.
+2. **New Custom Event.** Type the name (it must match what the app sends exactly). Optionally pick a color and add tags. Link an existing property, or create one in the dialog (it joins the Properties tab when you save).
+
 The SDK sends **only the event names declared in the Console**. The match is exact: case and spaces count, and the SDK never trims or changes the name. `"Recipe Viewed"` and `"recipe_viewed"` are two different events. An undeclared event is ignored, with no error: a typo is silence.
 
 ## Properties
@@ -72,19 +77,39 @@ Custom events have their own queue and their own retries, separate from the SDK'
 
 ## Trigger a campaign from a custom event
 
-Link a campaign to one of your custom events in the Console (trigger type: custom event). When the event fires, the SDK opens the campaign screen. The same rules as the app-launch (`APP_STARTED`) campaign apply: schedule dates, capping (frequency, impression cap), exposure window, and the `campaigns` consent purpose. A custom event never opens the campaigns of a Purchasely event with the same name: a custom event named `APP_STARTED` does not open the startup campaigns. See [campaigns.md](campaigns.md).
+There are two ways to start:
+
+- On the event card in **Targeting > Events**, click **Map with a new campaign**. The Console opens a new campaign with the event as the trigger.
+- In a campaign, turn on the **When** section. The **Trigger** list holds `APP_STARTED`, the SDK events that can be triggers, and your custom events.
+
+When the event fires, the SDK opens the campaign screen. If you select several events, the campaign starts when one of them fires. The same rules as the app-launch (`APP_STARTED`) campaign apply: schedule dates, capping (frequency, impression cap), exposure window, and the `campaigns` consent purpose. `allowCampaigns` also applies: when it is `false`, the SDK keeps the campaign until the app sets it to `true` again. A custom event never opens the campaigns of a Purchasely event with the same name: a custom event named `APP_STARTED` does not open the startup campaigns. An SDK older than 6.2.0 ignores the campaigns that use a custom event. See [campaigns.md](campaigns.md).
+
+### Filter on properties
+
+Under **Filters**, **Filter on properties** starts the campaign only when the event properties match. Each condition has a property, an operation and, for most operations, a value. Use **AND/OR** to join conditions in a group, and **Add condition group** to add a group.
+
+| Type | Operations |
+|---|---|
+| `string` | equals to, is different from, contains, starts with, ends with, is one of |
+| `int` | equals to, is different from, is greater than, is greater than or equal to, is less than, is less than or equal to, is between |
+| `bool` | is true, is false, is true or not set, is false or not set |
 
 ## The `track_event` screen action
 
-A Screen button can send one of your custom events with the `track_event` action, configured in the Screen Composer with the event name. The event carries the context of the screen: presentation, placement, audience, A/B test and variant, campaign, flow and step.
+A Screen button can send one of your custom events with the `track_event` action, configured in the Screen Composer: **On tap > Action > Track event**, then **Custom event**. You can add an optional **Second action** (for example Close/Back). The event carries the context of the screen: presentation, placement, audience, A/B test and variant, campaign, flow and step.
 
 - Use it to measure a **success KPI** for a campaign, a flow or an A/B test (a sign-up, a finished onboarding), beyond the purchases the SDK already counts.
 - It **cannot be intercepted**: the interceptor never sees it, so the app cannot cancel it.
 - It never blocks the actions next to it. A button that tracks an event and then purchases still closes the paywall after the purchase.
+- You set no property values in the action: it carries the event name only. An SDK older than 6.2 ignores the action and sends nothing.
 - It carries the event name only, no properties. An empty `event_name` logs a warning and tracks nothing.
 - The event name must be declared in the Console like any custom event.
 
 See [paywall-actions.md](paywall-actions.md).
+
+## Measure the event in an experiment
+
+The **Primary KPI** step of an experiment lists your custom events: pick one as the metric that decides the winner. A Local experiment can also target custom events in its **When** section, like a campaign trigger.
 
 ## Troubleshooting: the event is not visible
 
@@ -104,3 +129,4 @@ Enable debug logs ([troubleshooting/debug-mode.md](../troubleshooting/debug-mode
 - [user-attributes-targeting.md](user-attributes-targeting.md): built-in attributes for audiences
 - [privacy-settings.md](privacy-settings.md): the `analytics` and `campaigns` purposes
 - [analytics-integration.md](analytics-integration.md): what reaches the event delegate
+- Official guide: https://docs.purchasely.com/docs/custom-events
