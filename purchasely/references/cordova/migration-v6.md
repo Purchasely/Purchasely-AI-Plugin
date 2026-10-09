@@ -4,7 +4,9 @@
 > `@purchasely/cordova-plugin-purchasely: 6.0.0` (and the matching
 > `@purchasely/cordova-plugin-purchasely-google: 6.0.0`), live on npm under the
 > `latest` dist-tag alongside the native iOS `Purchasely 6.0.0` and Android
-> `io.purchasely:core 6.0.1`. Unlike React Native / Flutter / native iOS / Android
+> `io.purchasely:core 6.0.1`. The install target is now **6.2.0** (native iOS
+> `Purchasely 6.2.0`, Android `io.purchasely:core 6.2.0`); see
+> [After 6.0.0](#after-600). Unlike React Native / Flutter / native iOS / Android
 > (still pre-release at the time of writing), **Cordova 6.0.0 is a stable GA
 > release** — no `@next` / release-candidate tag is involved. The builder-based
 > API documented below (`Purchasely.builder`, `Purchasely.presentation`,
@@ -68,7 +70,7 @@ A paywall is now called a **Presentation** (or *Screen*).
 - Deeplinks: `readyToOpenDeeplink` / `isDeeplinkHandled` are **removed** — use
   `.allowDeeplink(true)` and `Purchasely.handleDeeplink(uri, ok, err)`.
 - There is **no inline/embedded presentation view** on Cordova (WebView plugin,
-  no declarative native view) — see [Known limitations](#known-limitations--deferred-to-v61).
+  no declarative native view) — see [Known limitations](#known-limitations).
 - **All other `Purchasely.*` methods are UNCHANGED** — see
   [What's unchanged](#whats-unchanged).
 
@@ -77,9 +79,9 @@ A paywall is now called a **Presentation** (or *Screen*).
 ## Migration checklist
 
 1. Detect the Cordova project (`config.xml`, `plugin.xml` dependents, `www/`
-   call sites) and bump both plugins to **`6.0.0`** exactly
-   (`cordova plugin add @purchasely/cordova-plugin-purchasely@6.0.0` and
-   `...-google@6.0.0`); never a floating range. Re-run `cordova prepare`.
+   call sites) and bump both plugins to **`6.2.0`** exactly
+   (`cordova plugin add @purchasely/cordova-plugin-purchasely@6.2.0` and
+   `...-google@6.2.0`); never a floating range. Re-run `cordova prepare`.
 2. Grep for legacy v5 symbols (the ones removed below):
    `presentPresentationForPlacement`, `presentPresentationWithIdentifier`,
    `fetchPresentation`, `fetchPresentationForPlacement`,
@@ -601,12 +603,67 @@ subscriptions without a commitment:
 
 ---
 
-## Known limitations / deferred to v6.1
+## After 6.0.0
 
-Cordova 6.0.0 intentionally does **not** have full API parity with React
-Native / Flutter yet. These gaps are tracked in the Linear project
-**"Cordova — parité & compléments v6.1"** — do not tell a developer these are
-available today:
+Plugin 6.1.0, 6.1.1 and 6.2.0 are additive. Code written for 6.0.0 keeps
+working, except for one value change (see below). Each addition has a code
+sample in [`integration.md`](./integration.md#what-610-611-and-620-add).
+
+| Plugin | Native iOS | Native Android | Adds |
+| --- | --- | --- | --- |
+| 6.1.0 | `6.1.0` | `6.1.0` | Web redemption listener, anonymous user id, `proxy`, `SubscriptionSource.webCheckoutStripe` |
+| 6.1.1 | `6.1.2` | `6.1.1` | Native fixes only, no JavaScript change |
+| 6.2.0 | `6.2.0` | `6.2.0` | `emit`, `signPromotionalOfferWithToken`, `refundHandling` purpose |
+
+### 6.1.0
+
+- `Purchasely.builder(key).webRedemptionListener(callback, appHandlesRedemptionAlert)`
+  receives the result of a web-to-app redemption as one flat object
+  (`isSuccess`, `context`, `replay`, `errorCode`, `errorMessage`).
+  `addWebRedemptionListener` and `removeWebRedemptionListener` also exist.
+  New events: `REDEMPTION_CONSUMED` and `REDEMPTION_FAILED`.
+- `anonymousUserId(id, override)` on the builder, or the `anonymousUserId` and
+  `anonymousUserIdOverride` keys on `Purchasely.start({...})`. The `id` is a
+  string and must be a canonical UUID.
+- `proxy(api)` on the builder, or the `proxy` key. `null` clears a proxy, and a
+  missing key leaves it unchanged. `proxy()` without an argument is refused.
+- **Value change.** `Purchasely.SubscriptionSource.none` changed from `4` to
+  `5`, and `webCheckoutStripe: 4` is new. Code that uses the constant keeps
+  working. Code that compares the raw number `4`, or stores it, must change.
+- `purchaseToken`, `nextRenewalDate` and `cancelledDate` can be absent in a
+  subscription. Android sends `null` and iOS omits the key. Use a truthiness
+  check.
+- Listener callbacks are released when a listener is removed or replaced, and
+  all handles clear when the WebView reloads.
+- The iOS pod manifest declares three more diagnostic data types. Check your
+  App Store privacy answers.
+
+### 6.1.1
+
+- Native iOS `6.1.2` and Android `6.1.1` fixes (invisible window after a
+  drawer, popin or modal closes, StoreKit batch processing, regional
+  languages, raw translation keys on screen, TalkBack text). No API change.
+
+### 6.2.0
+
+- `Purchasely.emit(name, properties, success, error)` sends a custom event.
+  The event must be declared in the Console.
+- `signPromotionalOfferWithToken(...)` is for Observer mode on iOS.
+  `signPromotionalOffer(...)` is deprecated. On Android both are no-ops that
+  call `success`.
+- `Purchasely.DataProcessingPurpose.refundHandling` (`'REFUND_HANDLING'`) is
+  for iOS only. Android ignores it. `revokeDataProcessingConsent` replaces the
+  whole list on each call.
+- Purchases are attributed to the paywall that started them. Audience
+  targeting sees active and expired subscriptions, including web ones.
+
+---
+
+## Known limitations
+
+Cordova (6.0.0 to 6.2.0) intentionally does **not** have full API parity with
+React Native / Flutter. None of these gaps was closed by 6.1.0, 6.1.1 or 6.2.0.
+Do not tell a developer these are available:
 
 - **No inline/embedded presentation view.** Cordova is a WebView plugin with
   no declarative native view layer, so there is no equivalent of RN/Flutter's
@@ -659,11 +716,11 @@ working exactly as in v5:
 > above.
 
 > **Native dependency.** This Cordova release targets the Purchasely v6 native
-> SDKs (iOS `Purchasely 6.0.0`, Android `io.purchasely:core 6.0.1`), published
-> as **stable** releases on CocoaPods / Maven Central — see
+> SDKs (iOS `Purchasely 6.2.0`, Android `io.purchasely:core 6.2.0` at plugin
+> 6.2.0), published as **stable** releases on CocoaPods / Maven Central — see
 > [`../sdk-versions.md`](../sdk-versions.md) for the canonical pins. Both
 > Cordova packages (`@purchasely/cordova-plugin-purchasely` and
-> `@purchasely/cordova-plugin-purchasely-google`) are `6.0.0`, pinned exactly.
+> `@purchasely/cordova-plugin-purchasely-google`) are `6.2.0`, pinned exactly.
 
 ---
 

@@ -1,6 +1,6 @@
 # React Native Integration
 
-Purchasely React Native is on the **v6 API**, the same generation as the native iOS and Android SDKs. The plugin pins **`6.0.0`** (npm dist-tag `latest`, stable GA) on every layer: all five npm packages (`react-native-purchasely`, `@purchasely/react-native-purchasely-google`, `@purchasely/react-native-purchasely-android-player`, `@purchasely/react-native-purchasely-amazon`, `@purchasely/react-native-purchasely-huawei`) are `6.0.0`, and they pull the published native SDKs (iOS `Purchasely 6.0.0` on the CocoaPods trunk, Android `io.purchasely:core 6.0.1` on Maven Central — both confirmed pinned in the published `6.0.0` tag). The public JS/TS symbols are **`PLY`-prefixed** (`Purchasely.builder`, `PLYPresentationBuilder`, `PLYPresentationRequest`, `PLYLoadedPresentation`, `PLYPresentationOutcome`, `PLYTransition`, …) — there are no `v6` / `V6` symbols.
+Purchasely React Native is on the **v6 API**, the same generation as the native iOS and Android SDKs. The plugin pins **`6.2.0`** (stable GA) on every layer: all five npm packages (`react-native-purchasely`, `@purchasely/react-native-purchasely-google`, `@purchasely/react-native-purchasely-android-player`, `@purchasely/react-native-purchasely-amazon`, `@purchasely/react-native-purchasely-huawei`) are `6.2.0`, and they pull the published native SDKs (iOS `Purchasely 6.2.0` on the CocoaPods trunk, Android `io.purchasely:core 6.2.0` on Maven Central, both pinned in the `6.2.0` tag). The public JS/TS symbols are **`PLY`-prefixed** (`Purchasely.builder`, `PLYPresentationBuilder`, `PLYPresentationRequest`, `PLYLoadedPresentation`, `PLYPresentationOutcome`, `PLYTransition`, …) — there are no `v6` / `V6` symbols.
 
 Three areas changed shape from v5: **starting the SDK** (`Purchasely.builder(apiKey)`), **displaying / preloading / closing a presentation** (`Purchasely.presentation` + `PLYPresentationRequest`), and the **action interceptor** (`Purchasely.interceptAction`). Everything else on the `Purchasely` default export — purchases, restore, identity, catalog, subscriptions data, user attributes, events, dynamic offerings, consent and config — remains source-compatible. Note the **deeplink API changed**: `isDeeplinkHandled` / `readyToOpenDeeplink` are **removed** (no alias) — use `Purchasely.handleDeeplink(uri)` and `Purchasely.allowDeeplink(bool)`. See [`migration-v6.md`](./migration-v6.md) for the full v5 → v6 old→new mapping.
 
@@ -15,27 +15,27 @@ Three areas changed shape from v5: **starting the SDK** (`Purchasely.builder(api
 > - [`../concepts/user-attributes-targeting.md`](../concepts/user-attributes-targeting.md) — audience targeting + GDPR consent
 > - [`../concepts/privacy-settings.md`](../concepts/privacy-settings.md) — `revokeDataProcessingConsent` and privacy purposes
 > - [`../concepts/subscription-checks.md`](../concepts/subscription-checks.md) — gating premium content, restore purchases
-> - [`../sdk-versions.md`](../sdk-versions.md) — latest versions (pin React Native to **6.0.0**)
+> - [`../sdk-versions.md`](../sdk-versions.md) — latest versions (pin React Native to **6.2.0**)
 
 ## Installation
 
-Pin all packages to the exact same version, `6.0.0`. Use `--save-exact` — `6.0.0` is stable GA, so a floating range (`^6.0.0`, `6.x`) would resolve too, but an exact pin keeps every Purchasely package in lockstep.
+Pin all packages to the exact same version, `6.2.0`. Use `--save-exact`. `6.2.0` is stable GA, so a floating range (`^6.2.0`, `6.x`) would resolve too, but an exact pin keeps every Purchasely package in lockstep.
 
 ```bash
 # Core SDK
-npm install react-native-purchasely@6.0.0 --save-exact
+npm install react-native-purchasely@6.2.0 --save-exact
 
 # Google Play — required if targeting Google Play Store
-npm install @purchasely/react-native-purchasely-google@6.0.0 --save-exact
+npm install @purchasely/react-native-purchasely-google@6.2.0 --save-exact
 
 # Video Player — optional, for video support in paywalls on Android
-npm install @purchasely/react-native-purchasely-android-player@6.0.0 --save-exact
+npm install @purchasely/react-native-purchasely-android-player@6.2.0 --save-exact
 
 # Amazon Appstore — optional, Android alt store
-npm install @purchasely/react-native-purchasely-amazon@6.0.0 --save-exact
+npm install @purchasely/react-native-purchasely-amazon@6.2.0 --save-exact
 
 # Huawei AppGallery — optional, Android alt store
-npm install @purchasely/react-native-purchasely-huawei@6.0.0 --save-exact
+npm install @purchasely/react-native-purchasely-huawei@6.2.0 --save-exact
 ```
 
 **CRITICAL: All Purchasely packages must be at the exact same version, pinned exactly (never floating).** Check `package.json`:
@@ -43,16 +43,16 @@ npm install @purchasely/react-native-purchasely-huawei@6.0.0 --save-exact
 ```json
 {
   "dependencies": {
-    "react-native-purchasely": "6.0.0",
-    "@purchasely/react-native-purchasely-google": "6.0.0",
-    "@purchasely/react-native-purchasely-android-player": "6.0.0"
+    "react-native-purchasely": "6.2.0",
+    "@purchasely/react-native-purchasely-google": "6.2.0",
+    "@purchasely/react-native-purchasely-android-player": "6.2.0"
   }
 }
 ```
 
 > **Toolchain.** The v6 React Native SDK is built and tested against **React Native 0.86** and **Node 22** (`.nvmrc` → `v22`).
 
-> **Native dependency.** `react-native-purchasely 6.0.0` pulls the native SDKs transitively — iOS `Purchasely 6.0.0` (CocoaPods trunk) and Android `io.purchasely:core 6.0.1` (Maven Central). Both are published stable GA releases, so the project builds from the public repositories. You do not bump the native pods/gradle dependencies yourself; the plugin's pinning is correct.
+> **Native dependency.** `react-native-purchasely 6.2.0` pulls the native SDKs transitively: iOS `Purchasely 6.2.0` (CocoaPods trunk) and Android `io.purchasely:core 6.2.0` (Maven Central). The toolchain floors (iOS 15.1, `minSdkVersion 23`) did not change since 6.0.0. Both are published stable GA releases, so the project builds from the public repositories. You do not bump the native pods/gradle dependencies yourself; the plugin's pinning is correct.
 
 ### iOS Setup
 
@@ -545,10 +545,122 @@ try {
 
 > **Resolving a `.purchase` / `.restore` interceptor with `'success'` already auto-synchronizes the receipt** — do not also call `Purchasely.synchronize()` from inside that handler. Reserve manual `synchronize()` calls for purchases processed **outside** the interceptor flow (e.g. a "Restore Purchases" button, or a client-side/BYOS presentation). If you need to chain a follow-up placement that targets users by subscription state, `await Purchasely.synchronize()` yourself first so the receipt is guaranteed to have landed before the fetch.
 
+## After 6.0.0: what 6.1.0, 6.1.1 and 6.2.0 add
+
+All three releases are additive. No code change is required in an existing integration, with one TypeScript exception (see [`PLYSubscription` nullable fields](#plysubscription-nullable-fields)).
+
+| Bridge | Native iOS | Native Android | Content |
+|--------|------------|----------------|---------|
+| `6.1.0` | `6.1.0` | `6.1.0` | Web redemption listener, `anonymousUserId`, `proxy`, `WEB_CHECKOUT_STRIPE`, `REDEMPTION_*` events |
+| `6.1.1` | `6.1.2` | `6.1.1` | Native fixes only, no API change |
+| `6.2.0` | `6.2.0` | `6.2.0` | `emit`, `signPromotionalOfferWithToken`, `REFUND_HANDLING`, empty-list consent change |
+
+### Web redemption listener (6.1.0)
+
+Set the listener on the builder. A redemption can settle during `start()`, and the builder subscribes your callback before the native `start()` call. The second argument is `appHandlesRedemptionAlert`: `false` (default) keeps the SDK popin and calls the listener when the user closes it. `true` shows no popin and calls the listener as soon as the redemption settles.
+
+```typescript
+await Purchasely.builder('YOUR_API_KEY')
+  .webRedemptionListener((result) => {
+    if (result.isSuccess) {
+      // result.replay is true when the link was already redeemed
+      unlockContent(result.context?.subscription, result.replay);
+    } else {
+      showError(result.errorCode, result.errorMessage);
+    }
+  }, false)
+  .start();
+```
+
+The result is one flat object on both platforms: `{ isSuccess, context, replay, errorCode, errorMessage }`. `context` and `context.subscription` are separately nullable, and a success can carry neither. A failure reports `replay: false` and `context: null`. The callback runs on the main thread, once per settled redemption.
+
+`Purchasely.addWebRedemptionListener(cb)` and `Purchasely.removeWebRedemptionListener()` exist for an app that adds or replaces the listener after `start()`. A redemption that settles during `start()` is then missed. `removeWebRedemptionListener()` removes every listener on the event.
+
+- A redemption deeplink does not obey `allowDeeplink`.
+- For an expired link, `errorMessage` can contain a masked email address. Show it to the user. Do not send it to analytics or a crash reporter, on either platform. The `REDEMPTION_FAILED` event drops it.
+- `PLYEventName` adds `REDEMPTION_CONSUMED` and `REDEMPTION_FAILED`. `PLYEventProperties.redemption` types their payload. A replayed link also sends `REDEMPTION_CONSUMED`: read `properties.redemption.purchase_context.replay`.
+- `SubscriptionSource.WEB_CHECKOUT_STRIPE` is a new value. A web checkout subscription now reports it on both platforms (Android reported `null` before).
+
+See [`../concepts/web-checkout.md`](../concepts/web-checkout.md) for the behavior of the redemption flow.
+
+### Anonymous user id and proxy (6.1.0)
+
+```typescript
+await Purchasely.builder('YOUR_API_KEY')
+  .anonymousUserId('3f2504e0-4f89-11d3-9a0c-0305e82c3301', false) // string, not a UUID type
+  .proxy('https://your-proxy.example.com')                        // proxy(null) clears a proxy
+  .start();
+```
+
+- `anonymousUserId(id: string, override: boolean = false)`: JavaScript has no UUID type, so the bridge parses the string. A value that is not a canonical UUID is refused with a log, the option is skipped and `start()` still succeeds. The SDK keeps an id already on the device unless `override` is `true`. `override: true` splits the user history. The SDK stores the id in uppercase on both platforms, so compare it case-insensitively. See [`../concepts/user-identity.md`](../concepts/user-identity.md).
+- `proxy(api: string | null)`: routes the API traffic only through your `https` URL, for a region where `api.purchasely.io` is not reachable. The paywall and tracking hosts stay on production. It works on iOS and Android. It is a start-time option. A chain that never calls `proxy` leaves the current setting untouched.
+
+### Custom events: `emit` (6.2.0)
+
+```typescript
+Purchasely.emit('recipe_viewed', { recipe_id: 42, title: 'Ratatouille' });
+Purchasely.emit('checkout_started');
+```
+
+`emit(name: string, properties: Record<string, unknown> = {}): void` returns nothing. Declare the event in the Console first: the SDK sends only names declared there, matched exactly, and ignores an undeclared name. Pass a date as an ISO 8601 string. Custom events never reach `addEventListener`, and you can call `emit` before `start()`. See [`../concepts/custom-events.md`](../concepts/custom-events.md).
+
+### Promotional offers: `signPromotionalOfferWithToken` (6.2.0, iOS only)
+
+For Observer mode. The method signs a promotional offer over a purchase context token and returns the signature with that token:
+
+```typescript
+const result = await Purchasely.signPromotionalOfferWithToken({
+  storeProductId: productId,
+  storeOfferId: offerId,
+  // purchaseContextToken: optional canonical UUID string. Omit it or pass null to let the SDK create one.
+});
+const token = result?.purchaseContextToken; // lowercase UUID
+```
+
+- The purchase must carry this exact token: `applicationUsername` with StoreKit 1, or `appAccountToken` (the UUID) with StoreKit 2. Apple rejects the offer when the purchase carries another value.
+- A `purchaseContextToken` that is not a canonical UUID rejects the promise.
+- `signPromotionalOffer` is **deprecated**. It still works, but it signs over the anonymous user id, so a purchase that carries another value is rejected by Apple. Use `signPromotionalOfferWithToken`.
+- On Android, both methods resolve `null`. They do not reject.
+
+See [`../concepts/promotional-offers.md`](../concepts/promotional-offers.md).
+
+### Consent: `REFUND_HANDLING` and the empty list (6.2.0)
+
+```typescript
+import { PLYDataProcessingPurpose } from 'react-native-purchasely';
+
+// Replaces the whole list: pass every refused purpose in the same call
+Purchasely.revokeDataProcessingConsent([
+  PLYDataProcessingPurpose.ANALYTICS,
+  PLYDataProcessingPurpose.REFUND_HANDLING, // 'refund-handling'
+]);
+
+Purchasely.revokeDataProcessingConsent([]); // grants every purpose back
+```
+
+- `PLYDataProcessingPurpose.REFUND_HANDLING` (string value `'refund-handling'`) records that the user refused to share consumption data with Apple for refund requests. It is not part of `ALL_NON_ESSENTIALS`: add it explicitly.
+- Android ignores this purpose. On Android, `[REFUND_HANDLING]` alone is an empty list and grants every purpose back.
+- **Behavior change.** Native iOS and Android replace the stored set on each call. In 6.0.0 to 6.1.1 the bridge dropped an empty list (it logged a warning and did nothing). From 6.2.0 the bridge forwards it, so `[]` grants every purpose back on iOS and Android. A list that holds only unknown strings now does the same.
+
+See [`../concepts/privacy-settings.md`](../concepts/privacy-settings.md).
+
+### `PLYSubscription` nullable fields
+
+In 6.1.0, `purchaseToken`, `nextRenewalDate` and `cancelledDate` on `PLYSubscription` are typed `?: string | null`. iOS omits the key (you read `undefined`). Android sends an explicit `null`. Typed code that reads `subscription.purchaseToken` without a guard fails to compile: use `subscription.purchaseToken ?? null`. The runtime behavior did not change.
+
+### Native fixes inherited in 6.1.1
+
+No API change. Native iOS 6.1.2 and Android 6.1.1 fix these points:
+
+- iOS: closing a drawer, popin or modal no longer leaves a transparent window over the app, and `PRESENTATION_CLOSED` is sent again.
+- iOS: all purchases of one StoreKit update are processed together, and a regional language such as `de-CH` falls back to the base language `de`.
+- iOS: durations and periods no longer show a raw translation key.
+- Android: TalkBack reads the rendered text of a button or label, not internal action metadata. A UI test that finds a paywall control by `content-desc` must use the visible text.
+
 ## Bridge & version alignment notes
 
 - The JS ↔ native bridge is still **NativeModules** (`Purchasely`) + event emitters. v6 changes the public JS surface, not the bridge transport.
-- **All Purchasely npm packages MUST be the exact same version** (`6.0.0`). Mixing versions causes runtime crashes. Pin exactly — never floating (`^6.0.0`, `6.x`).
+- **All Purchasely npm packages MUST be the exact same version** (`6.2.0`). Mixing versions causes runtime crashes. Pin exactly, never floating (`^6.2.0`, `6.x`).
 - Run a fresh install after pinning: `rm -rf node_modules && npm install`, then `pod install --repo-update` (iOS) and `./gradlew --refresh-dependencies` (Android) as needed.
 - See [`../sdk-versions.md`](../sdk-versions.md) for the canonical version table and [`./migration-v6.md`](./migration-v6.md) for the full v5 → v6 old→new mapping.
 

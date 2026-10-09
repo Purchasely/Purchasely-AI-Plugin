@@ -11,21 +11,21 @@
 > - [`../concepts/user-attributes-targeting.md`](../concepts/user-attributes-targeting.md) — audience targeting + GDPR consent
 > - [`../concepts/privacy-settings.md`](../concepts/privacy-settings.md) — `revokeDataProcessingConsent` and privacy purposes
 > - [`../concepts/subscription-checks.md`](../concepts/subscription-checks.md) — gating premium content, restore purchases
-> - [`../sdk-versions.md`](../sdk-versions.md) — latest stable versions (pin to **6.0.0** for Cordova)
+> - [`../sdk-versions.md`](../sdk-versions.md) — latest stable versions (pin to **6.2.0** for Cordova)
 > - [`./migration-v6.md`](./migration-v6.md) — full v5 → v6 API mapping if migrating an existing integration
 
-**Cordova is on the v6 builder API** (`Purchasely.builder`, `Purchasely.presentation`, `Purchasely.interceptAction`) as a **stable** release (npm `latest`, not `@next`) — pulling native iOS `Purchasely 6.0.0` / Android `io.purchasely:core 6.0.1`.
+**Cordova is on the v6 builder API** (`Purchasely.builder`, `Purchasely.presentation`, `Purchasely.interceptAction`) as a **stable** release (npm `latest`, not `@next`) — pulling native iOS `Purchasely 6.2.0` / Android `io.purchasely:core 6.2.0` at plugin 6.2.0 (6.1.0 pulled 6.1.0 / 6.1.0, 6.1.1 pulled iOS 6.1.2 / Android 6.1.1).
 
 ## Installation
 
-Requirements: iOS 11.0+, Android minSdk 23, compileSdk 36, targetSdk 35. Pin all packages to **6.0.0** (see [`../sdk-versions.md`](../sdk-versions.md)).
+Requirements: iOS 13.4+ (the native xcframework floor), Android minSdk 23, compileSdk 36, targetSdk 35, `cordova >=11.0.0`, `cordova-android >=12.0.0`. The bridge did not change these floors between 6.0.0 and 6.2.0. Pin all packages to **6.2.0** (see [`../sdk-versions.md`](../sdk-versions.md)).
 
 ```bash
 # Core plugin
-cordova plugin add @purchasely/cordova-plugin-purchasely@6.0.0
+cordova plugin add @purchasely/cordova-plugin-purchasely@6.2.0
 
 # Google Play — required if targeting Google Play Store
-cordova plugin add @purchasely/cordova-plugin-purchasely-google@6.0.0
+cordova plugin add @purchasely/cordova-plugin-purchasely-google@6.2.0
 ```
 
 **CRITICAL: All Purchasely packages must be at the exact same version.**
@@ -320,6 +320,104 @@ Purchasely.synchronize(
 ```
 
 Fire-and-forget calls (`Purchasely.synchronize()`, no args) still work.
+
+## What 6.1.0, 6.1.1 and 6.2.0 add
+
+Plugin 6.1.0, 6.1.1 and 6.2.0 are additive. An existing 6.0.0 integration needs no code change, except for one value change (see [SubscriptionSource value change](#subscriptionsource-value-change-610)). Native pins: 6.1.0 = iOS `6.1.0` / Android `6.1.0`, 6.1.1 = iOS `6.1.2` / Android `6.1.1`, 6.2.0 = iOS `6.2.0` / Android `6.2.0`. The plugin has no inline or embedded presentation view in 6.2.0. Do not promise one.
+
+### Web redemption listener (6.1.0)
+
+Set the listener on the builder. The builder subscribes the callback before the native `start()` call, so a redemption that settles during `start()` is not missed. The second argument is `appHandlesRedemptionAlert`. Pass `false` (default) to keep the SDK popin. Pass `true` to show your own result screen.
+
+```javascript
+Purchasely.builder('YOUR_API_KEY')
+  .webRedemptionListener(function(result) {
+    if (result.isSuccess) {
+      // replay = a link that was already redeemed. Unlock, but do not thank the user twice.
+      unlockContent(result.context && result.context.subscription, result.replay);
+    } else {
+      showError(result.errorCode, result.errorMessage);
+    }
+  }, true)
+  .start();
+```
+
+The result is one flat object on both platforms: `{ isSuccess, context, replay, errorCode, errorMessage }`. `errorCode` is `'EXPIRED_REDEMPTION_TOKEN'`, `'INVALID_REDEMPTION_TOKEN'` or `null`. `context` and `context.subscription` can each be `null`, and both stay a success. A failure reports `replay: false` and `context: null`. For a subscription, `purchaseToken`, `nextRenewalDate` and `cancelledDate` can be absent: Android sends `null`, iOS omits the key. Use a truthiness check, not `!== undefined`.
+
+`Purchasely.addWebRedemptionListener(success, error)` and `Purchasely.removeWebRedemptionListener()` also exist, for an app that changes the listener while the SDK runs. A redemption that settles during `start()` is then missed. Both paths share one native slot: the last caller wins. The `REDEMPTION_CONSUMED` and `REDEMPTION_FAILED` events arrive through `Purchasely.addEventListener`. Rules:
+
+- A redemption deeplink does not obey `allowDeeplink`.
+- `errorMessage` for an expired link can contain a masked email address. Show it to the user. Do not send it to analytics, a crash reporter or a log, on any platform.
+
+### Anonymous user id (6.1.0)
+
+The parameter is a **string**, not a native `UUID`. The bridge parses it. A value that is not a canonical UUID is refused with a log, the option is skipped, and `start()` still succeeds. The SDK keeps an id already on the device unless `override` is `true`, and `override: true` splits the user history. The SDK stores the id you pass in uppercase and an id it generates in lowercase, so compare ids case-insensitively.
+
+```javascript
+Purchasely.builder('YOUR_API_KEY')
+  .anonymousUserId('3f2504e0-4f89-11d3-9a0c-0305e82c3301', false)
+  .start();
+// Options object form: { anonymousUserId: '...', anonymousUserIdOverride: false }
+```
+
+### API proxy (6.1.0)
+
+`proxy(api)` routes the API traffic through your own `https` URL. It works on iOS and Android. The paywall and tracking hosts stay on production. There are three states: a string routes, `null` clears a proxy set earlier, and a key that is absent leaves the setting unchanged. `proxy()` with no argument, or with `undefined`, is refused with a log, because the no-argument native modifiers differ between the platforms.
+
+```javascript
+Purchasely.builder('YOUR_API_KEY')
+  .proxy('https://api-proxy.example.com')
+  .start();
+// Options object form: { proxy: 'https://...' } or { proxy: null } to clear
+```
+
+### Custom events: `emit` (6.2.0)
+
+`Purchasely.emit(name, properties, success, error)`. The `properties`, `success` and `error` arguments are optional. Declare the event in the Console first: the SDK sends only the declared names, matched exactly, and ignores an undeclared name. Pass a date as an ISO 8601 string. The call works before `start()`. Custom events never reach `addEventListener`. An empty name calls `error` with `name is required`. See [`../concepts/custom-events.md`](../concepts/custom-events.md).
+
+```javascript
+Purchasely.emit('recipe_viewed', { recipe_id: 42, title: 'Ratatouille' });
+Purchasely.emit('checkout_started');
+```
+
+### Promotional offer signing (6.2.0, iOS only)
+
+`signPromotionalOfferWithToken(storeProductId, storeOfferId, purchaseContextToken, success, error)` is for Observer mode on iOS. The purchase must carry the same token: `applicationUsername` with StoreKit 1, or `appAccountToken` with StoreKit 2. Pass `null` to let the SDK make the token. A string that is not a UUID calls `error` with no signing. The success value is the signature object (`planVendorId`, `identifier`, `signature`, `keyIdentifier`, `nonce`, `timestamp`) plus `purchaseContextToken`, a lowercase UUID string. See [`../concepts/promotional-offers.md`](../concepts/promotional-offers.md).
+
+```javascript
+Purchasely.signPromotionalOfferWithToken('product_id', 'offer_id', null,
+  function(signature) { console.log(signature.purchaseContextToken); },
+  function(error) { console.error(error); }
+);
+```
+
+`signPromotionalOffer(storeProductId, storeOfferId, success, error)` is **deprecated**. It signs over the anonymous user id, so Apple rejects a purchase that carries another value. On Android both methods call `success` with no value and sign nothing, so shared code can call them on both platforms.
+
+### `refundHandling` consent purpose (6.2.0, iOS only)
+
+The value is `Purchasely.DataProcessingPurpose.refundHandling`, which is the string `'REFUND_HANDLING'`. It is not part of `allNonEssentials`. Android ignores it. `revokeDataProcessingConsent` replaces the whole list on each call, so pass every refused purpose together. An empty list `[]` grants every purpose back. The bridge does not add any logic for the empty list: it forwards an empty set to the native SDK. A string that the bridge does not know is ignored. See [`../concepts/privacy-settings.md`](../concepts/privacy-settings.md).
+
+```javascript
+Purchasely.revokeDataProcessingConsent([
+  Purchasely.DataProcessingPurpose.analytics,
+  Purchasely.DataProcessingPurpose.refundHandling
+]);
+```
+
+### SubscriptionSource value change (6.1.0)
+
+`Purchasely.SubscriptionSource.none` changed from `4` to `5`, and `webCheckoutStripe: 4` is new. The values now equal the native raw values on both platforms (iOS `stripe = 4, none = 5`). Code that uses the constant `Purchasely.SubscriptionSource.none` keeps working. Code that compares the raw number `4`, or stores it, must change. On iOS the wire value did not change. Before 6.1.0, a Stripe subscription matched `none` in JavaScript.
+
+| Subscription source | Android wire before 6.1.0 | Android wire from 6.1.0 | iOS wire (unchanged) |
+| --- | --- | --- | --- |
+| Web checkout (Stripe) | `4`, named `none` in JS | `4`, named `webCheckoutStripe` | `4` |
+| No source | `4` | `5` | `5` |
+
+### Other behavior changes
+
+- 6.1.0: a listener that is removed or replaced now closes its Cordova callback, and all listener handles clear when the WebView reloads (`onReset`).
+- 6.1.1: native fixes only (iOS 6.1.2, Android 6.1.1), with no JavaScript change.
+- 6.2.0: every purchase is attributed to the paywall, placement, campaign and A/B test that started it. Audience targeting sees active and expired subscriptions, including web subscriptions.
 
 ## Complete Integration Example
 

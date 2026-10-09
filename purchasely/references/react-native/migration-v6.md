@@ -1,10 +1,11 @@
 # React Native — Migrating to the Purchasely 6.0 API
 
-> **Published as stable GA.** The React Native v6 API ships in
-> `react-native-purchasely: 6.0.0` (and the matching
+> **Published as stable GA.** The React Native v6 API shipped in `6.0.0` and the
+> current install target is `react-native-purchasely: 6.2.0` (and the matching
 > `@purchasely/react-native-purchasely-google` / `-android-player` / `-amazon` /
-> `-huawei` packages), live on npm alongside the native iOS `Purchasely 6.0.0`
-> and Android `io.purchasely:core 6.0.1` stable SDKs. The builder-based API
+> `-huawei` packages), live on npm alongside the native iOS `Purchasely 6.2.0`
+> and Android `io.purchasely:core 6.2.0` stable SDKs. See
+> [After 6.0.0](#after-600) for what 6.1.0, 6.1.1 and 6.2.0 add. The builder-based API
 > documented below (`Purchasely.builder`, `Purchasely.presentation`,
 > `Purchasely.interceptAction`) is the current published surface — the v5
 > paywall API (`Purchasely.start({...})`, `fetchPresentation` /
@@ -68,8 +69,8 @@ A paywall is now called a **Presentation** (or *Screen*).
 
 ## Migration checklist
 
-1. Bump all five npm packages to **`6.0.0`** (`--save-exact` recommended —
-   `6.0.0` is stable GA so a caret range now resolves fine, but an exact pin
+1. Bump all five npm packages to **`6.2.0`** (`--save-exact` recommended;
+   `6.2.0` is stable GA so a caret range now resolves fine, but an exact pin
    keeps every Purchasely package in lockstep). `rm -rf node_modules && npm
    install`, then `pod install --repo-update`. Bump the Android host
    `minSdkVersion` to **23** (was 21) and `compileSdk` to 35.
@@ -519,11 +520,12 @@ exactly as in v5:
 > `userSubscriptionsHistory()`.
 
 > **Native dependency.** This React Native release targets the Purchasely v6 native
-> SDKs (iOS `Purchasely 6.0.0`, Android `io.purchasely:core 6.0.1`),
-> published as stable GA releases on CocoaPods / Maven Central — see
+> SDKs (iOS `Purchasely 6.2.0`, Android `io.purchasely:core 6.2.0`),
+> published as stable GA releases on CocoaPods / Maven Central. See
 > [`../sdk-versions.md`](../sdk-versions.md) for the canonical pins. The published
-> **React Native** packages are all `6.0.0`, pinned exactly to those native
-> versions for cross-package alignment.
+> **React Native** packages are all `6.2.0`, pinned exactly to those native
+> versions for cross-package alignment. The v5 to v6 mapping below is unchanged
+> since `6.0.0` (native pins at `6.0.0`: iOS `6.0.0`, Android `6.0.1`).
 
 ---
 
@@ -550,6 +552,64 @@ GA added a few React Native surfaces that didn't exist at `6.0.0-rc.3`:
 > **`signPromotionalOffer` on Android** no longer fails — it's a no-op success
 > that resolves `null` (Android has no promotional-offer signing step; only
 > iOS needs a signature).
+
+---
+
+## After 6.0.0
+
+Three releases followed `6.0.0`. They are additive: an existing `6.0.0`
+integration needs no code change, except one TypeScript typing change in `6.1.0`.
+The full samples are in [`integration.md`](./integration.md#after-600-what-610-611-and-620-add).
+
+| Bridge | Native iOS | Native Android |
+|--------|------------|----------------|
+| `6.1.0` | `6.1.0` | `6.1.0` |
+| `6.1.1` | `6.1.2` | `6.1.1` |
+| `6.2.0` | `6.2.0` | `6.2.0` |
+
+The iOS deployment target (15.1) and the Android `minSdkVersion` (23) did not
+change.
+
+### 6.1.0
+
+- `builder().webRedemptionListener(callback, appHandlesRedemptionAlert?)`,
+  `builder().appHandlesRedemptionAlert(bool)`,
+  `Purchasely.addWebRedemptionListener(cb)` and
+  `Purchasely.removeWebRedemptionListener()`. The result is a flat
+  `PLYWebRedemptionResult` on both platforms. A redemption deeplink does not obey
+  `allowDeeplink`.
+- `builder().anonymousUserId(id: string, override?: boolean)`. The id is a
+  string. A value that is not a canonical UUID is refused with a log and the SDK
+  still starts.
+- `builder().proxy(api: string | null)`, on iOS and Android. `proxy(null)` clears
+  a proxy.
+- `SubscriptionSource.WEB_CHECKOUT_STRIPE`, and the `REDEMPTION_CONSUMED` and
+  `REDEMPTION_FAILED` event names.
+- **Typing change.** `PLYSubscription.purchaseToken`, `nextRenewalDate` and
+  `cancelledDate` are now `?: string | null`. Code that reads them without a
+  guard fails to compile in strict mode. Runtime behavior is unchanged.
+
+### 6.1.1
+
+- Native fixes only. iOS closing a drawer, popin or modal no longer leaves a
+  transparent window over the app. Android TalkBack reads the rendered text of a
+  control: a UI test that used the internal `content-desc` must use the visible
+  text.
+
+### 6.2.0
+
+- `Purchasely.emit(name, properties?)` sends a custom event declared in the
+  Console. It returns `void`.
+- `Purchasely.signPromotionalOfferWithToken({ storeProductId, storeOfferId,
+  purchaseContextToken? })`, iOS only, for Observer mode. It resolves `null` on
+  Android. `signPromotionalOffer` is **deprecated**.
+- `PLYDataProcessingPurpose.REFUND_HANDLING` (`'refund-handling'`). Android
+  ignores it.
+- **Behavior change.** `revokeDataProcessingConsent([])` now grants every purpose
+  back on iOS and Android. Up to `6.1.1` the bridge ignored an empty list.
+- Every purchase is linked to the paywall, placement, campaign and A/B test that
+  started it, and audiences see active and expired subscriptions, web
+  subscriptions included (native 6.2.0).
 
 ---
 

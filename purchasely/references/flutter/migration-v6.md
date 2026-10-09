@@ -1,10 +1,11 @@
 # Flutter — Migrating to the Purchasely 6.0 API
 
-> **GA / stable.** The Flutter v6 API ships in
-> `purchasely_flutter: 6.0.0` (and the matching `purchasely_google` /
-> `purchasely_android_player` packages, also `6.0.0`), published stable on
-> pub.dev alongside the native iOS `Purchasely 6.0.0` and Android
-> `io.purchasely:core 6.0.1` GA releases. The builder-based API documented below
+> **GA / stable.** The Flutter v6 API shipped in `6.0.0`. The install target is
+> now `purchasely_flutter: 6.2.0` (and the matching `purchasely_google` /
+> `purchasely_android_player` packages, also `6.2.0`), which pulls native iOS
+> `Purchasely 6.2.0` and Android `io.purchasely:core 6.2.0`. The v5 to v6 mapping
+> below is unchanged since 6.0.0. See [After 6.0.0](#after-600) for 6.1.0, 6.1.1
+> and 6.2.0. The builder-based API documented below
 > (`Purchasely.apiKey(...)`, `PLYPresentationBuilder`, `Purchasely.interceptAction`)
 > is the current published surface — the v5 API (`Purchasely.start(...)`,
 > `fetchPresentation` / `presentPresentation[ForPlacement]`,
@@ -475,8 +476,30 @@ name, signature and behaviour:
 > **Removed deeplink helpers.** `readyToOpenDeeplink` and `isDeeplinkHandled`
 > were **removed** in v6. Use `allowDeeplink` / `handleDeeplink` instead.
 
-> **Native dependency.** This Flutter release targets the Purchasely v6 native SDKs
-> (iOS `Purchasely 6.0.0`, Android `io.purchasely:core 6.0.1`), published as stable GA releases
-> on CocoaPods / Maven Central — see [`../sdk-versions.md`](../sdk-versions.md) for the canonical
-> pins. The published **Flutter** package is `purchasely_flutter: 6.0.0`, which pulls those
-> native versions transitively.
+> **Native dependency.** The current Flutter release targets the Purchasely native
+> SDKs iOS `Purchasely 6.2.0` and Android `io.purchasely:core 6.2.0`, published as
+> stable GA releases on CocoaPods / Maven Central — see
+> [`../sdk-versions.md`](../sdk-versions.md) for the canonical pins. The published
+> **Flutter** package is `purchasely_flutter: 6.2.0`, which pulls those native
+> versions transitively. The 6.0.0 package pulled iOS `6.0.0` and Android `6.0.1`.
+
+## After 6.0.0
+
+The code samples are in [`integration.md`](./integration.md). All three releases are additive.
+
+| Version | Native iOS / Android | What it adds |
+|---------|----------------------|--------------|
+| 6.1.0 | `6.1.0` / `6.1.0` | `webRedemptionListener`, `anonymousUserId`, `proxy`, `PLYSubscriptionSource.webCheckoutStripe`, events `REDEMPTION_CONSUMED` and `REDEMPTION_FAILED` |
+| 6.1.1 | `6.1.2` / `6.1.1` | No Dart API change. iOS fix: a closed drawer, popin or modal now removes the SDK window and sends `PRESENTATION_CLOSED` |
+| 6.2.0 | `6.2.0` / `6.2.0` | `emit`, `signPromotionalOfferWithToken`, `PLYDataProcessingPurpose.refundHandling`, `signPromotionalOffer` deprecated |
+
+Behavior changes to check:
+
+- **`PLYSubscriptionSource` changed (6.1.0).** `webCheckoutStripe` is a new case at index 4, and `none` moves from index 4 to index 5. An exhaustive `switch` without a `default` stops compiling until you add an arm. A value persisted as `.index` now decodes one case off for `none`. Persist `.name`.
+- **`PLYSubscription` fields (6.1.0).** `purchaseToken` is Android only. iOS omits the key. `nextRenewalDate` and `cancelledDate` are null when the native value is empty.
+- **Redemption data (6.1.0).** `errorMessage` can hold a masked email address on both platforms. Do not send it to analytics. `PLYEventProperties.redemption.token` is the raw token. Exclude it when you forward events.
+- **iOS-only methods on Android (6.2.0).** `signPromotionalOffer` and `signPromotionalOfferWithToken` resolve with an empty map and never reject. Android ignores `refundHandling`.
+- **`signPromotionalOffer` is deprecated (6.2.0).** It signs over the anonymous user id. In Observer mode on iOS, use `signPromotionalOfferWithToken` and put the returned `purchaseContextToken` in the purchase.
+- **Consent (6.2.0).** `allNonEssentials` does not include `refundHandling`. `revokeDataProcessingConsent` replaces the whole list. On iOS, `allNonEssentials` combined with other purposes no longer drops the other purposes.
+- **Purchases and audiences (6.2.0).** A purchase is linked to the paywall, placement, campaign and A/B test that started it. Audience targeting sees web subscriptions.
+- **Toolchain.** The floors did not change: Dart ≥ 3.0.0, iOS 13.4, `minSdk 23`, `compileSdk 36`.
