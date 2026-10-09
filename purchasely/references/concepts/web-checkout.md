@@ -31,7 +31,7 @@ Web Checkout has its own dedicated SDK/UI events, separate from the regular purc
 
 ## Web-to-app redemption result (6.1.0+)
 
-Native iOS / Android SDK 6.1.0+. A user buys on your website, taps the link in the confirmation email (`{scheme}://ply/redeem/{token}`) and lands in the app. The SDK tells your app when the redemption settles. The bridges do not expose this yet.
+Native iOS / Android SDK 6.1.0+, and the Flutter, React Native and Cordova bridges 6.1.0+. A user buys on your website, taps the link in the confirmation email (`{scheme}://ply/redeem/{token}`) and lands in the app. The SDK tells your app when the redemption settles. On the bridges, call `webRedemptionListener(callback, appHandlesRedemptionAlert?)` on the builder, or `addWebRedemptionListener` / `removeWebRedemptionListener` after start. The result has `isSuccess`, `context.subscription`, `replay`, `errorCode` and `errorMessage`. See the web redemption section of the [Flutter](../flutter/integration.md#web-redemption-listener-610), [React Native](../react-native/integration.md#web-redemption-listener-610) and [Cordova](../cordova/integration.md#web-redemption-listener-610) integration guides. Cordova takes the callback first: `webRedemptionListener(callback, appHandlesRedemptionAlert)`.
 
 Register the handler on the **builder only**. A redemption can settle during `start()`, so there is no runtime setter.
 

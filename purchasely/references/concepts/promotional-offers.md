@@ -113,6 +113,10 @@ Purchasely.signPromotionalOffer(
 - `purchaseContextToken: nil` makes a new token. To sign again for the **same** purchase, for example after an error, pass the token you received before.
 - The older `signPromotionalOffer(storeProductId:storeOfferId:success:failure:)` and `signPromotionalOffer(plan:promoOffer:success:failure:)` are deprecated since SDK 6.2.0 in the official docs, but the 6.2.0 SDK does not mark it `@available(*, deprecated)`, so the compiler shows no warning. They still work. They sign for the anonymous user id and does not return a token. If you use it, do not put a token in the account field.
 
+#### Flutter, React Native, Cordova 6.2.0+: `signPromotionalOfferWithToken` (iOS only, Observer mode)
+
+The bridges expose the token variant as `signPromotionalOfferWithToken`: Flutter `signPromotionalOfferWithToken(storeProductId, storeOfferId, {purchaseContextToken})`, React Native `signPromotionalOfferWithToken({ storeProductId, storeOfferId, purchaseContextToken })`, Cordova `signPromotionalOfferWithToken(storeProductId, storeOfferId, purchaseContextToken, success, error)`. The result carries the signature fields and `purchaseContextToken` (lowercase UUID). A token that is not a UUID is refused (Flutter rejects with `PlatformException`, React Native rejects, Cordova calls `error`); `null` lets native create one. On Android the call resolves empty and never fails. `signPromotionalOffer` is **deprecated** on the three bridges since 6.2.0 and still works. See the [Flutter](../flutter/integration.md#promotional-offer-token-620-ios-only-observer-mode), [React Native](../react-native/integration.md#promotional-offers-signpromotionalofferwithtoken-620-ios-only) and [Cordova](../cordova/integration.md#promotional-offer-signing-620-ios-only) guides.
+
 #### Android (Kotlin) — offer token from the interceptor
 
 In v6 the offer parameters live on the `PLYPresentationAction.Purchase` sealed subclass; register a per-action interceptor and return a `PLYInterceptResult`:

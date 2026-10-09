@@ -44,7 +44,7 @@ Exposed in the SDK since **v5.4**, with the legal basis and revocability of each
 | `campaigns` | Automatically triggered Campaigns / in-app experiences. |
 | `thirdPartyIntegrations` | Forwarding subscription lifecycle events and subscription attributes to external integrations. |
 | `allNonEssentials` | Revokes analytics, identified analytics, personalization, campaigns, and third-party integrations in one call. |
-| `refundHandling` | Native iOS SDK 6.2.0+ only (`PLYDataProcessingPurpose.refundHandling`). Records that the user refused to share consumption data with Apple for refund requests. **Not** part of `allNonEssentials`. |
+| `refundHandling` | Native iOS SDK 6.2.0+, and the bridges 6.2.0+ (Flutter `PLYDataProcessingPurpose.refundHandling`, React Native `PLYDataProcessingPurpose.REFUND_HANDLING`, Cordova `Purchasely.DataProcessingPurpose.refundHandling`). Android ignores it, on native and on the bridges. Records that the user refused to share consumption data with Apple for refund requests. **Not** part of `allNonEssentials`. |
 
 Processing strictly required to operate subscriptions cannot be revoked through this API.
 
@@ -53,13 +53,15 @@ Processing strictly required to operate subscriptions cannot be revoked through 
 1. Show your privacy notice / CMP.
 2. Map the user's choice to the processing purposes to revoke.
 3. Call `revokeDataProcessingConsent(...)` once with the full set of revoked purposes.
-4. To reactivate all revokable processing, call the same API with an empty set/array.
+4. To reactivate all revokable processing, call the same API with an empty set/array. This reaches the native SDK on Flutter and Cordova from 6.0.0. On React Native the bridge dropped an empty array from 6.0.0 to 6.1.1 (nothing reached native), so it works from React Native 6.2.0.
 
 The SDK persists the choice until changed or until the app is reinstalled.
 
 > **Each call replaces the whole list.** `revokeDataProcessingConsent(for:)` stores the set you pass and discards the earlier one. To refuse `refundHandling` and `analytics`, pass both in one call: `Purchasely.revokeDataProcessingConsent(for: [.analytics, .refundHandling])`. `[.allNonEssentials]` does not cover `refundHandling`, so add it explicitly.
 
-Custom events (native SDK 6.2.0+, `Purchasely.emit`) respect the `analytics` purpose: when it is revoked, the SDK sends no new custom event.
+On Android, an array that holds only `refundHandling` (unsupported there, so ignored) becomes an empty set and grants every purpose back.
+
+Custom events (SDK 6.2.0+ on native and on the bridges, `Purchasely.emit`) respect the `analytics` purpose: when it is revoked, the SDK sends no new custom event.
 
 ## iOS privacy manifest
 

@@ -1,6 +1,6 @@
 # Custom Events — Universal Patterns
 
-Applies to: **native iOS SDK 6.2.0+ and native Android SDK 6.2.0+ only**. The React Native, Flutter and Cordova bridges do not expose `emit` yet: do not promise it there.
+Applies to: **native iOS SDK 6.2.0+, native Android SDK 6.2.0+, and the Flutter, React Native and Cordova bridges 6.2.0+**. Before 6.2.0 `emit` does not exist on any platform.
 
 A **custom event** is a business event of your own app (`recipe_viewed`, `checkout_started`, `onboarding_completed`) that you hand to Purchasely. The SDK can then do two independent things with it:
 
@@ -41,6 +41,25 @@ Purchasely.emit("checkout_started");
 ```
 
 Signatures (source of truth): iOS `emit(name: String, properties: [String: Any] = [:])`, Android `emit(name: String, properties: Map<String, Any?> = emptyMap())`. The call returns at once, reports nothing back and never throws. It is safe to call before `start()`. On Android, an event emitted before the configuration is loaded has nothing to match against and is simply not sent.
+
+### Flutter, React Native and Cordova (bridge 6.2.0+)
+
+```dart
+// Flutter: returns Future<void>. A DateTime value makes the call fail: pass an ISO 8601 string.
+await Purchasely.emit('recipe_viewed', {'recipe_id': 42, 'title': 'Ratatouille'});
+```
+
+```typescript
+// React Native: returns void, not a Promise.
+Purchasely.emit('recipe_viewed', { recipe_id: 42, title: 'Ratatouille' });
+```
+
+```javascript
+// Cordova: optional success and error callbacks. An empty name calls error with "name is required".
+Purchasely.emit('recipe_viewed', { recipe_id: 42 }, () => {}, (err) => console.log(err));
+```
+
+The three bridges forward the call to native `emit`, may be called before `start()`, and ignore an undeclared name. Details: [Flutter](../flutter/integration.md#custom-events-emit-620), [React Native](../react-native/integration.md#custom-events-emit-620), [Cordova](../cordova/integration.md#custom-events-emit-620).
 
 ## Declare the event in the Console
 
@@ -116,7 +135,7 @@ The **Primary KPI** step of an experiment lists your custom events: pick one as 
 1. **The name is not declared** in the Console. Declare it, then restart the app so the SDK fetches the new configuration.
 2. **The name does not match.** Compare case and spaces character by character with the Console declaration.
 3. **The `analytics` purpose is refused** for this user. No new custom event is sent. Check `revokeDataProcessingConsent` calls.
-4. **The SDK is older than 6.2.0**, or the app uses a React Native, Flutter or Cordova bridge (still on native 6.0.x). `emit` does not exist there.
+4. **The SDK is older than 6.2.0**, or the app uses a Flutter, React Native or Cordova bridge older than 6.2.0. `emit` does not exist there.
 5. **The event arrives but no campaign opens.** The campaign is a separate path: check the campaign trigger, dates, capping, exposure and the `campaigns` purpose.
 6. **The event is missing from `PLYEventDelegate` / the event listener.** This is expected: custom events never reach it.
 

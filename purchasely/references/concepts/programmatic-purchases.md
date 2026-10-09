@@ -118,7 +118,7 @@ Do not substitute the regular purchase call for an offer-aware flow:
 - iOS custom/Observer flow: use the promotional-offer APIs from [promotional-offers.md](promotional-offers.md).
 - iOS 6.2.0+ Observer flow with your own StoreKit purchase: prefer `signPromotionalOffer(storeProductId:storeOfferId:purchaseContextToken:success:failure:)` and pass the returned token in `appAccountToken` (StoreKit 2) or `applicationUsername` (StoreKit 1, `token.uuidString.lowercased()`). The older variants are deprecated since 6.2.0 in the docs (no compiler warning) and still work. See [promotional-offers.md](promotional-offers.md).
 - Android custom/Observer flow: pass the Google `offerToken` to your billing layer.
-- React Native / Flutter / Cordova: use `signPromotionalOffer` for Apple signatures when your custom billing flow needs it.
+- React Native / Flutter / Cordova: on 6.2.0+ use `signPromotionalOfferWithToken` (iOS only) and pass the returned token as the StoreKit account token. `signPromotionalOffer` is deprecated there. On earlier bridges use `signPromotionalOffer`.
 
 ## Anti-patterns
 

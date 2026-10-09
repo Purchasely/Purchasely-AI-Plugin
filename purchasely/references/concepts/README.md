@@ -31,7 +31,7 @@ When a topic also has a deeper platform-specific take (e.g. SwiftUI lifecycle, J
 | [monthly-commitment.md](monthly-commitment.md) | Apple "Monthly with 12-Month Commitment" `PLYBillingPlanType` (iOS 26.4+, eligibility excl. US/SG) and Google Play native installment subscriptions — cross-platform pricing tags (`{{MONTHLY_AMOUNT}}`, `{{PRICE}}`, `{{AMOUNT}}`), `INSTALLMENT_*` webhooks |
 | [web-checkout.md](web-checkout.md) | Stripe Payment Links via the `webCheckout` action, audience targeting, `WEB_CHECKOUT_*` events |
 | [campaigns.md](campaigns.md) | No-code Console automations (trigger / placement-based), `allowCampaigns` + `allowDeeplink` (native iOS/Android, React Native, Flutter v6, and Cordova v6), SDK ≥ 5.1.0 |
-| [custom-events.md](custom-events.md) | `Purchasely.emit` custom events (native iOS/Android 6.2.0+ only): Console declaration, properties, consent, campaign trigger, `track_event` screen action, `ply_custom_events_*` attributes |
+| [custom-events.md](custom-events.md) | `Purchasely.emit` custom events (native iOS/Android and Flutter/React Native/Cordova bridges, 6.2.0+): Console declaration, properties, consent, campaign trigger, `track_event` screen action, `ply_custom_events_*` attributes |
 | [analytics-integration.md](analytics-integration.md) | Forwarding UI events to Firebase / Amplitude / AppsFlyer + analytics wrapper pattern |
 | [rendering-engine.md](rendering-engine.md) | How a Screen renders: iOS UIKit component tree + tolerant decoding, Android Views/fat-AAR, image cache, Lottie bridge, known rendering bugs |
 
@@ -49,7 +49,7 @@ When a topic also has a deeper platform-specific take (e.g. SwiftUI lifecycle, J
 | Setting up 12-month commitment billed monthly (Apple) or installment subscriptions (Google Play) | `monthly-commitment.md`, `dynamic-offerings.md` |
 | Adding scheduled or event-driven paywalls | `campaigns.md` |
 | Adding a Stripe / web checkout button | `web-checkout.md` |
-| Sending your own business events, triggering a campaign from an app event, measuring a KPI on a paywall (native 6.2.0+) | `custom-events.md`, `campaigns.md` |
+| Sending your own business events, triggering a campaign from an app event, measuring a KPI on a paywall (6.2.0+) | `custom-events.md`, `campaigns.md` |
 | Wiring analytics / tracking | `analytics-integration.md`, `user-identity.md` |
 | Improving paywall perceived performance | `presentation-cache.md` (preload pattern) |
 | Debugging stuck paywalls / blank presentations | `presentation-types.md`, `presentation-cache.md`, `paywall-actions.md` |

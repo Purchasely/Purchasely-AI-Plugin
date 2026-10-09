@@ -80,7 +80,7 @@ Platform files (exact setup and signatures) and troubleshooting files are listed
 
 ### SDK generation rules
 
-- **Native iOS, native Android, Flutter, React Native, and Cordova use SDK v6** (native iOS is stable GA at `6.2.0`; native Android is stable GA at `6.2.0` — Android never had a `6.0.0` tag; Flutter pins `6.0.0`, pulling native iOS `6.0.0` + Android core `6.0.1`; React Native pins `6.0.0` (stable GA, npm `latest` tag), pulling native iOS `6.0.0` + Android `6.0.1`; Cordova pins `6.0.0` (stable GA, npm `latest` tag — not `@next`) and pulls native iOS `6.0.0` / Android `6.0.1`).
+- **Native iOS, native Android, Flutter, React Native, and Cordova use SDK v6** (native iOS is stable GA at `6.2.0`; native Android is stable GA at `6.2.0` — Android never had a `6.0.0` tag; Flutter pins `6.2.0`, pulling native iOS `6.2.0` + Android core `6.2.0`; React Native pins `6.2.0` (stable GA, npm `latest` tag), pulling native iOS `6.2.0` + Android `6.2.0`; Cordova pins `6.2.0` (stable GA, npm `latest` tag — not `@next`) and pulls native iOS `6.2.0` / Android `6.2.0`).
 - **Cordova is on the v6 builder API** — `Purchasely.builder(apiKey)…start()` / `Purchasely.start({...}, ok, err)`, `Purchasely.presentation` builder/request, per-action `Purchasely.interceptAction(kind, handler)`.
 - Always answer iOS / Android / Flutter / React Native / Cordova with v6 APIs.
 - Never invent signatures. If exact syntax matters, load the matching reference file before answering.
@@ -216,7 +216,7 @@ For any campaign / trigger / `APP_STARTED` / launch display question, load `../.
 
 For `Purchasely.emit` / custom event / `track_event` questions, load `../../references/concepts/custom-events.md` first.
 
-- Native iOS and Android SDK 6.2.0+ only. The React Native, Flutter and Cordova bridges do not expose it yet.
+- Native iOS and Android SDK 6.2.0+, and the Flutter, React Native and Cordova bridges 6.2.0+. The bridge API is `Purchasely.emit(name, properties)`; Flutter returns a `Future`, React Native returns `void`, Cordova takes optional success and error callbacks.
 - The event name must be declared in the Console and match exactly (case and spaces). An undeclared event is ignored.
 - Custom events never reach `PLYEventDelegate` / the event listener. A refused `analytics` purpose means no new custom events.
 
