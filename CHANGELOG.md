@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+## [2.2.0] — 2026-10-09
+
 ### Added
 
 - `references/concepts/custom-events.md`: custom events on native iOS and Android 6.2.0. Covers `Purchasely.emit` (Swift, Objective-C, Kotlin, Java), the exact-name Console declaration, property types, the `ply_custom_events_tracked` / `ply_custom_events_last_tracked` built-in attributes, the `analytics` consent purpose, the separate delivery queue, the custom-event campaign trigger, the `track_event` screen action, and a troubleshooting list. Aligned with docs.purchasely.com 6.2: Console setup (Targeting > Events, properties), trigger property filters (AND/OR) and `allowCampaigns`, and the experiment Primary KPI. Indexed in `concepts/README.md`, the `purchasely-sdk-expert` routing index, the `purchasely-debug` and `purchasely-integrate` reference maps, and the session-start routing sentence.
