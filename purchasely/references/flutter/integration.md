@@ -1,6 +1,6 @@
 # Flutter Integration
 
-Purchasely Flutter is on the **v6 API**, the same generation as the native iOS and Android SDKs, and is **GA / stable** (no longer a pre-release). The plugin pins the **6.0.0** Dart packages (`purchasely_flutter`, `purchasely_google`, `purchasely_android_player` are all `6.0.0`, published on pub.dev), which pull the published **native SDKs** — iOS `Purchasely 6.0.0` on the CocoaPods trunk, Android `io.purchasely:core 6.0.1` on Maven Central. All public Dart types carry the **`PLY` prefix** (`PLYPresentationBuilder`, `PLYPresentationRequest`, `PLYPresentationOutcome`, `PLYTransition`, …), aligning with the iOS/Android naming convention. The one exception is **SDK initialization**: the builder is started via `Purchasely.apiKey(...)` (a static method on `Purchasely` that returns a `PurchaselyBuilder`).
+Purchasely Flutter is on the **v6 API**, the same generation as the native iOS and Android SDKs, and is **GA / stable** (no longer a pre-release). The plugin pins the **6.2.0** Dart packages (`purchasely_flutter`, `purchasely_google`, `purchasely_android_player` are all `6.2.0`, published on pub.dev), which pull the published **native SDKs** — iOS `Purchasely 6.2.0` on the CocoaPods trunk, Android `io.purchasely:core 6.2.0` on Maven Central. All public Dart types carry the **`PLY` prefix** (`PLYPresentationBuilder`, `PLYPresentationRequest`, `PLYPresentationOutcome`, `PLYTransition`, …), aligning with the iOS/Android naming convention. The one exception is **SDK initialization**: the builder is started via `Purchasely.apiKey(...)` (a static method on `Purchasely` that returns a `PurchaselyBuilder`).
 
 Three areas changed shape from v5: **starting the SDK** (`Purchasely.apiKey(...)`), **displaying / preloading / closing a presentation** (`PLYPresentationBuilder` + `PLYPresentationRequest`), and the **action interceptor** (`Purchasely.interceptAction`). Everything else on the `Purchasely` class — purchases, restore, identity, catalog, subscriptions data, user attributes, events, dynamic offerings, consent and config — remains source-compatible. See [`migration-v6.md`](./migration-v6.md) for the full v5 → v6 old→new mapping.
 
@@ -15,33 +15,33 @@ Three areas changed shape from v5: **starting the SDK** (`Purchasely.apiKey(...)
 > - [`../concepts/user-attributes-targeting.md`](../concepts/user-attributes-targeting.md) — audience targeting + GDPR consent
 > - [`../concepts/privacy-settings.md`](../concepts/privacy-settings.md) — `revokeDataProcessingConsent` and privacy purposes
 > - [`../concepts/subscription-checks.md`](../concepts/subscription-checks.md) — gating premium content, restore purchases
-> - [`../sdk-versions.md`](../sdk-versions.md) — latest versions (Flutter is **6.0.0**, stable)
+> - [`../sdk-versions.md`](../sdk-versions.md) — latest versions (Flutter is **6.2.0**, stable)
 
 ## Installation
 
-**Requires Dart ≥ 3.0.0.** Pin all three packages to the exact same version, `6.0.0` (now stable, a caret range like `^6.0.0` is fine for reproducible builds, but pin exactly if you prefer to control upgrades manually):
+**Requires Dart ≥ 3.0.0.** Pin all three packages to the exact same version, `6.2.0` (a caret range like `^6.2.0` is fine for reproducible builds, but pin exactly if you prefer to control upgrades manually):
 
 ```bash
 # Core SDK
-flutter pub add purchasely_flutter:6.0.0
+flutter pub add purchasely_flutter:6.2.0
 
 # Google Play — required if targeting Google Play Store
-flutter pub add purchasely_google:6.0.0
+flutter pub add purchasely_google:6.2.0
 
 # Video Player — optional, for video support in paywalls on Android
-flutter pub add purchasely_android_player:6.0.0
+flutter pub add purchasely_android_player:6.2.0
 ```
 
 **CRITICAL: All Purchasely packages must be at the exact same version.** Check `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  purchasely_flutter: ^6.0.0
-  purchasely_google: ^6.0.0
-  purchasely_android_player: ^6.0.0
+  purchasely_flutter: ^6.2.0
+  purchasely_google: ^6.2.0
+  purchasely_android_player: ^6.2.0
 ```
 
-> **Native dependency.** `purchasely_flutter 6.0.0` pulls the native SDKs transitively — iOS `Purchasely 6.0.0` (CocoaPods trunk) and Android `io.purchasely:core 6.0.1` (Maven Central). Both are stable, published GA releases, so the project builds from the public repositories with no `mavenLocal()` and no development pod. You do not bump the native pods/gradle dependencies yourself; the plugin's pinning is correct.
+> **Native dependency.** `purchasely_flutter 6.2.0` pulls the native SDKs transitively — iOS `Purchasely 6.2.0` (CocoaPods trunk and Swift Package) and Android `io.purchasely:core 6.2.0` (Maven Central). `purchasely_google` pulls `io.purchasely:google-play 6.2.0` and `purchasely_android_player` pulls `io.purchasely:player 6.2.0`. The toolchain floors did not change since 6.0.0 (Dart ≥ 3.0.0, iOS 13.4, `minSdk 23`, `compileSdk 36`). Both are stable, published GA releases, so the project builds from the public repositories with no `mavenLocal()` and no development pod. You do not bump the native pods/gradle dependencies yourself; the plugin's pinning is correct.
 
 ### iOS Setup
 
@@ -510,10 +510,91 @@ try {
 }
 ```
 
+## What 6.1.0, 6.1.1 and 6.2.0 add
+
+All three releases are additive. The one change that can break a build is the `PLYSubscriptionSource` enum case added in 6.1.0 (see below). 6.1.0 pulls native iOS `6.1.0` and Android `6.1.0`. 6.1.1 pulls iOS `6.1.2` and Android `6.1.1`, with no Dart API change. 6.2.0 pulls iOS `6.2.0` and Android `6.2.0`.
+
+### Web redemption listener (6.1.0)
+
+Set the listener on the start builder. A redemption can settle during `start()`, and the builder subscribes before the native `start()` call. The second argument is `appHandlesRedemptionAlert`: `false` (default) lets the SDK show its own popin and call the listener after the user closes it. `true` shows no popin and calls the listener when the redemption settles.
+
+```dart
+await Purchasely.apiKey('YOUR_API_KEY')
+    .webRedemptionListener((result) {
+      if (result.isSuccess) {
+        unlockContent(result.context?.subscription, result.replay);
+      } else {
+        showError(result.errorCode, result.errorMessage);
+      }
+    }, true)
+    .start();
+```
+
+`PLYWebRedemptionResult` is one flat object: `isSuccess`, `context` (`PLYWebRedemptionContext?`, with a nullable `subscription`), `replay`, `errorCode`, `errorMessage`. A failure reports `replay: false` and `context: null`. `Purchasely.addWebRedemptionListener(cb)` and `Purchasely.removeWebRedemptionListener()` exist for a runtime change, but a redemption that settles during `start()` is then missed. `appHandlesRedemptionAlert(bool)` also exists as a builder modifier.
+
+- A redemption deeplink does not obey `allowDeeplink`.
+- For an expired link, `errorMessage` can hold a masked email address, on iOS and on Android. Show it to the user. Do not send it to analytics or to a crash reporter.
+- `PLYEventProperties.redemption.token` carries the raw redemption token on `REDEMPTION_CONSUMED` and `REDEMPTION_FAILED`. Exclude this field when you forward events to a third party.
+- New events: `PLYEventName.REDEMPTION_CONSUMED` and `PLYEventName.REDEMPTION_FAILED`. The payload is `PLYEventProperties.redemption`.
+
+See [`../concepts/web-checkout.md`](../concepts/web-checkout.md) for the web funnel.
+
+### Anonymous user id and API proxy (6.1.0)
+
+```dart
+await Purchasely.apiKey('YOUR_API_KEY')
+    .anonymousUserId('3f2504e0-4f89-11d3-9a0c-0305e82c3301') // override: true replaces an id already on the device
+    .proxy('https://svc.purchasely.io') // proxy(null) clears a proxy set earlier
+    .start();
+```
+
+- `anonymousUserId(String id, {bool override = false})`: the id is a `String`. A value that is not a canonical UUID is refused with a log, and `start()` still succeeds. The SDK keeps an id already on the device unless `override` is `true`, and `override: true` splits the user history. The SDK stores a passed id in uppercase. Compare an anonymous user id without case, because an id the SDK generates itself is uppercase on iOS and lowercase on Android.
+- `proxy(String? api)`: routes the API host only, on both platforms, for a region where `api.purchasely.io` is not reachable. The URL must be `https`. A URL routes. `proxy(null)` clears. Not calling the modifier changes nothing.
+
+### Subscription source (6.1.0, build break possible)
+
+`PLYSubscriptionSource.webCheckoutStripe` is a new case at index 4, and `none` moves from index 4 to index 5. An exhaustive `switch` without a `default` does not compile until you add an arm. Persist `.name`, not `.index`. A web checkout subscription reports `webCheckoutStripe` on both platforms. `PLYSubscription.purchaseToken` is Android only: iOS omits the key. `nextRenewalDate` and `cancelledDate` are null when the native value is empty.
+
+### Custom events: `emit` (6.2.0)
+
+```dart
+await Purchasely.emit('recipe_viewed', {'recipe_id': 42, 'title': 'Ratatouille'});
+```
+
+Signature: `static Future<void> emit(String name, [Map<String, dynamic> properties = const {}])`. Declare the event in the Console first: the SDK sends only declared names, matched exactly. Property values are `String`, `num`, `bool`, `List`, `Map` or `null`. Pass a date as an ISO 8601 string, because a `DateTime` makes the call fail. You can call `emit` before `start()`. Custom events do not reach `listenToEvents`. See [`../concepts/custom-events.md`](../concepts/custom-events.md).
+
+### Promotional offer token (6.2.0, iOS only, Observer mode)
+
+```dart
+final result = await Purchasely.signPromotionalOfferWithToken(productId, offerId);
+final token = result['purchaseContextToken']; // lowercase UUID string
+```
+
+Signature: `signPromotionalOfferWithToken(String storeProductId, String storeOfferId, {String? purchaseContextToken})` returns `Future<Map<dynamic, dynamic>>`. The purchase must carry this exact token: `appAccountToken` with StoreKit 2, `applicationUsername` with StoreKit 1. Pass `purchaseContextToken` to sign again for the same purchase. A value that is not a UUID string rejects with a `PlatformException`. On Android the method resolves with an empty map and never rejects.
+
+`signPromotionalOffer(storeProductId, storeOfferId)` is `@Deprecated`. It signs over the anonymous user id, so Apple rejects a purchase that carries another value. On Android it also resolves with an empty map. See [`../concepts/promotional-offers.md`](../concepts/promotional-offers.md).
+
+### Consent purpose `refundHandling` (6.2.0, iOS only)
+
+```dart
+Purchasely.revokeDataProcessingConsent([
+  PLYDataProcessingPurpose.analytics,
+  PLYDataProcessingPurpose.refundHandling,
+]);
+```
+
+The enum case is `refundHandling` (wire value `REFUND_HANDLING`). `allNonEssentials` does not include it, so add it in the list. Each call replaces the whole list, and `[]` grants every purpose back. Android ignores `refundHandling`. On iOS, `allNonEssentials` combined with other purposes no longer drops the other purposes. See [`../concepts/privacy-settings.md`](../concepts/privacy-settings.md).
+
+### Behavior changes
+
+- 6.1.1 (iOS 6.1.2): a drawer, popin or modal closed by its close button, a close action or a tap on the background now removes the SDK window and sends `PRESENTATION_CLOSED`. With 6.1.0, a transparent window could stay over the app and block taps.
+- 6.2.0: every purchase is linked to the paywall, placement, campaign and A/B test that started it.
+- 6.2.0: audience targeting sees active and expired subscriptions, including web subscriptions. On Android, the built-in attributes `ply_active_subscriptions` and `ply_expired_subscriptions` are new.
+
 ## Bridge & version alignment notes
 
 - The Dart ↔ native bridge is still **MethodChannel** (`purchasely`) + **EventChannels** (`purchasely-events`, `purchasely-purchases`, `purchasely-user-attributes`). v6 changes the public Dart surface, not the bridge transport.
-- **All three `purchasely_*` packages MUST be the exact same version** (`6.0.0`). Mixing versions causes runtime crashes. Now that the release is stable, a caret range (`^6.0.0`) applied consistently to all three is fine; pin exactly if you prefer to control upgrades manually.
+- **All three `purchasely_*` packages MUST be the exact same version** (`6.2.0`). Mixing versions causes runtime crashes. Now that the release is stable, a caret range (`^6.2.0`) applied consistently to all three is fine; pin exactly if you prefer to control upgrades manually.
 - Run a fresh install after pinning: `flutter clean && flutter pub get`, then `pod install --repo-update` (iOS) and `./gradlew --refresh-dependencies` (Android) as needed.
 - See [`../sdk-versions.md`](../sdk-versions.md) for the canonical version table and [`./migration-v6.md`](./migration-v6.md) for the full v5 → v6 old→new mapping.
 

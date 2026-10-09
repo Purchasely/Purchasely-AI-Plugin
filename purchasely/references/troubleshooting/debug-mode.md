@@ -36,6 +36,12 @@ Enable both together when investigating "the wrong paywall appears" tickets.
 
 > **Gate behind a build flag.** Ship `LogLevel.ERROR` (or omit the parameter) in production. Debug logs include placement IDs, audience matches, and presentation IDs — keep them out of production binaries.
 
+### Reading logs and plans for a support request
+
+- **Android `retrieveLogs()`** returns the in-memory log lines. Since native Android SDK 6.2.0 it keeps the last 200 lines.
+- **Android `PLYPlan.dump()`** (native Android SDK 6.2.0) returns a full text report of a plan and of its Google Play product. Use it to debug a price, a period or an offer, and attach it to a support request: `val report = plan.dump()`.
+- **iOS** (native SDK 6.2.0) logs a warning when a placement or campaign id cannot be read. Look for it when a placement or campaign does not resolve.
+
 ## Enabling Debug Mode
 
 > ⚠️ **Deeplink handling is required.** Your app must implement `Purchasely.handleDeeplink(...)` and ensure `allowDeeplink` is `true` (the v6 default — set `Purchasely.allowDeeplink(true)` once the app's UI is ready if you gated it). Without it, the QR code does nothing. See [campaigns.md](../concepts/campaigns.md#sdk-setup--gating-campaign-display).

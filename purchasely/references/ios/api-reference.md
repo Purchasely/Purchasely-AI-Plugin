@@ -1,6 +1,6 @@
 # iOS API Reference
 
-> Documents the **v6.0.0** (stable GA) public surface (Swift + Objective-C). Migrating from v5? See [`migration-v6.md`](migration-v6.md) and the legacy [`v5-api-reference.md`](v5-api-reference.md). Universal concepts (running modes, log levels, presentation types) also live in [`../concepts/`](../concepts/README.md).
+> Documents the **v6** (stable GA, latest native iOS SDK **6.2.0**) public surface (Swift + Objective-C). Migrating from v5? See [`migration-v6.md`](migration-v6.md) and the legacy [`v5-api-reference.md`](v5-api-reference.md). Universal concepts (running modes, log levels, presentation types) also live in [`../concepts/`](../concepts/README.md).
 
 ## Initialization — fluent builder
 
@@ -59,6 +59,9 @@ Purchasely
 | `allowDeeplink(_:)` | `true` — deeplinks display immediately; pass `false` to defer until `Purchasely.allowDeeplink(true)` |
 | `allowCampaigns(_:)` | `true` — campaigns display immediately; pass `false` to defer until `Purchasely.allowCampaigns(true)` |
 | `handleDeeplink(_:)` | unset — pass a cold-start deeplink to display once the SDK has started |
+| `appAnonymousUserId(_:)` / `appAnonymousUserId(_:override:)` | unset — since `6.1.0`. Takes a `UUID?`. The SDK keeps an id already on the device unless `override: true` |
+| `proxy()` / `proxy(api:)` | off — since `6.1.0`. `proxy()` routes API traffic through `https://svc.purchasely.io`; `proxy(api: URL?)` takes your own `https` URL |
+| `webRedemptionDelegate(_:appHandlesRedemptionAlert:)` | unset — since `6.1.0`. `PLYWebRedemptionDelegate.webRedemptionCompleted(result:)` receives the web redemption result on the main thread. `appHandlesRedemptionAlert` defaults to `false` (the SDK shows its own popin) |
 
 > 📘 The pre-`start` class funcs `setEnvironment(_:)`, `setShowPromotedInAppPurchasePaywall(_:)`, `setAppTechnology(_:)`, `setSdkBridgeVersion(_:)`, `setThemeMode(_:)` are **deprecated** (removal in v7). Use the chain modifiers instead.
 
@@ -533,6 +536,38 @@ class MyAttributeDelegate: PLYUserAttributeDelegate {
 
 Purchasely.setUserAttributeDelegate(MyAttributeDelegate())
 ```
+
+### `Purchasely.emit(name:properties:)` — custom events
+
+Since native iOS SDK `6.2.0`. Sends a business event declared in the Console. The name must match the Console declaration exactly. `properties` defaults to `[:]`. See [`../concepts/custom-events.md`](../concepts/custom-events.md).
+
+```swift
+Purchasely.emit(name: "recipe_viewed", properties: ["recipe_id": 42])
+```
+
+```objc
+[Purchasely emitWithName:@"recipe_viewed" properties:@{@"recipe_id": @42}];
+```
+
+## Observer mode — `signPromotionalOffer` with a purchase context token
+
+Since native iOS SDK `6.2.0`. This variant returns the signature and a purchase context token. Pass `nil` to make a new token, or pass the earlier token to sign again for the same purchase.
+
+```swift
+Purchasely.signPromotionalOffer(storeProductId: productId,
+                                storeOfferId: offerId,
+                                purchaseContextToken: nil,
+                                success: { signature, token in
+    // StoreKit 2: pass `token` as .appAccountToken(token)
+    // StoreKit 1: set applicationUsername = token.uuidString.lowercased()
+}, failure: { error in })
+```
+
+The other `signPromotionalOffer` overloads (`storeProductId:storeOfferId:success:failure:` and `plan:promoOffer:success:failure:`) sign for the anonymous user id and use no token. They are deprecated since SDK 6.2.0 in the official docs, but the 6.2.0 SDK does not mark it `@available(*, deprecated)`, so the compiler shows no warning. They still work.
+
+## Consent — `PLYDataProcessingPurpose.refundHandling`
+
+Since native iOS SDK `6.2.0`. Records that the user refused to share consumption data with Apple for refund requests. It is not part of `.allNonEssentials`. `revokeDataProcessingConsent(for:)` replaces the whole list on each call: pass every refused purpose in the same call.
 
 ## Objective-C type changes (v5 → v6)
 

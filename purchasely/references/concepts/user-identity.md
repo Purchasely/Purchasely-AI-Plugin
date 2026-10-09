@@ -25,6 +25,28 @@ Purchasely tracks two user concepts:
 
 A user can hold subscriptions under both identities. When you call `userLogin` after an anonymous purchase, **Purchasely transfers the anonymous receipt(s) to the logged-in user** — provided you call `userLogin` before the user signs out / before the receipt is wiped by an uninstall.
 
+## App-provided anonymous user id (6.1.0+)
+
+If your app already has its own per-install UUID, give it to the SDK on the builder. Native iOS / Android SDK 6.1.0+, and the Flutter, React Native and Cordova bridges 6.1.0+.
+
+| Platform | API |
+|----------|-----|
+| iOS | `Purchasely.apiKey(...).appAnonymousUserId(uuid)` or `.appAnonymousUserId(uuid, override: true)` (`UUID`) |
+| Android | `Purchasely.Builder(context).anonymousUserId(uuid, override)` (`java.util.UUID`, `override` defaults to `false`) |
+| Flutter | `PurchaselyBuilder.anonymousUserId(id, override: false)` (`String`) |
+| React Native | `builder.anonymousUserId(id, override = false)` (`string`; an id that is not a UUID is skipped with a log, and `start()` still succeeds) |
+| Cordova | `builder.anonymousUserId(id, override)` (`string`, canonical UUID) |
+
+- The SDK keeps an anonymous id that is already on the device. It uses yours only when there is none, unless you pass `override: true`.
+- `override: true` on a device that holds a different id **splits the history**: the backend keeps the earlier events and purchases under the old id and the SDK does not merge them.
+- Passing `nil` / `null` changes nothing.
+- The SDK stores an id you pass in **uppercase** on both platforms (on iOS `UUID.uuidString` is uppercase). On Android an id the SDK generates itself is **lowercase**. Compare an anonymous user id case-insensitively.
+- iOS 6.2.0+: the SDK no longer puts the anonymous id in the StoreKit purchase. See [observer-mode-post-purchase.md](observer-mode-post-purchase.md).
+
+## Login transfer on Android 6.2.0+
+
+On Android 6.2.0+, a login transfers the subscriptions that the user bought or redeemed while anonymous. If the transfer fails, the SDK retries it at the next login.
+
 ## Decision tree
 
 ```

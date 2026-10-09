@@ -37,6 +37,7 @@ The result semantics are:
 | `navigate` | User tapped a custom navigation link | Handle the link (push a screen, open a URL), then `.success`. |
 | `open_presentation` | User tapped a link to another presentation | Either let the SDK handle (`.notHandled`) or build it yourself and `.success`. |
 | `promo_code` | User tapped Promo Code (iOS shows native sheet) | `.notHandled`. |
+| `track_event` | The screen sends one of your custom events (native iOS/Android 6.2.0+); optional second action; an older SDK ignores it | **Not interceptable**: the interceptor never sees it. It carries the screen context (presentation, placement, audience, A/B test and variant, campaign, flow and step), and never blocks the neighbor actions: a button that tracks then purchases still closes after the purchase. See [custom-events.md](custom-events.md). |
 
 Casing / type reference per platform:
 
@@ -220,4 +221,5 @@ Key points:
 
 - [observer-mode-post-purchase.md](observer-mode-post-purchase.md) — exact resolve-then-dismiss sequence after Observer-mode purchases
 - [presentation-types.md](presentation-types.md) — what to do when a fetched presentation is `DEACTIVATED` or `CLIENT`
+- [custom-events.md](custom-events.md) — custom events and the `track_event` screen action
 - [byos.md](byos.md) — Bring Your Own Screen: native screens inside a Flow, with their own `executeConnection(...)` chaining model

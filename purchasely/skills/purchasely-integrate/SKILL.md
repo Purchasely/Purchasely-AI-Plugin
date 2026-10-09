@@ -28,6 +28,7 @@ The bundled references are intentionally curated, not a full copy of the public 
 - `../../references/concepts/campaigns.md` — No-code automations (trigger/placement-based), `allowDeeplink` / `allowCampaigns`, trigger/deeplink display readiness, use cases
 - `../../references/concepts/lottie-animations.md` — Lottie animations in Screens (iOS / Android weak dependency bridge; cross-platform host projects)
 - `../../references/concepts/analytics-integration.md` — Forwarding UI events to Firebase / Amplitude / AppsFlyer + recommended analytics wrapper pattern
+- `../../references/concepts/custom-events.md` — Custom events (optional, native 6.2.0+): `Purchasely.emit`, `track_event` action, campaign trigger
 
 **Platform-specific deep dives** (load the one(s) matching the project's platform — they hold the authoritative install snippets, init signatures, and platform-only patterns):
 
@@ -56,7 +57,7 @@ Before writing integration code, run a Purchasely expert checkpoint. If the harn
 
 If that subagent is not available, do the checkpoint inline using the `purchasely-sdk-expert` guidance when available, or this fallback checklist:
 
-- Confirm the SDK generation: native iOS uses v6 (`6.0.0`, stable GA); native Android uses v6 (`6.0.1`, stable GA — Android never had a `6.0.0` tag); Flutter uses v6 (`6.0.0`, pulling native iOS `6.0.0` + Android core `6.0.1`); React Native uses v6 (`6.0.0`, stable GA, npm `latest`); Cordova uses v6 (`6.0.0`, stable GA, npm `latest`).
+- Confirm the SDK generation: native iOS uses v6 (`6.2.0`, stable GA); native Android uses v6 (`6.2.0`, stable GA — Android never had a `6.0.0` tag); Flutter uses v6 (`6.2.0`, pulling native iOS `6.2.0` + Android core `6.2.0`); React Native uses v6 (`6.2.0`, stable GA, npm `latest`); Cordova uses v6 (`6.2.0`, stable GA, npm `latest`).
 - Confirm versions are pinned from `../../references/sdk-versions.md` and no floating ranges are introduced.
 - Confirm Full mode is explicit when Purchasely must process and validate purchases.
 - Confirm the presentation path matches the platform generation and handles `DEACTIVATED` / `FALLBACK` where relevant.
@@ -99,13 +100,13 @@ Run the appropriate installation commands and modify project files as needed.
 
 | Platform | Latest stable version |
 |----------|-----------------------|
-| iOS (native) | **6.0.0** (stable GA) |
-| Android (native) | **6.0.1** (stable GA — Android never had a `6.0.0` tag; the line went rc.1 → rc.2 → rc.3 → `6.0.1`) |
-| Flutter | **6.0.0** (stable, pulls native iOS `6.0.0` + Android core `6.0.1`) |
-| React Native | **6.0.0** (stable GA, npm `latest` tag) |
-| Cordova | **6.0.0** (stable GA, npm `latest` tag) |
+| iOS (native) | **6.2.0** (stable GA) |
+| Android (native) | **6.2.0** (stable GA — Android never had a `6.0.0` tag) |
+| Flutter | **6.2.0** (stable, pulls native iOS `6.2.0` + Android core `6.2.0`) |
+| React Native | **6.2.0** (stable GA, npm `latest` tag) |
+| Cordova | **6.2.0** (stable GA, npm `latest` tag) |
 
-**Pin exactly on Android, Flutter, React Native, and Cordova** — never floating (`5.+`, `6.+`, `^5.0.0`, `^6.0.0`). Floating versions break reproducibility and silently pull regressions. **iOS is the exception**: it's stable GA, so a minor-range pin is the recommended form — SPM `from: "6.0.0"` (primary) or CocoaPods `pod 'Purchasely', '~> 6.0'` — see the iOS install section below. React Native and Cordova are also stable GA now, but keep the exact pin across all packages for cross-package alignment.
+**Pin exactly on Android, Flutter, React Native, and Cordova** — never floating (`5.+`, `6.+`, `^5.0.0`, `^6.2.0`). Floating versions break reproducibility and silently pull regressions. **iOS is the exception**: it's stable GA, so a minor-range pin is the recommended form — SPM `from: "6.2.0"` (primary) or CocoaPods `pod 'Purchasely', '~> 6.2'` — see the iOS install section below. React Native and Cordova are also stable GA now, but keep the exact pin across all packages for cross-package alignment.
 
 **Before installing, ask the user these questions (adapt per platform):**
 
@@ -125,7 +126,7 @@ In Xcode: File > Add Packages, then enter the repository URL:
 ```
 https://github.com/Purchasely/Purchasely-iOS
 ```
-Select **Up to Next Major Version, starting at `6.0.0`** (Package.swift: `.package(url: "https://github.com/Purchasely/Purchasely-iOS", from: "6.0.0")`).
+Select **Up to Next Major Version, starting at `6.2.0`** (Package.swift: `.package(url: "https://github.com/Purchasely/Purchasely-iOS", from: "6.2.0")`).
 
 **Option B — CocoaPods** (if a `Podfile` exists):
 
@@ -157,27 +158,27 @@ Requirements: minSdk 23, compileSdk 36, Kotlin 2.3.x, Gradle 9.x, JDK 17 (to bui
 
 The Purchasely SDK is published on **Maven Central** — no custom repository needed. Just make sure `mavenCentral()` is present in your `settings.gradle.kts` (it is by default in modern projects).
 
-**Add dependencies** in `app/build.gradle.kts` (pin to exact `6.0.1` — see `../../references/sdk-versions.md`):
+**Add dependencies** in `app/build.gradle.kts` (pin to exact `6.2.0` — see `../../references/sdk-versions.md`):
 ```kotlin
 dependencies {
     // Core SDK — Required
-    implementation("io.purchasely:core:6.0.1")
+    implementation("io.purchasely:core:6.2.0")
 
     // Google Play Store — Required if publishing on Google Play
-    implementation("io.purchasely:google-play:6.0.1")
+    implementation("io.purchasely:google-play:6.2.0")
 
     // Video Player — Optional, for video support in Screens
-    implementation("io.purchasely:player:6.0.1")
+    implementation("io.purchasely:player:6.2.0")
 }
 ```
 
 **Alternative stores** (instead of or in addition to Google Play):
 ```kotlin
 // Huawei AppGallery (also requires Huawei AGConnect plugin and repo)
-implementation("io.purchasely:huawei-services:6.0.1")
+implementation("io.purchasely:huawei-services:6.2.0")
 
 // Amazon Appstore
-implementation("io.purchasely:amazon:6.0.1")
+implementation("io.purchasely:amazon:6.2.0")
 ```
 
 For **Huawei**, also add to the project-level build.gradle:
@@ -204,7 +205,7 @@ Then sync Gradle.
 
 Requirements: iOS 15.1+ (set by the `react-native-purchasely` podspec, aligned with RN 0.86), Android minSdkVersion 23, compileSdk 35 (align compileSdk/targetSdk on the existing app, 35+). Built and tested against React Native 0.86 / Node 22.
 
-> **React Native is on the v6 API** (same generation as native iOS / Android / Flutter — no longer grouped with Cordova) and is now **stable GA**. `react-native-purchasely 6.0.0` pulls the native iOS 6.0.0 / Android 6.0.1 SDKs (iOS pod `Purchasely`, Android `io.purchasely:core`) and exposes the v6 TypeScript surface: `Purchasely.builder('key')…start()`, `Purchasely.presentation.placement(id).build()` → a `PLYPresentationRequest` (`preload()` / `display(transition?)`), and the per-action `Purchasely.interceptAction(kind, handler)` returning `'success' | 'failed' | 'notHandled'` strings. `../../references/react-native/integration.md` documents the v6 API.
+> **React Native is on the v6 API** (same generation as native iOS / Android / Flutter — no longer grouped with Cordova) and is now **stable GA**. `react-native-purchasely 6.2.0` pulls the native iOS 6.2.0 / Android 6.2.0 SDKs (iOS pod `Purchasely`, Android `io.purchasely:core`) and exposes the v6 TypeScript surface: `Purchasely.builder('key')…start()`, `Purchasely.presentation.placement(id).build()` → a `PLYPresentationRequest` (`preload()` / `display(transition?)`), and the per-action `Purchasely.interceptAction(kind, handler)` returning `'success' | 'failed' | 'notHandled'` strings. `../../references/react-native/integration.md` documents the v6 API.
 
 **1. Install the core SDK:**
 ```bash
@@ -248,37 +249,37 @@ allprojects {
 }
 ```
 
-**CRITICAL: All Purchasely packages must be at the exact same version.** Pin to the **exact** `6.0.0` — stable GA now, but keep the exact pin (never a caret / range) for cross-package alignment (see `../../references/sdk-versions.md`):
+**CRITICAL: All Purchasely packages must be at the exact same version.** Pin to the **exact** `6.2.0` — stable GA now, but keep the exact pin (never a caret / range) for cross-package alignment (see `../../references/sdk-versions.md`):
 ```json
 "dependencies": {
-  "react-native-purchasely": "6.0.0",
-  "@purchasely/react-native-purchasely-google": "6.0.0",
-  "@purchasely/react-native-purchasely-android-player": "6.0.0"
+  "react-native-purchasely": "6.2.0",
+  "@purchasely/react-native-purchasely-google": "6.2.0",
+  "@purchasely/react-native-purchasely-android-player": "6.2.0"
 }
 ```
 
-> **Native dependency.** `react-native-purchasely 6.0.0` pins the native iOS 6.0.0 / Android 6.0.1 SDKs — Android `io.purchasely:core` / `google-play` / `player` on **Maven Central**, iOS `Purchasely` on the **CocoaPods trunk** — so the project builds from the public repositories.
+> **Native dependency.** `react-native-purchasely 6.2.0` pins the native iOS 6.2.0 / Android 6.2.0 SDKs — Android `io.purchasely:core` / `google-play` / `player` on **Maven Central**, iOS `Purchasely` on the **CocoaPods trunk** — so the project builds from the public repositories.
 
 ### Flutter
 
 Requirements: iOS 13.4+, Android minSdk 23, compileSdk 36, targetSdk 35
 
-> **Flutter is on the v6 API** (same generation as native iOS / Android — no longer grouped with React Native / Cordova). `purchasely_flutter 6.0.0` is stable GA and pulls native iOS `Purchasely 6.0.0` + Android `io.purchasely:core 6.0.1` (Android never had a `6.0.0` native tag — its GA is `6.0.1`) and exposes the v6 Dart surface: `PurchaselyBuilder.apiKey(...).start()`, `PresentationBuilder` → `PresentationRequest` (`preload()` / `display([Transition])`), and the per-action `Purchasely.interceptAction(kind, handler)` returning an `InterceptResult`. `../../references/flutter/integration.md` and `../../references/flutter/migration-v6.md` document the v6 API.
+> **Flutter is on the v6 API** (same generation as native iOS / Android — no longer grouped with React Native / Cordova). `purchasely_flutter 6.2.0` is stable GA and pulls native iOS `Purchasely 6.2.0` + Android `io.purchasely:core 6.2.0` (Android never had a `6.0.0` native tag) and exposes the v6 Dart surface: `PurchaselyBuilder.apiKey(...).start()`, `PresentationBuilder` → `PresentationRequest` (`preload()` / `display([Transition])`), and the per-action `Purchasely.interceptAction(kind, handler)` returning an `InterceptResult`. `../../references/flutter/integration.md` and `../../references/flutter/migration-v6.md` document the v6 API.
 
 **1. Install the core SDK:**
 ```bash
-flutter pub add purchasely_flutter:6.0.0
+flutter pub add purchasely_flutter:6.2.0
 ```
 
 **2. Install the store dependency (required for Android):**
 ```bash
 # Google Play — required if targeting Google Play Store
-flutter pub add purchasely_google:6.0.0
+flutter pub add purchasely_google:6.2.0
 ```
 
 **3. Optional — video player for Android:**
 ```bash
-flutter pub add purchasely_android_player:6.0.0
+flutter pub add purchasely_android_player:6.2.0
 ```
 
 **4. iOS pods:**
@@ -302,31 +303,31 @@ allprojects {
 }
 ```
 
-**CRITICAL: All Purchasely packages must be at the exact same version.** Pin to `6.0.0` (see `../../references/sdk-versions.md`):
+**CRITICAL: All Purchasely packages must be at the exact same version.** Pin to `6.2.0` (see `../../references/sdk-versions.md`):
 ```yaml
 dependencies:
-  purchasely_flutter: 6.0.0
-  purchasely_google: 6.0.0
-  purchasely_android_player: 6.0.0
+  purchasely_flutter: 6.2.0
+  purchasely_google: 6.2.0
+  purchasely_android_player: 6.2.0
 ```
 
-> **Native dependency.** `purchasely_flutter 6.0.0` pins native iOS `Purchasely 6.0.0` (CocoaPods trunk) and Android `io.purchasely:core 6.0.1` / `google-play` / `player` (Maven Central) — so the project builds from the public repositories with no `mavenLocal()` and no development pod.
+> **Native dependency.** `purchasely_flutter 6.2.0` pins native iOS `Purchasely 6.2.0` (CocoaPods trunk) and Android `io.purchasely:core 6.2.0` / `google-play` / `player` (Maven Central) — so the project builds from the public repositories with no `mavenLocal()` and no development pod.
 
 ### Cordova
 
 Requirements: iOS 13.4+, Android minSdk 23, compileSdk 36, targetSdk 35
 
-> **Cordova is on the v6 builder API** (same generation as native iOS / Android / Flutter / React Native), and unlike them it ships as a **stable** release (npm `latest`, not `@next`). `@purchasely/cordova-plugin-purchasely 6.0.0` pulls the native iOS `Purchasely 6.0.0` / Android `io.purchasely:core 6.0.1` SDKs and exposes the v6 JS surface: `Purchasely.builder(apiKey)…start()` (the v5-shaped `Purchasely.start({...}, ok, err)` options object is also still accepted, now as a single object instead of positional args), `Purchasely.presentation` builder/request (`preload()` / `display()`), and per-action `Purchasely.interceptAction(kind, handler)`. `../../references/cordova/integration.md` and `../../references/cordova/migration-v6.md` document the v6 API.
+> **Cordova is on the v6 builder API** (same generation as native iOS / Android / Flutter / React Native), and unlike them it ships as a **stable** release (npm `latest`, not `@next`). `@purchasely/cordova-plugin-purchasely 6.2.0` pulls the native iOS `Purchasely 6.2.0` / Android `io.purchasely:core 6.2.0` SDKs and exposes the v6 JS surface: `Purchasely.builder(apiKey)…start()` (the v5-shaped `Purchasely.start({...}, ok, err)` options object is also still accepted, now as a single object instead of positional args), `Purchasely.presentation` builder/request (`preload()` / `display()`), and per-action `Purchasely.interceptAction(kind, handler)`. `../../references/cordova/integration.md` and `../../references/cordova/migration-v6.md` document the v6 API.
 
 **1. Install the core plugin:**
 ```bash
-cordova plugin add @purchasely/cordova-plugin-purchasely@6.0.0
+cordova plugin add @purchasely/cordova-plugin-purchasely@6.2.0
 ```
 
 **2. Install the store dependency (required for Android):**
 ```bash
 # Google Play — required if targeting Google Play Store
-cordova plugin add @purchasely/cordova-plugin-purchasely-google@6.0.0
+cordova plugin add @purchasely/cordova-plugin-purchasely-google@6.2.0
 ```
 
 **3. Android setup** — edit `android/build.gradle`:
@@ -345,11 +346,11 @@ allprojects {
 }
 ```
 
-**CRITICAL: All Purchasely packages must be at the exact same version.** Pin to `6.0.0` (see `../../references/sdk-versions.md`):
+**CRITICAL: All Purchasely packages must be at the exact same version.** Pin to `6.2.0` (see `../../references/sdk-versions.md`):
 ```json
 "dependencies": {
-  "@purchasely/cordova-plugin-purchasely": "6.0.0",
-  "@purchasely/cordova-plugin-purchasely-google": "6.0.0"
+  "@purchasely/cordova-plugin-purchasely": "6.2.0",
+  "@purchasely/cordova-plugin-purchasely-google": "6.2.0"
 }
 ```
 
@@ -1051,11 +1052,11 @@ When the interceptor receives a `PURCHASE` action in Observer mode, you run the 
 
 | Platform | Minimum version |
 |----------|-----------------|
-| iOS (native) | **6.0.0** — return `.success`, then call `Purchasely.closeAllScreens()` after the interceptor resolves (Observer mode does not auto-close; or wire a Console `close` action). It is `@MainActor`-isolated. Wrap in `Task { @MainActor in Purchasely.closeAllScreens() }` when called from a non-isolated synchronous context. |
-| Android (native) | **6.0.1** — return `PLYInterceptResult.SUCCESS`, then call `Purchasely.closeAllScreens()` after the interceptor resolves (Observer mode does not auto-close; or wire a Console `close` action). No threading constraint. |
-| Flutter | **6.0.0** — return `InterceptResult.success`, then dismiss with `presentation.close()` on the loaded `Presentation` after the handler resolves (Observer mode does not auto-close; or wire a Console `close` action). There is no `closePresentation()` in Flutter v6. |
-| React Native | **6.0.0** — return `'success'`, then dismiss with `request.close()` on the held `PresentationRequest` after the handler resolves (Observer mode does not auto-close; or wire a Console `close` action). There is no `closePresentation()` / `closeAllScreens()` in React Native v6. |
-| Cordova | **6.0.0** — resolve the handler with `Purchasely.InterceptResult.success`, then call `request.close()` on the held presentation request after the handler resolves (Observer mode does not auto-close; or wire a Console `close` action). `request.close()` dismisses every displayed Purchasely screen (`closeAllScreens()` under the hood). The separate top-level `Purchasely.closePresentation()` method is a deprecated alias for `Purchasely.closeAllScreens()`. |
+| iOS (native) | **6.2.0** — return `.success`, then call `Purchasely.closeAllScreens()` after the interceptor resolves (Observer mode does not auto-close; or wire a Console `close` action). It is `@MainActor`-isolated. Wrap in `Task { @MainActor in Purchasely.closeAllScreens() }` when called from a non-isolated synchronous context. |
+| Android (native) | **6.2.0** — return `PLYInterceptResult.SUCCESS`, then call `Purchasely.closeAllScreens()` after the interceptor resolves (Observer mode does not auto-close; or wire a Console `close` action). No threading constraint. |
+| Flutter | **6.2.0** — return `InterceptResult.success`, then dismiss with `presentation.close()` on the loaded `Presentation` after the handler resolves (Observer mode does not auto-close; or wire a Console `close` action). There is no `closePresentation()` in Flutter v6. |
+| React Native | **6.2.0** — return `'success'`, then dismiss with `request.close()` on the held `PresentationRequest` after the handler resolves (Observer mode does not auto-close; or wire a Console `close` action). There is no `closePresentation()` / `closeAllScreens()` in React Native v6. |
+| Cordova | **6.2.0** — resolve the handler with `Purchasely.InterceptResult.success`, then call `request.close()` on the held presentation request after the handler resolves (Observer mode does not auto-close; or wire a Console `close` action). `request.close()` dismisses every displayed Purchasely screen (`closeAllScreens()` under the hood). The separate top-level `Purchasely.closePresentation()` method is a deprecated alias for `Purchasely.closeAllScreens()`. |
 
 Full version list: `../../references/sdk-versions.md`.
 
@@ -1215,6 +1216,7 @@ Once Steps 1-8 are in place and verified, walk the user through the **optional b
 | **Analytics integration** — forward Purchasely UI events to Firebase / Amplitude / AppsFlyer (client-side) and subscription lifecycle events via 3rd-party integrations / webhooks (server-side, recommended). | Any team with an analytics stack — recommend a single analytics wrapper / manager to centralise the routing | `../../references/concepts/analytics-integration.md` |
 | **Subscription gating + restore** — gate premium content via `userSubscriptions`, restore purchases from Settings | Any app with premium features | `../../references/concepts/subscription-checks.md` |
 | **Audience attributes + GDPR consent** — target users with `setUserAttribute`, gate event flow on consent | Apps with marketing audiences or EU users | `../../references/concepts/user-attributes-targeting.md` |
+| **Custom events (optional, native 6.2.0+)** — send your own business events with `Purchasely.emit(name, properties)`, open a campaign from them, measure a KPI with the `track_event` screen action. Native iOS / Android only. | Apps that want event-triggered campaigns or a success KPI on a paywall | `../../references/concepts/custom-events.md` |
 | **Bring Your Own Screen (BYOS)** — embed a native screen (login, custom form, legacy paywall A/B variant) inside a Purchasely Flow with its own connections / `executeConnection(...)` chaining. **iOS + Android only, SDK ≥ 5.6.0.** | Teams that need a native login step in a Flow, or want to A/B their existing paywall against a Composer version | `../../references/concepts/byos.md` |
 | **Lottie animations** — render Composer Lottie blocks by adding Airbnb Lottie plus the Purchasely bridge/interface in native host projects. | Any Screen uses Lottie JSON animations, including React Native / Flutter / Cordova apps through their iOS/Android hosts | `../../references/concepts/lottie-animations.md` |
 | **Chain multiple actions on a single button** — configure `purchase + open_screen` / `purchase + open_placement` / `purchase + deeplink` in the Screen Composer. Without a second action, the default is *close in Full mode, stay open in Observer mode*. | Any team wiring post-purchase upsells, thank-you screens, or onboarding completion | `../../references/concepts/paywall-actions.md` § Chaining multiple actions |

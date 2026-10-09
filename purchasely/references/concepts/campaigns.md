@@ -9,7 +9,7 @@ Applies to: **iOS, Android, React Native, Flutter, Cordova**.
 - **on an event trigger** (e.g. `APP_STARTED`), or
 - **on a Placement** (instead of the Placement's default rules).
 
-> **Capping applies to trigger-based delivery only.** Impression cap, frequency and exposure window are evaluated on the trigger path (`APP_STARTED` and other event triggers). A campaign served through a Placement is never capped: the SDK evaluates it every time the app calls that placement. A report that "the campaign capping does not work" on a placement-served campaign is expected behaviour, not a defect. Detail under *The four campaign dimensions* and *Anti-patterns* below.
+> **Capping applies to trigger-based delivery only.** Impression cap, frequency and exposure window are evaluated on the trigger path (`APP_STARTED`, or a custom event on native 6.2.0+). A campaign served through a Placement is never capped: the SDK evaluates it every time the app calls that placement. A report that "the campaign capping does not work" on a placement-served campaign is expected behaviour, not a defect. Detail under *The four campaign dimensions* and *Anti-patterns* below.
 
 Campaigns are the recommended way to schedule promos (Black Friday, anniversary offers), run retention flows, or centralise display rules — without shipping code.
 
@@ -33,7 +33,7 @@ Docs:
 | Dimension | Value | Notes |
 |-----------|-------|-------|
 | **WHO** | Audience | Built-in attributes (`Total number of Screens dismissed`, `Active Offer Type`, …) and custom attributes set via `setUserAttribute` |
-| **WHEN** | Event trigger + scheduling | Default trigger is `APP_STARTED` (app launch / cold restart). Add capping (`X displays per user per Y`), exposure window, impression cap |
+| **WHEN** | Event trigger + scheduling | Default trigger is `APP_STARTED` (app launch / cold restart). Native 6.2.0+ adds custom-event triggers: several triggers = OR, optional property filters. Add capping (`X displays per user per Y`), exposure window, impression cap |
 | **WHAT** | Screen | Any Purchasely Screen — paywall, survey, message, flow |
 | **WHERE** | Placement(s) | Optional — when set, the campaign overrides the Placement's default rules |
 
@@ -116,6 +116,10 @@ await PurchaselyBuilder.apiKey('<YOUR_API_KEY>')
 > // one handler active (re-register replaces); clean up with:
 > subscription.remove(); // or Purchasely.removeDefaultPresentationDismissHandler()
 > ```
+
+## Trigger a campaign from a custom event
+
+> **Native iOS / Android SDK 6.2.0+.** Link a campaign to one of your own custom events in the Console, then call `Purchasely.emit(...)`. The campaign follows the same rules as the `APP_STARTED` trigger: dates, capping, exposure window and the `campaigns` consent purpose. Select several events and the campaign starts when one fires (OR). Add property filters (AND/OR groups) to start only when the event properties match. `allowCampaigns = false` keeps the campaign until the app sets it to `true`. An SDK older than 6.2.0 ignores these campaigns. A custom event never opens the campaigns of a Purchasely event with the same name. Details: [custom-events.md](custom-events.md).
 
 ## Placement-based campaigns — no extra SDK code
 

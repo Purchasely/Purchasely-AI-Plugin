@@ -153,6 +153,14 @@ function onPurchaseSuccess() {
 }
 ```
 
+## iOS 6.2.0+: attribution and `appAccountToken`
+
+Native iOS SDK 6.2.0+ links every purchase to the paywall, placement, campaign and A/B test that started it. This also holds for a repeat purchase of the same product, Ask to Buy, and a purchase that completes after a relaunch.
+
+- **Behavior change.** The SDK no longer puts the anonymous user id in `appAccountToken` / `applicationUsername`. It puts a **new random UUID for each purchase** (a purchase context token). A server that reads `appAccountToken` in App Store Server Notifications to identify the user must switch to its own user mapping or to Purchasely webhooks.
+- **Your own StoreKit purchase with a promotional offer.** On Flutter, React Native and Cordova 6.2.0+ call `signPromotionalOfferWithToken` instead. On native, sign with `signPromotionalOffer(storeProductId:storeOfferId:purchaseContextToken:success:failure:)` and pass the returned token as `.appAccountToken(token)` (StoreKit 2) or `applicationUsername = token.uuidString.lowercased()` (StoreKit 1). The older variants are deprecated since 6.2.0 in the docs (no compiler warning) and still work. See [promotional-offers.md](promotional-offers.md).
+- Do not put the anonymous user id in the purchase to identify the user. Use `Purchasely.userLogin(with:)` and the Purchasely webhooks.
+
 ## Optional: chaining a follow-up placement
 
 Some apps display a follow-up paywall after a successful purchase — a thank-you screen, a premium feature tour, a one-tap upsell, etc. **This is not part of the SDK contract**: it's just another presentation fetch with whatever placement ID you've configured on the Console (e.g. `"post_purchase"`, `"thank_you"`, `"premium_welcome"` — name it whatever you want, just match it in the dashboard). Native iOS/Android v6 build it with `PLYPresentationBuilder` / the `PLYPresentation { }` DSL; React Native v6 builds it with `Purchasely.presentation.placement(...)` → `PLYPresentationRequest`; Flutter v6 builds it with `PLYPresentationBuilder.placement(...)` → `PLYPresentationRequest` (`.preload()` / `.display(...)`); Cordova v6 builds it with `Purchasely.presentation.placement(...)` → a presentation request (`.preload()` / `.display(...)`).

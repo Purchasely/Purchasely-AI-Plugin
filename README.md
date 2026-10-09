@@ -274,9 +274,9 @@ Purchasely-AI-Plugin/
 |----------|----------|------|----------|-------------|-----------|-----------|
 | iOS (Swift / Obj-C) | v6 (`6.0.0`, GA) | `Purchasely.apiKey(...).runningMode(...).start()` | `PLYPresentationBuilder...build().preload()` → `display(from:)` | per-action `interceptAction` returning `PLYInterceptResult` | `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
 | Android (Kotlin / Java) | v6 (`6.0.1`, GA) | `Purchasely { ... }` or `Purchasely.Builder(...)` | `PLYPresentation { ... }.preload()` → `display(context)` | per-action `interceptAction` returning `PLYInterceptResult` | auto-intercept + `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
-| Flutter | v6 (`6.0.0`, stable on pub.dev) | `PurchaselyBuilder.apiKey(...).start()` | `PresentationBuilder...build()` → `preload()` / `display(...)` | per-action `interceptAction` returning `InterceptResult` | `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
-| React Native | v6 (`6.0.0-rc.3`) | `Purchasely.builder(...).runningMode(...).start()` | `Purchasely.presentation.placement(...).build()` → `preload()` / `display(transition?)` | per-action `interceptAction` returning `'success' \| 'failed' \| 'notHandled'` | `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
-| Cordova | v6 (`6.0.0-rc.3`) | `Purchasely.start(options, success, error)` | `fetchPresentationForPlacement` + `presentPresentation` (display-mode arg) | per-action `interceptAction` returning `InterceptResult` | `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
+| Flutter | v6 (`6.2.0`, stable on pub.dev) | `PurchaselyBuilder.apiKey(...).start()` | `PresentationBuilder...build()` → `preload()` / `display(...)` | per-action `interceptAction` returning `InterceptResult` | `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
+| React Native | v6 (`6.2.0`, GA) | `Purchasely.builder(...).runningMode(...).start()` | `Purchasely.presentation.placement(...).build()` → `preload()` / `display(transition?)` | per-action `interceptAction` returning `'success' \| 'failed' \| 'notHandled'` | `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
+| Cordova | v6 (`6.2.0`, GA) | `Purchasely.builder(apiKey).runningMode(...).start()` | `Purchasely.presentation.placement(...).build()` → `preload()` / `display()` | per-action `interceptAction(kind, handler)` returning `'success' \| 'failed' \| 'notHandled'` | `handleDeeplink` / `allowDeeplink` | `userLogin` / `userLogout` |
 
 ## Requirements
 

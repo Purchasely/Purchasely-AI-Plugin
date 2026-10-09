@@ -193,6 +193,7 @@ When a teammate says "paywall is broken", ask in this order:
 
 **Causes and Solutions:**
 
+- **`start()` callback never called (Android < 6.1.0):** a `configure()` that returned early left the callback pending. Fixed in native Android 6.1.0, upgrade. On Flutter, React Native and Cordova, the bridge 6.1.0 embeds native 6.1.0, the bridge 6.1.1 embeds iOS 6.1.2 / Android 6.1.1, and the bridge 6.2.0 embeds native 6.2.0.
 - **SDK not initialized:** Ensure `Purchasely.apiKey(...).start()` has completed successfully before calling any presentation method. Wait for the `start()` completion (`error == nil`) or the awaited call to return without throwing.
 - **Invalid placement ID:** Verify the placement vendor ID in the Purchasely dashboard matches exactly (case-sensitive).
 - **Presentation type is DEACTIVATED:** Always check `presentation.type` before displaying — see [presentation-types.md](../concepts/presentation-types.md). A deactivated presentation returns valid data but should not be shown.
@@ -215,6 +216,8 @@ Purchasely.apiKey("KEY").storekitSettings(.storeKit2).start { error in
 ## 2. UI Frozen / Paywall Stuck
 
 **Symptoms:** Paywall buttons stop responding, spinner never dismisses, app appears frozen.
+
+**First, check the SDK version.** Several freezes and unresponsive taps were fixed natively: iOS 6.1.0 (closing a paywall left unresponsive taps or a black frame), iOS 6.1.1 (nested Screen from an app-presented paywall left an invisible window), iOS 6.1.2 (invisible window after closing a drawer, popin or modal), Android 6.2.0 (paywall freeze after two purchase attempts with the same result, purchase button blocked after an error with no alert). Upgrade to native 6.2.0 first, then check the cause below. On Flutter, React Native and Cordova, the bridge 6.1.0 embeds native 6.1.0, the bridge 6.1.1 embeds iOS 6.1.2 / Android 6.1.1, and the bridge 6.2.0 embeds native 6.2.0.
 
 **Cause A (Android, custom `PLYUIHandler`):** an `onAlert` branch displayed the app's own dialog and called neither `proceed()` nor `alert.onDismiss()`. The alert is the last step of the paywall action that raised it (purchase, restore, plan change); the SDK keeps that action open until the alert is dismissed, so the Screen stays displayed and stops reacting to taps, close button included. Early v5 releases did not wait for the dismissal, so apps that migrate to v6 with an existing handler surface this for the first time.
 
@@ -283,11 +286,14 @@ Purchasely.interceptAction(Purchasely.PresentationAction.login, async (info, par
 - **Store configuration:** Verify your products are configured correctly in App Store Connect / Google Play Console and match the plan IDs in the Purchasely dashboard.
 - **Sandbox account (iOS):** On iOS, ensure you are signed in with a Sandbox Apple ID in Settings > App Store > Sandbox Account.
 - **Google Play test track:** On Android, ensure the app is published to at least an internal test track and the test account is added to the testers list.
+- **Several StoreKit transactions delivered together (iOS < 6.1.2):** one skipped transaction held back the others until the next launch. Fixed in native iOS 6.1.2, upgrade. On Flutter, React Native and Cordova, the bridge 6.1.0 embeds native 6.1.0, the bridge 6.1.1 embeds iOS 6.1.2 / Android 6.1.1, and the bridge 6.2.0 embeds native 6.2.0.
 - **Missing store dependency (Android):** Verify the correct store artifact is included (e.g., `io.purchasely:google-play`).
 
 ## 4. Events Fire Twice
 
 **Symptoms:** Analytics events are duplicated, purchase callbacks trigger multiple times.
+
+**First, check the SDK version.** Fixed natively: Android 6.1.0 (second `PRESENTATION_VIEWED` when a screen is re-attached), iOS 6.1.0 (a flow delivered its outcome twice), Android 6.2.0 (`onOpenPresentation` / `onOpenPlacement` ran twice per action). Upgrade to 6.2.0 before debugging the app. iOS 6.2.0 also fixed a tap inside a tappable container that ran the container action too, and removed duplicate `APP_STARTED` events (session counts may drop slightly).
 
 **Cause:** Event listener registered in a lifecycle method that is called multiple times (e.g., `onResume`, `viewWillAppear`).
 
@@ -325,6 +331,7 @@ override fun onCreate(savedInstanceState: Bundle?) {
 
 **Causes and Solutions:**
 
+- **Only the first `handleDeeplink()` works (Android < 6.1.0), or a deeplink with an upper-case `PLY` host is ignored (Android < 6.2.0):** fixed natively, upgrade to 6.2.0. On Flutter, React Native and Cordova, the bridge 6.1.0 embeds native 6.1.0, the bridge 6.1.1 embeds iOS 6.1.2 / Android 6.1.1, and the bridge 6.2.0 embeds native 6.2.0.
 - **`handleDeeplink` not called:** Ensure you call `Purchasely.handleDeeplink(url)` (iOS) or `Purchasely.handleDeeplink(uri, activity)` (Android) in your deeplink handler.
 - **`allowDeeplink` not set:** The SDK queues deeplinks until `allowDeeplink` is `true` (the v6 default, but check for an explicit `allowDeeplink(false)` left over from a gated onboarding flow that never flips back). Call `Purchasely.allowDeeplink(true)` when your root view controller / main activity is ready if you gated it.
 - **URL scheme not configured:** Verify the URL scheme or universal link / app link is properly configured in your app settings.
@@ -374,6 +381,8 @@ Purchasely.Builder(applicationContext)
 
 **Symptoms:** Paywall flashes on screen and then vanishes.
 
+**Upgrade first (iOS < 6.1.1):** the SDK could present a screen on top of a controller that was still being dismissed, so the next flow step or a fullscreen paywall disappeared silently. Fixed in native iOS 6.1.1.
+
 **Cause:** The view controller or fragment is not strongly referenced and gets deallocated.
 
 **Solutions:**
@@ -394,7 +403,7 @@ func showPaywall() async throws {
     presentation?.display(from: self)
 }
 
-// GOOD (if you must embed it yourself): store the controller as a property
+// GOOD (if you must embed it yourself; required on iOS < 6.1.1, see note below): store the controller as a property
 var paywallController: UIViewController?
 
 func showPaywall() async throws {
@@ -404,6 +413,8 @@ func showPaywall() async throws {
 }
 ```
 
+> **Fixed in iOS 6.1.1.** When the app presents `presentation.controller` itself, `onDismissed` was lost or reported as cancelled after a purchase. Native iOS 6.1.1 reports the real outcome on every close path, so keeping the `PLYPresentation` in a property is no longer needed there. Keep it only for apps on an older iOS SDK, and upgrade. On Flutter, React Native and Cordova, the bridge 6.1.0 embeds native 6.1.0, the bridge 6.1.1 embeds iOS 6.1.2 / Android 6.1.1, and the bridge 6.2.0 embeds native 6.2.0.
+>
 > **Legacy (v5).** `Purchasely.presentationController(for:)` was removed in v6 in favour of `PLYPresentationBuilder` + `preload()`, exposing `presentation.display(from:)` or `presentation.controller`.
 
 **Android:** Ensure the Fragment is properly attached to a container and the Activity is not finishing:
@@ -493,6 +504,8 @@ The Purchasely SDK defines two semantically distinct close actions:
 | `.closeAll` | **Exit** the paywall entirely        | Clears `flowSteps`, **closes the flow window**  |
 
 The SDK holds flow presentations inside a dedicated `PLYWindow` (iOS) / custom overlay (Android) that stays alive across steps. When `.close` is triggered on the only *visible* step but there are preloaded (not-yet-shown) steps queued in `flowSteps` or registered controllers, the window remains alive waiting for the next step — which will never come, because the user wanted to exit. The stale window intercepts touches and the app appears frozen.
+
+> **Fixed in iOS 6.1.2:** a drawer, popin or modal closed by its button, a close action or a tap on the background no longer leaves a transparent window over the app (`PRESENTATION_CLOSED` is sent). On older iOS SDKs, upgrade; the `.close` vs `.closeAll` configuration below still applies. On Flutter, React Native and Cordova, the bridge 6.1.0 embeds native 6.1.0, the bridge 6.1.1 embeds iOS 6.1.2 / Android 6.1.1, and the bridge 6.2.0 embeds native 6.2.0.
 
 **Convention:**
 - **X button / "Not now" / "Skip"** = `.closeAll` (user intent: exit the paywall)
@@ -584,5 +597,7 @@ A screenshot taken without reopening the paywall may predate the change entirely
 **Symptoms:** the Console font is ignored on device, or multiline text is clipped on iOS *or* Android only.
 
 **Cause:** Screens render with **native** components, so the font must exist in the **native project**. The file uploaded in the Console is used **only for the Composer preview** and is never shipped. The iOS field must match the font's **PostScript name** (not the filename); the Android field must match the resource name. A missing font is silently substituted by the OS, which changes line height and wrapping — hence clipping on one platform only.
+
+Bold or italic text rendered smaller than the rest when the custom font has no bold or italic face: fixed in native iOS 6.2.0 (the text keeps the label size).
 
 Full prerequisites: [screen-resolution.md](../concepts/screen-resolution.md#custom-fonts--the-font-must-exist-in-the-native-project).

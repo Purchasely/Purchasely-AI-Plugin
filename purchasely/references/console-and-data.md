@@ -53,6 +53,7 @@ Some views aggregate over the full subscription history. Narrow the date range a
 - **Deterministic assignment**: a hash of the user identifier buckets the user (0–99), so a given user always sees the same variant. Works identically with pseudonymous IDs.
 - **Bayesian significance** computed in the Console.
 - **Stripe / web transactions are included** in the results.
+- Since native SDK 6.2.0, an experiment's **Primary KPI** can be a custom event: see [concepts/custom-events.md](concepts/custom-events.md).
 
 ### Why variants are not split 50/50
 
