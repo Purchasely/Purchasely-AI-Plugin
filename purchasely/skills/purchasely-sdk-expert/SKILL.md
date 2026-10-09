@@ -43,6 +43,7 @@ Read the matching file before you answer. Paths are relative to this skill (`../
 | `NORMAL` / `FALLBACK` / `DEACTIVATED` / `CLIENT`, blank paywall | `concepts/presentation-types.md` |
 | Button action, interceptor, frozen paywall | `concepts/paywall-actions.md` |
 | iOS UIKit component actions, label highlights, or multiple actions from one touch | `ios/action-dispatch.md` |
+| `PLYUIHandler`, custom alert dialog, `onAlert`, `proceed()` vs `alert.onDismiss()`, Android Screen unresponsive after a dialog | `android/api-reference.md` § UI Handler — Alerts |
 | Flow, Transition, Quiz, `PLYPresentationOutcome` | `concepts/flows.md` |
 | Promotional offer, offer code, developer determined offer, offer eligibility | `concepts/promotional-offers.md` |
 | `setDynamicOffering`, runtime plan or offer override | `concepts/dynamic-offerings.md` |
