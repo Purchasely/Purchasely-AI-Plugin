@@ -250,7 +250,7 @@ Every branch must end with `proceed()` or `alert.onDismiss()` — the paywall ac
 ```kotlin
 Purchasely.uiHandler = object : PLYUIHandler {
     override fun onAlert(alert: PLYAlertMessage, purchaselyView: View, activity: Activity?, proceed: () -> Unit) {
-        val context = activity ?: return proceed() // no activity: let the SDK display the alert
+        val context = activity ?: return alert.onDismiss() // no activity: the SDK cannot show a dialog either, so release the action
         when (alert) {
             is PLYAlertMessage.InAppSuccess,
             is PLYAlertMessage.InAppSuccessUnauthentified ->

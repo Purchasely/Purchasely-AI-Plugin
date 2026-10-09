@@ -395,7 +395,7 @@ Purchasely.uiHandler = object : PLYUIHandler {
 
 | Call | Effect |
 |------|--------|
-| `proceed()` | The SDK displays its own dialog and dismisses the alert when the user taps its button. |
+| `proceed()` | The SDK displays its own dialog and dismisses the alert when the user taps its button. When `activity` is `null`, the SDK cannot display the dialog and the alert is never dismissed: call `alert.onDismiss()` instead. |
 | `alert.onDismiss()` | Dismisses the alert with no SDK dialog. Use it when you display your own. |
 
 The alert is the last step of the paywall action that produced it, and the SDK keeps that action open until the alert is dismissed — only then does it resume the Screen (closing it after a successful purchase, accepting taps again after an error). A branch that calls neither leaves the action pending: **the Screen stays displayed and stops reacting to taps, close button included**, and later actions are never processed. Early v5 releases did not wait for the dismissal, so a missing call went unnoticed.
@@ -405,7 +405,7 @@ The alert is the last step of the paywall action that produced it, and the SDK k
 ```kotlin
 Purchasely.uiHandler = object : PLYUIHandler {
     override fun onAlert(alert: PLYAlertMessage, purchaselyView: View, activity: Activity?, proceed: () -> Unit) {
-        val context = activity ?: return proceed() // no activity: let the SDK display the alert
+        val context = activity ?: return alert.onDismiss() // no activity: the SDK cannot show a dialog either, so release the action
         when (alert) {
             is PLYAlertMessage.InAppSuccess,
             is PLYAlertMessage.InAppSuccessUnauthentified ->

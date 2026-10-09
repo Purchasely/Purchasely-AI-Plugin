@@ -223,7 +223,7 @@ Purchasely.apiKey("KEY").storekitSettings(.storeKit2).start { error in
 ```kotlin
 Purchasely.uiHandler = object : PLYUIHandler {
     override fun onAlert(alert: PLYAlertMessage, purchaselyView: View, activity: Activity?, proceed: () -> Unit) {
-        val context = activity ?: return proceed() // no activity: let the SDK display the alert
+        val context = activity ?: return alert.onDismiss() // no activity: the SDK cannot show a dialog either, so release the action
         showMyDialog(context, alert.getTitleContent(), alert.getContentMessage()) { alert.onDismiss() }
     }
 }
