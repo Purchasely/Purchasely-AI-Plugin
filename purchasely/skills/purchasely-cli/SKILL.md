@@ -45,6 +45,6 @@ purchasely screens list --app app_xxx
 
 1. List the applications and ask the developer which one is the target.
 2. Before you write the integration code, list the placements, products, plans and custom events of that app.
-3. Use the real `vendor_id` of each placement in the v6 presentation request: `PLYPresentationBuilder.forPlacementId(...)` on iOS, `PLYPresentationBuilder.placement(...)` on Flutter, `PLYPresentation { placementId(...) }` on Android, `Purchasely.presentation.placement(...)` on React Native, and the real custom event names in `Purchasely.emit(...)`. Do not invent them.
+3. Use the real `vendor_id` of each placement in the v6 presentation request: `PLYPresentationBuilder.forPlacementId(...)` on iOS, `PLYPresentationBuilder.placement(...)` on Flutter, `PLYPresentation { placementId(...) }` on Android, `Purchasely.presentation.placement(...)` on React Native and Cordova, and the real custom event names in `Purchasely.emit(...)`. Do not invent them.
 4. If a placement or a custom event does not exist, tell the developer. Do not create it unless they ask. If they ask, follow rule 5.
 5. For campaigns, list them to see which triggers and placements exist. Then check the behavior in `../../references/concepts/` before you explain it.
