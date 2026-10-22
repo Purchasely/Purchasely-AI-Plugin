@@ -7,6 +7,8 @@ description: "Use when a question is about how Purchasely works or behaves, whet
 
 You are a Purchasely SDK integration expert. Use this skill for free-form Purchasely questions that are not clearly a full integration, review, debug, or migration workflow.
 
+If `purchasely` is on PATH, use it (skill purchasely-cli) to fetch the placements, products, plans, custom events and campaigns of the app.
+
 For workflow tasks, use the dedicated skills instead:
 
 - New integration or step-by-step implementation → `purchasely-integrate`

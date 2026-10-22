@@ -50,7 +50,7 @@ When in doubt, lean on the language: "recommended", "optional pattern", "conside
 
 ## Publishing / refreshing on agentskill.sh
 
-The five skills are published on [agentskill.sh](https://agentskill.sh) as `@purchasely/purchasely-sdk-expert`, `@purchasely/purchasely-integrate`, `@purchasely/purchasely-review`, `@purchasely/purchasely-debug`, and `@purchasely/purchasely-migrate`.
+The six skills are published on [agentskill.sh](https://agentskill.sh) as `@purchasely/purchasely-sdk-expert`, `@purchasely/purchasely-integrate`, `@purchasely/purchasely-review`, `@purchasely/purchasely-debug`, `@purchasely/purchasely-migrate`, and `@purchasely/purchasely-cli`.
 
 **Force a re-scan** (after a push, a skill rename, or a description change) — agentskill.sh runs a daily background sync, but you can trigger it on demand by POSTing the GitHub repo URL to the public submit endpoint:
 
@@ -103,7 +103,7 @@ For push-time sync without manual calls, set up a GitHub webhook → `https://ag
 
 ## Publishing / refreshing on skills.sh
 
-The same five skills are also installable through the [`skills` CLI](https://www.skills.sh/docs):
+The same six skills are also installable through the [`skills` CLI](https://www.skills.sh/docs):
 
 ```bash
 npx skills add Purchasely/Purchasely-AI-Plugin
@@ -117,7 +117,7 @@ To **validate the repo layout** locally before pushing (catches frontmatter / di
 npx --yes skills add . --list
 ```
 
-Should report `Found 5 skills` with names `purchasely-debug`, `purchasely-integrate`, `purchasely-migrate`, `purchasely-review`, `purchasely-sdk-expert`. The CLI auto-discovers `skills/` and the `.claude-plugin/` manifests — no extra config needed.
+Should report `Found 6 skills` with names `purchasely-cli`, `purchasely-debug`, `purchasely-integrate`, `purchasely-migrate`, `purchasely-review`, `purchasely-sdk-expert`. The CLI auto-discovers `skills/` and the `.claude-plugin/` manifests — no extra config needed.
 
 # context-mode — MANDATORY routing rules
 

@@ -7,6 +7,8 @@ description: "Use when integrating the Purchasely SDK into a mobile app — guid
 
 You are guiding a developer through integrating the Purchasely SDK into their mobile app. You must write actual code into the user's project — not just explain what to do.
 
+If `purchasely` is on PATH, use it (skill purchasely-cli) to fetch the placements, products, plans and custom events of the app before you write code.
+
 Reference documentation is available in the `../../references/` directory of this plugin. Before integrating, read `../../references/purchasely-architecture.md` to understand the end-to-end platform (SDK ↔ Purchasely Server ↔ stores ↔ your backend ↔ third-party tools) and the Full-mode purchase flow. If the app already sells subscriptions on the web (Stripe, another subscription platform, in-house billing), also read `../../references/cross-platform-subscriptions.md` — Purchasely accepts S2S Stripe receipts and the coexistence model has subtle defaults to know about.
 
 The bundled references are intentionally curated, not a full copy of the public docs. If a required integration detail is missing, looks stale, or depends on an exact SDK signature / current Console behavior, verify it against the official Purchasely documentation at https://docs.purchasely.com/ before writing code.
