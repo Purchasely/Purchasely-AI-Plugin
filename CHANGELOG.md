@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+## [2.3.0] — 2026-10-22
+
 ### Added
 
 - `skills/purchasely-cli/SKILL.md`: a skill that teaches an agent to use the public `purchasely` CLI to fetch the placements, products, plans, campaigns, custom events and applications of an app before it writes SDK code. Read-only first, `--dry-run` before any write, no API key in a command or an output, and the SDK API key is asked from the developer (Console, App settings). `purchasely-sdk-expert`, `purchasely-integrate`, `purchasely-review` and `purchasely-debug` point to it when `purchasely` is on PATH. Listed in the session-start intro, `README.md`, `AGENTS.md` and `GEMINI.md`.

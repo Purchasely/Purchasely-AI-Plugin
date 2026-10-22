@@ -78,9 +78,10 @@ The call is idempotent: first import returns `status: imported`, subsequent call
       { "slug": "purchasely/purchasely-debug",      "status": "updated", "securityScore": 95 },
       { "slug": "purchasely/purchasely-integrate",  "status": "updated", "securityScore": 100 },
       { "slug": "purchasely/purchasely-migrate",    "status": "updated", "securityScore": 100 },
-      { "slug": "purchasely/purchasely-review",     "status": "updated", "securityScore": 100 }
+      { "slug": "purchasely/purchasely-review",     "status": "updated", "securityScore": 100 },
+      { "slug": "purchasely/purchasely-cli",        "status": "updated" }
     ],
-    "summary": { "found": 5, "imported": 0, "updated": 5, "failed": 0 }
+    "summary": { "found": 6, "imported": 0, "updated": 6, "failed": 0 }
   }
 }
 ```
@@ -100,6 +101,7 @@ For push-time sync without manual calls, set up a GitHub webhook → `https://ag
 - https://agentskill.sh/@purchasely/purchasely-review
 - https://agentskill.sh/@purchasely/purchasely-debug
 - https://agentskill.sh/@purchasely/purchasely-migrate
+- https://agentskill.sh/@purchasely/purchasely-cli
 
 ## Publishing / refreshing on skills.sh
 
