@@ -1,6 +1,6 @@
 # Purchasely AI Plugin is available
 
-This project is using the **Purchasely AI Plugin**. You have access to five auto-invoked skills and the `purchasely-sdk-expert` Claude Code agent for free-form Purchasely SDK questions across iOS, Android, React Native, Flutter, and Cordova.
+This project is using the **Purchasely AI Plugin**. You have access to six auto-invoked skills and the `purchasely-sdk-expert` Claude Code agent for free-form Purchasely SDK questions across iOS, Android, React Native, Flutter, and Cordova.
 
 ## Skills (auto-invoked when relevant)
 
@@ -9,6 +9,7 @@ This project is using the **Purchasely AI Plugin**. You have access to five auto
 - **`purchasely-review`** — checklist review that audits an existing integration for missing interceptor completions, deprecated APIs, identity ordering, `PrivacyInfo.xcprivacy`, Google Play Billing v8, log-level gating, and more.
 - **`purchasely-debug`** — diagnostic flow for blank paywalls, frozen UI, purchase failures, and deeplinks. Includes SDK debug logging, `PLYError` decoding, and the screen-issue-report escalation template.
 - **`purchasely-migrate`** — v5 → v6 migration for native iOS, native Android, Flutter, React Native, and Cordova integrations.
+- **`purchasely-cli`**: use the `purchasely` command line tool to fetch the placements, products, plans, campaigns, and custom events of an app, so the code uses real ids.
 
 ## Expert agent
 

@@ -9,8 +9,8 @@
 
 A cross-harness plugin with the richest experience on **Claude Code**, plus portable skills for other agents:
 
-- **Claude Code full plugin** — 4 slash commands (`/purchasely:integrate`, `/purchasely:review`, `/purchasely:debug`, `/purchasely:migrate`), 5 auto-invoked skills, hooks, references, and the `purchasely-sdk-expert` agent for free-form Purchasely SDK questions.
-- **5 portable skills** — `purchasely-sdk-expert`, `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, `purchasely-migrate` (installable with `npx skills add ...`; skills-only installs do **not** include slash commands, hooks, or the Claude Code subagent).
+- **Claude Code full plugin**: 4 slash commands (`/purchasely:integrate`, `/purchasely:review`, `/purchasely:debug`, `/purchasely:migrate`), 6 auto-invoked skills, hooks, references, and the `purchasely-sdk-expert` agent for free-form Purchasely SDK questions.
+- **6 portable skills**: `purchasely-sdk-expert`, `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, `purchasely-migrate`, `purchasely-cli` (installable with `npx skills add ...`; skills-only installs do **not** include slash commands, hooks, or the Claude Code subagent).
 - **Cross-vendor manifests** — `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/`, `purchasely/.claude-plugin/`, `purchasely/.codex-plugin/`, `purchasely/.cursor-plugin/`, `AGENTS.md`, `GEMINI.md`, `gemini-extension.json`.
 
 Works with **Claude Code**, **Codex CLI**, **Codex App**, **Cursor**, **Gemini CLI**, **OpenCode**, **GitHub Copilot CLI**, and **AGENTS.md-compatible harnesses**.
@@ -34,7 +34,7 @@ Claude reads `.claude-plugin/marketplace.json`, which points at the self-contain
 
 ### Skills CLI (skills.sh) — portable skills only
 
-The [`skills` CLI](https://www.skills.sh/docs) installs the five Purchasely skills (`purchasely-sdk-expert`, `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, `purchasely-migrate`) into any AGENTS.md-compatible harness, Claude Code, Cursor, Codex, OpenCode, and 50+ others — pick where they go interactively, no marketplace setup required.
+The [`skills` CLI](https://www.skills.sh/docs) installs the six Purchasely skills (`purchasely-sdk-expert`, `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, `purchasely-migrate`, `purchasely-cli`) into any AGENTS.md-compatible harness, Claude Code, Cursor, Codex, OpenCode, and 50+ others: pick where they go interactively, no marketplace setup required.
 
 This is a **skills-only** installation path: it installs the portable `purchasely-sdk-expert` skill, but not the Claude Code `purchasely-sdk-expert` subagent, slash commands, hooks, or plugin manifests. Claude Code users should prefer the full plugin install above.
 
@@ -58,7 +58,7 @@ npx skills add Purchasely/Purchasely-AI-Plugin -g -a claude-code -y
 npx skills update
 ```
 
-The CLI discovers skills at [`skills/`](./skills) (a compatibility link to [`purchasely/skills/`](./purchasely/skills)). Skill names match their directory names — `purchasely-sdk-expert`, `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, `purchasely-migrate`.
+The CLI discovers skills at [`skills/`](./skills) (a compatibility link to [`purchasely/skills/`](./purchasely/skills)). Skill names match their directory names: `purchasely-sdk-expert`, `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, `purchasely-migrate`, `purchasely-cli`.
 
 #### Updating Skills CLI installations
 
@@ -75,7 +75,7 @@ npx skills update -g
 npx skills update -p
 
 # Update only the Purchasely skills by name
-npx skills update purchasely-sdk-expert purchasely-integrate purchasely-review purchasely-debug purchasely-migrate
+npx skills update purchasely-sdk-expert purchasely-integrate purchasely-review purchasely-debug purchasely-migrate purchasely-cli
 
 # Non-interactive global update
 npx skills update -g -y
@@ -156,6 +156,20 @@ Tools that read the repository-level `AGENTS.md` should use this repository dire
 | `/purchasely:review` | Automated checklist review of your existing integration — finds bugs, deprecated APIs, and missing best practices |
 | `/purchasely:debug` | Diagnostic trees for common issues — blank paywalls, frozen UI, purchase failures, deeplink problems |
 | `/purchasely:migrate` | Upgrade an existing native iOS, native Android, Flutter, React Native, or Cordova integration from SDK v5 to v6 |
+| `purchasely` CLI on PATH | Fetch the placements, products, plans, campaigns, and custom events of your app via `purchasely-cli` |
+
+### Use with the purchasely CLI
+
+The `purchasely` command line tool reads your Console configuration, so the agent uses the real placement ids, products, plans, and custom event names of your app.
+
+```bash
+curl -fsSL https://cli.purchasely.io/install.sh | sh   # needs Node 20+
+purchasely auth login                                   # key at the prompt, never in the command
+purchasely ai install                                   # set up this plugin in your coding agents
+purchasely placements list --app app_xxx
+```
+
+The skill is read-only by default and runs `--dry-run` before any write. The SDK API key is not available from the CLI: copy it from the Console, in the App settings.
 
 ## Usage Examples
 
@@ -230,7 +244,8 @@ Purchasely-AI-Plugin/
 │   │   ├── purchasely-integrate/SKILL.md
 │   │   ├── purchasely-review/SKILL.md
 │   │   ├── purchasely-debug/SKILL.md
-│   │   └── purchasely-migrate/SKILL.md
+│   │   ├── purchasely-migrate/SKILL.md
+│   │   └── purchasely-cli/SKILL.md
 │   ├── agents/
 │   │   └── purchasely-sdk-expert.md  # Claude Code subagent wrapper
 │   ├── commands/                # User-invoked slash commands
