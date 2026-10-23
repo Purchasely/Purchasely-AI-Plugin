@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+## [2.4.0] — 2026-10-23
+
 ### Changed
 
 - `skills/purchasely-cli/SKILL.md`: a **Key metrics of an app** section for `purchasely dashboard summary` (CLI 0.3.0 or later): MRR, active subscriptions, paywall unique viewers and conversions of one app, as JSON, or as a sparkline per metric with `--output table`. The skill description, the session-start intro, `README.md`, `AGENTS.md` and `GEMINI.md` mention it.
