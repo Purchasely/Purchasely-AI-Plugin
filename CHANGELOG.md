@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Security
+
+- `skills/purchasely-cli/SKILL.md`: no `curl | sh` install command (the skill points to https://cli.purchasely.io), and the agent never asks for a key: the developer types the Management API key at the `purchasely auth login` prompt and puts the SDK API key in the app configuration. The agentskill.sh scan scored the skill 35/100.
+
 ## [2.4.0] — 2026-10-23
 
 ### Changed

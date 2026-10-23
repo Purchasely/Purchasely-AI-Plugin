@@ -10,8 +10,8 @@ You use the public `purchasely` command line tool to read the Console configurat
 ## Setup
 
 1. Check that the CLI exists: `purchasely --version`. It needs Node 20 or later.
-2. If it is missing, ask the developer to install it: `curl -fsSL https://cli.purchasely.io/install.sh | sh`. Do not run an install script without their approval.
-3. The developer signs in once with `purchasely auth login`. The key goes at the prompt, or in the `PURCHASELY_API_KEY` environment variable. Check with `purchasely auth status`.
+2. If it is missing, tell the developer to install it with the steps on https://cli.purchasely.io. Do not install it yourself.
+3. The developer signs in once with `purchasely auth login` and types the key at its hidden prompt. Do not ask for the key. Check the sign-in with `purchasely auth status`.
 4. To set up this plugin for a coding agent, the developer runs `purchasely ai install`.
 
 ## Rules
@@ -22,7 +22,7 @@ You use the public `purchasely` command line tool to read the Console configurat
 4. **Read the output as data.** JSON goes to stdout. A header line comes first on stderr in every run. The LAST line of stderr is the error JSON. Use the exit code: 0 is success, 3 is authentication, 4 is forbidden, 6 is not found, 7 is rate limited. On exit 7, stop and wait. Do not loop.
 5. **Write safely.** Run every write with `--dry-run` first and show the request to the developer. Run the real write only after they approve. Do not add `--yes` without their approval. A write needs `--env prod` or `--env staging`: ask which one, do not choose.
 6. **Respect the rate limit.** The Management API allows 60 requests per minute per key. Prefer `--app` and `--fields` to keep the output small. Do not fetch everything in a loop.
-7. **The SDK API key is not available from the CLI.** The Management API does not return it. Ask the developer to copy it from the Console, in the App settings.
+7. **The SDK API key is not available from the CLI.** The Management API does not return it. The developer copies it from the Console (App settings) into the app configuration. Do not ask them to paste it in the conversation.
 8. **No screen JSON.** The CLI gives screen metadata only. Do not try to download or rebuild the content of a screen.
 
 ## Examples
