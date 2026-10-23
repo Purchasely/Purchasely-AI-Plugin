@@ -1,6 +1,6 @@
 ---
 name: purchasely-cli
-description: "Use when the developer mentions the purchasely CLI, or when an integration needs real Console data: list my placements, products, plans, campaigns, custom events or applications, or fetch the Console configuration of an app before writing SDK code."
+description: "Use when the developer mentions the purchasely CLI, or when an integration needs real Console data: list my placements, products, plans, campaigns, custom events or applications, fetch the Console configuration of an app before writing SDK code, or show the key metrics of an app (MRR, active subscriptions, paywall viewers, conversions)."
 ---
 
 # Purchasely CLI Skill
@@ -37,9 +37,19 @@ purchasely plans list --app app_xxx --product-id <product-id>
 purchasely custom-events list --app app_xxx
 purchasely campaigns list --app app_xxx --status running
 purchasely screens list --app app_xxx
+purchasely dashboard summary --app app_xxx
 ```
 
 `app_xxx` is the public id of the application, from `purchasely applications list`.
+
+## Key metrics of an app
+
+`purchasely dashboard summary --app app_xxx` (CLI 0.3.0 or later) returns the MRR, the active subscriptions, the paywall unique viewers and the conversions of one app, over the last 30 days by default (`--days <n>`, from 2 to 730). It sends 3 requests, 4 when `--days` is above 60. Run `--dry-run` to see them.
+
+1. Read the JSON: `panels[]` has `name`, `value` and `series` (`period`, `value`). MRR is the value of today. Active subscriptions is the current base. Viewers and conversions are the total of the range.
+2. When the developer wants to read it in the terminal, give them the command with `--output table`. It draws one line per metric with a sparkline. Do not parse the table yourself.
+3. The MRR value is in the dashboard currency of the app, and the output does not name it. Do not add a currency symbol.
+4. If the command is not found, the CLI is older than 0.3.0. Ask the developer to run `purchasely update`.
 
 ## Use it in an integration
 

@@ -7,7 +7,7 @@ Use the canonical Purchasely skills instead of duplicating SDK guidance in this 
 - Review an existing integration: @./skills/purchasely-review/SKILL.md
 - Debug a runtime issue: @./skills/purchasely-debug/SKILL.md
 - Migrate native iOS, native Android, Flutter, React Native, or Cordova from SDK v5 to v6: @./skills/purchasely-migrate/SKILL.md
-- Fetch the placements, products, plans, campaigns, and custom events of an app with the `purchasely` CLI: @./skills/purchasely-cli/SKILL.md
+- Fetch the placements, products, plans, campaigns, and custom events of an app, or its key metrics, with the `purchasely` CLI: @./skills/purchasely-cli/SKILL.md
 
 ## References
 

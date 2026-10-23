@@ -156,7 +156,7 @@ Tools that read the repository-level `AGENTS.md` should use this repository dire
 | `/purchasely:review` | Automated checklist review of your existing integration — finds bugs, deprecated APIs, and missing best practices |
 | `/purchasely:debug` | Diagnostic trees for common issues — blank paywalls, frozen UI, purchase failures, deeplink problems |
 | `/purchasely:migrate` | Upgrade an existing native iOS, native Android, Flutter, React Native, or Cordova integration from SDK v5 to v6 |
-| `purchasely` CLI on PATH | Fetch the placements, products, plans, campaigns, and custom events of your app via `purchasely-cli` |
+| `purchasely` CLI on PATH | Fetch the placements, products, plans, campaigns, and custom events of your app, and its key metrics (`purchasely dashboard summary`), via `purchasely-cli` |
 
 ### Use with the purchasely CLI
 
