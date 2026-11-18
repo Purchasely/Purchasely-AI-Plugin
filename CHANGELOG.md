@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Changed
+
+- `README.md` and `skills/purchasely-cli/SKILL.md`: the `purchasely` CLI 1.0.0 is a native program. It does not need Node any more.
+
 ## [2.4.1] — 2026-10-23
 
 ### Security

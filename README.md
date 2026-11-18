@@ -163,7 +163,7 @@ Tools that read the repository-level `AGENTS.md` should use this repository dire
 The `purchasely` command line tool reads your Console configuration, so the agent uses the real placement ids, products, plans, and custom event names of your app.
 
 ```bash
-curl -fsSL https://cli.purchasely.io/install.sh | sh   # needs Node 20+
+curl -fsSL https://cli.purchasely.io/install.sh | sh   # native binary, no Node
 purchasely auth login                                   # key at the prompt, never in the command
 purchasely ai install                                   # set up this plugin in your coding agents
 purchasely placements list --app app_xxx

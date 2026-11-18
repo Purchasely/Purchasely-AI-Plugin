@@ -9,7 +9,7 @@ You use the public `purchasely` command line tool to read the Console configurat
 
 ## Setup
 
-1. Check that the CLI exists: `purchasely --version`. It needs Node 20 or later.
+1. Check that the CLI exists: `purchasely --version`. From 1.0.0, it is a native program for macOS and Linux, with no Node.
 2. If it is missing, tell the developer to install it with the steps on https://cli.purchasely.io. Do not install it yourself.
 3. The developer signs in once with `purchasely auth login` and types the key at its hidden prompt. Do not ask for the key. Check the sign-in with `purchasely auth status`.
 4. To set up this plugin for a coding agent, the developer runs `purchasely ai install`.
