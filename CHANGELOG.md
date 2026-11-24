@@ -4,8 +4,14 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Removed
+
+- The `SessionStart` hook and its `hooks/` folder (`hooks.json`, `hooks-cursor.json`, `run-hook.cmd`, `session-start`, `intro.md`), and the root `hooks` link. Plugin directories do not accept hooks or scripts from every publisher, and the hook only repeated the list of skills at the start of a session. The skills still load through their `description`.
+
 ### Changed
 
+- `skills/purchasely-sdk-expert/SKILL.md`: the description names custom events, a keyword that only the removed session-start text carried.
+- `references/diagrams/`: the two architecture diagrams are PNG files. Their SVG sources moved to `docs/diagrams/`, outside the plugin folder.
 - `README.md` and `skills/purchasely-cli/SKILL.md`: the `purchasely` CLI 1.0.0 is a native program. It does not need Node any more.
 
 ## [2.4.1] — 2026-10-23
