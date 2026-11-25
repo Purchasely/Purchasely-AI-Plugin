@@ -36,7 +36,7 @@
     ],
     "websiteURL": "https://www.purchasely.com",
     "privacyPolicyURL": "https://www.purchasely.com/privacy-policy",
-    "termsOfServiceURL": "https://www.purchasely.com/terms-and-conditions",
+    "termsOfServiceURL": "https://www.purchasely.com/terms-of-service",
     "brandColor": "#00AEEF",
     "defaultPrompt": [
       "Integrate Purchasely in my app.",
