@@ -79,8 +79,7 @@ jobs:
             purchasely/skills/purchasely-integrate/SKILL.md \
             purchasely/references/android/initialization.md \
             purchasely/commands/integrate.md \
-            purchasely/agents/purchasely-sdk-expert.md \
-            purchasely/hooks/hooks.json
+            purchasely/agents/purchasely-sdk-expert.md
           do
             test -f "$f" || { echo "::error file=$f::Missing plugin folder link"; exit 1; }
           done

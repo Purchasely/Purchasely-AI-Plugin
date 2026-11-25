@@ -9,8 +9,8 @@
 
 A cross-harness plugin with the richest experience on **Claude Code**, plus portable skills for other agents:
 
-- **Claude Code full plugin**: 4 slash commands (`/purchasely:integrate`, `/purchasely:review`, `/purchasely:debug`, `/purchasely:migrate`), 6 auto-invoked skills, hooks, references, and the `purchasely-sdk-expert` agent for free-form Purchasely SDK questions.
-- **6 portable skills**: `purchasely-sdk-expert`, `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, `purchasely-migrate`, `purchasely-cli` (installable with `npx skills add ...`; skills-only installs do **not** include slash commands, hooks, or the Claude Code subagent).
+- **Claude Code full plugin**: 4 slash commands (`/purchasely:integrate`, `/purchasely:review`, `/purchasely:debug`, `/purchasely:migrate`), 6 auto-invoked skills, references, and the `purchasely-sdk-expert` agent for free-form Purchasely SDK questions.
+- **6 portable skills**: `purchasely-sdk-expert`, `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, `purchasely-migrate`, `purchasely-cli` (installable with `npx skills add ...`; skills-only installs do **not** include slash commands or the Claude Code subagent).
 - **Cross-vendor manifests** — `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/`, `purchasely/.claude-plugin/`, `purchasely/.codex-plugin/`, `purchasely/.cursor-plugin/`, `AGENTS.md`, `GEMINI.md`, `gemini-extension.json`.
 
 Works with **Claude Code**, **Codex CLI**, **Codex App**, **Cursor**, **Gemini CLI**, **OpenCode**, **GitHub Copilot CLI**, and **AGENTS.md-compatible harnesses**.
@@ -23,7 +23,7 @@ Pick the block matching your harness. Each one is copy-paste-able as is.
 
 ### Claude Code — recommended full experience
 
-Claude Code is the best-supported installation path. It installs the complete Purchasely plugin: skills, slash commands, hooks, bundled references, and the `purchasely-sdk-expert` agent. Use this if you want the strongest guidance and free-form Purchasely SDK questions to route to the expert automatically when relevant.
+Claude Code is the best-supported installation path. It installs the complete Purchasely plugin: skills, slash commands, bundled references, and the `purchasely-sdk-expert` agent. Use this if you want the strongest guidance and free-form Purchasely SDK questions to route to the expert automatically when relevant.
 
 ```text
 /plugin marketplace add Purchasely/Purchasely-AI-Plugin
@@ -36,7 +36,7 @@ Claude reads `.claude-plugin/marketplace.json`, which points at the self-contain
 
 The [`skills` CLI](https://www.skills.sh/docs) installs the six Purchasely skills (`purchasely-sdk-expert`, `purchasely-integrate`, `purchasely-review`, `purchasely-debug`, `purchasely-migrate`, `purchasely-cli`) into any AGENTS.md-compatible harness, Claude Code, Cursor, Codex, OpenCode, and 50+ others: pick where they go interactively, no marketplace setup required.
 
-This is a **skills-only** installation path: it installs the portable `purchasely-sdk-expert` skill, but not the Claude Code `purchasely-sdk-expert` subagent, slash commands, hooks, or plugin manifests. Claude Code users should prefer the full plugin install above.
+This is a **skills-only** installation path: it installs the portable `purchasely-sdk-expert` skill, but not the Claude Code `purchasely-sdk-expert` subagent, slash commands, or plugin manifests. Claude Code users should prefer the full plugin install above.
 
 ```bash
 npx skills add Purchasely/Purchasely-AI-Plugin
@@ -231,7 +231,6 @@ Purchasely-AI-Plugin/
 ├── agents -> purchasely/agents
 ├── commands -> purchasely/commands
 ├── references -> purchasely/references
-├── hooks -> purchasely/hooks
 ├── purchasely/
 │   ├── .claude-plugin/
 │   │   └── plugin.json          # Claude Code plugin manifest
@@ -253,13 +252,12 @@ Purchasely-AI-Plugin/
 │   │   ├── review.md
 │   │   ├── debug.md
 │   │   └── migrate.md
-│   ├── hooks/
 │   └── references/              # SDK documentation (used by skills)
 │       ├── concepts/            # Universal SDK concepts (all 5 platforms)
 │       ├── testing/             # Sandbox setup (Apple, Google)
 │       ├── troubleshooting/     # Common issues, error codes, debug mode
 │       ├── ios/  android/  react-native/  flutter/  cordova/
-│       ├── diagrams/            # Architecture diagrams (SVG)
+│       ├── diagrams/            # Architecture diagrams (PNG; SVG sources in docs/diagrams/)
 │       ├── architecture-patterns.md
 │       ├── cross-platform-subscriptions.md
 │       ├── purchasely-architecture.md

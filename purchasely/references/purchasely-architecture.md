@@ -8,7 +8,7 @@ It is the canonical reference to understand **where each component sits**, **wha
 
 ## 1. Platform Overview
 
-![Purchasely full-mode architecture](diagrams/purchasely-full-mode-architecture.svg)
+![Purchasely full-mode architecture](diagrams/purchasely-full-mode-architecture.png)
 
 ### Application side
 
@@ -91,7 +91,7 @@ Concretely:
 
 ## 4. Subscription Lifecycle After Purchase
 
-![Lifecycle and S2S webhook fan-out](diagrams/purchasely-lifecycle-s2s-fanout.svg)
+![Lifecycle and S2S webhook fan-out](diagrams/purchasely-lifecycle-s2s-fanout.png)
 
 Once the subscription is active, the lifecycle continues **server-side**, with no app intervention. Apple and Google notify Purchasely in real time on every event:
 
